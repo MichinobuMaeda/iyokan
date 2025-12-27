@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "bierner.markdown-mermaid",
+    "editorconfig.editorconfig",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}

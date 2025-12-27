@@ -1,0 +1,16 @@
+{
+  "cSpell.words": [
+    "apphosting",
+    "firestore",
+    "iyokan",
+    "Maeda",
+    "Michinobu",
+    "newuser",
+    "predeploy",
+    "ssword",
+    "testuser"
+  ],
+  "cSpell.ignorePaths": [".gitignore", "package*.json", ".vscode/*"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true
+}
