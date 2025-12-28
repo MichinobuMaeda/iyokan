@@ -56,7 +56,15 @@
       "enabled": true,
       "port": 4000
     },
-    "singleProjectMode": true
+    "singleProjectMode": true,
+    "apphosting": {
+      "port": 5002,
+      "rootDirectory": "./",
+      "startCommand": "npm run dev"
+    },
+    "hosting": {
+      "port": 5000
+    }
   },
   "apphosting": {
     "backendId": "iyokan-admin",
@@ -67,6 +75,7 @@
       "firebase-debug.log",
       "firebase-debug.*.log",
       "functions"
-    ]
+    ],
+    "alwaysDeployFromSource": true
   }
 }

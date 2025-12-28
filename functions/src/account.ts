@@ -1,9 +1,11 @@
+import { FieldValue } from "firebase-admin/firestore";
+
 export const getExistingAuthUserByEmail = async (
-  admin: typeof import("firebase-admin"),
+  auth: import("firebase-admin").auth.Auth,
   email: string
 ): Promise<import("firebase-admin").auth.UserRecord | null> => {
   try {
-    const userRecord = await admin.auth().getUserByEmail(email);
+    const userRecord = await auth.getUserByEmail(email);
     return userRecord;
   } catch (error) {
     if ((error as any).code !== "auth/user-not-found") {
@@ -14,14 +16,14 @@ export const getExistingAuthUserByEmail = async (
 };
 
 export const createAuthUserIfNotExists = async (
-  admin: typeof import("firebase-admin"),
+  auth: import("firebase-admin").auth.Auth,
   logger: typeof import("firebase-functions").logger,
   isTest: boolean,
   email: string,
   name: string
 ): Promise<import("firebase-admin").auth.UserRecord> => {
   // Get existing user by email
-  const existingUser = await getExistingAuthUserByEmail(admin, email);
+  const existingUser = await getExistingAuthUserByEmail(auth, email);
 
   if (existingUser) {
     logger.info("Auth account already exists", {
@@ -38,7 +40,7 @@ export const createAuthUserIfNotExists = async (
         Math.random().toString(36).slice(-10);
 
     // Create auth account
-    const userRecord = await admin.auth().createUser({
+    const userRecord = await auth.createUser({
       displayName: name || undefined,
       email: email,
       password: randomPassword,
@@ -54,7 +56,8 @@ export const createAuthUserIfNotExists = async (
 };
 
 export const createAdminUser = async (
-  admin: typeof import("firebase-admin"),
+  auth: import("firebase-admin").auth.Auth,
+  db: import("firebase-admin").firestore.Firestore,
   logger: typeof import("firebase-functions").logger,
   isTest: boolean,
   email: string,
@@ -62,18 +65,19 @@ export const createAdminUser = async (
 ) => {
   try {
     const userRecord = await createAuthUserIfNotExists(
-      admin,
+      auth,
       logger,
       isTest,
       email,
       name
     );
 
-    await admin.firestore().collection("admins").doc(userRecord.uid).set({
+    await db.collection("admins").doc(userRecord.uid).set({
       name,
       email,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      valid: true,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     logger.info("Admin user created in Firestore", {

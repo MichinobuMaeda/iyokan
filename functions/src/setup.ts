@@ -1,7 +1,9 @@
+import { FieldValue } from "firebase-admin/firestore";
 import { createAdminUser } from "./account.js";
 
 export const setupData = async (
-  admin: typeof import("firebase-admin"),
+  auth: import("firebase-admin").auth.Auth,
+  db: import("firebase-admin").firestore.Firestore,
   logger: typeof import("firebase-functions").logger,
   isTest: boolean,
   event?: import("firebase-functions/v2/firestore").FirestoreEvent<any>
@@ -18,7 +20,7 @@ export const setupData = async (
   switch (version) {
     case 0:
       const name = "Primary user";
-      const email = isTest ? "primary@example.com" : data?.email;
+      const email = data?.email;
 
       if (!email) {
         logger.error("No email provided for creating admin user");
@@ -26,7 +28,7 @@ export const setupData = async (
       }
 
       try {
-        await createAdminUser(admin, logger, isTest, email, name);
+        await createAdminUser(auth, db, logger, isTest, email, name);
 
         logger.info("Admin user created for version 0", { name, email });
       } catch (error) {
@@ -38,7 +40,7 @@ export const setupData = async (
       try {
         await snapshot.ref.set({
           version: version + 1,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
         });
       } catch (error) {
         logger.error(`Failed to create document version: ${version + 1}`, {

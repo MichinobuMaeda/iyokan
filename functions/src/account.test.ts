@@ -6,34 +6,20 @@ import {
 } from "./account.js";
 
 describe("account", () => {
-  let mockAdmin: any;
-  let mockLogger: any;
   let mockAuth: any;
+  let mockLogger: any;
   let mockFirestore: any;
 
   beforeEach(() => {
-    // Create persistent mock instances
+    // Create mock auth
     mockAuth = {
       getUserByEmail: vi.fn(),
       createUser: vi.fn(),
     };
 
+    // Create mock firestore
     mockFirestore = {
       collection: vi.fn(),
-      FieldValue: {
-        serverTimestamp: vi.fn(() => "TIMESTAMP"),
-      },
-    };
-
-    // Mock admin
-    mockAdmin = {
-      auth: vi.fn(() => mockAuth),
-      firestore: Object.assign(
-        vi.fn(() => mockFirestore),
-        {
-          FieldValue: mockFirestore.FieldValue,
-        }
-      ),
     };
 
     // Mock logger
@@ -49,7 +35,7 @@ describe("account", () => {
       mockAuth.getUserByEmail.mockResolvedValue(mockUser);
 
       const result = await getExistingAuthUserByEmail(
-        mockAdmin,
+        mockAuth,
         "test@example.com"
       );
 
@@ -63,7 +49,7 @@ describe("account", () => {
       });
 
       const result = await getExistingAuthUserByEmail(
-        mockAdmin,
+        mockAuth,
         "nonexistent@example.com"
       );
 
@@ -75,7 +61,7 @@ describe("account", () => {
       mockAuth.getUserByEmail.mockRejectedValue(mockError);
 
       await expect(
-        getExistingAuthUserByEmail(mockAdmin, "test@example.com")
+        getExistingAuthUserByEmail(mockAuth, "test@example.com")
       ).rejects.toEqual(mockError);
     });
   });
@@ -86,7 +72,7 @@ describe("account", () => {
       mockAuth.getUserByEmail.mockResolvedValue(mockUser);
 
       const result = await createAuthUserIfNotExists(
-        mockAdmin,
+        mockAuth,
         mockLogger,
         false,
         "test@example.com",
@@ -108,7 +94,7 @@ describe("account", () => {
       mockAuth.createUser.mockResolvedValue(mockNewUser);
 
       const result = await createAuthUserIfNotExists(
-        mockAdmin,
+        mockAuth,
         mockLogger,
         false,
         "new@example.com",
@@ -137,7 +123,7 @@ describe("account", () => {
       });
 
       await createAuthUserIfNotExists(
-        mockAdmin,
+        mockAuth,
         mockLogger,
         true,
         "test@example.com",
@@ -161,7 +147,7 @@ describe("account", () => {
       });
 
       await createAuthUserIfNotExists(
-        mockAdmin,
+        mockAuth,
         mockLogger,
         true,
         "test@example.com",
@@ -190,7 +176,8 @@ describe("account", () => {
       mockFirestore.collection = mockCollection;
 
       await createAdminUser(
-        mockAdmin,
+        mockAuth,
+        mockFirestore,
         mockLogger,
         true,
         "admin@example.com",
@@ -202,8 +189,9 @@ describe("account", () => {
       expect(mockSet).toHaveBeenCalledWith({
         name: "Admin User",
         email: "admin@example.com",
-        createdAt: "TIMESTAMP",
-        updatedAt: "TIMESTAMP",
+        valid: true,
+        createdAt: expect.any(Object),
+        updatedAt: expect.any(Object),
       });
       expect(mockLogger.info).toHaveBeenCalledWith(
         "Admin user created in Firestore",
@@ -216,11 +204,11 @@ describe("account", () => {
       mockAuth.getUserByEmail.mockRejectedValue({
         code: "auth/user-not-found",
       });
-      mockAuth.createUser.mockRejectedValue({ code: "auth/user-not-found" });
-      mockAdmin.auth().createUser = vi.fn().mockRejectedValue(mockError);
+      mockAuth.createUser.mockRejectedValue(mockError);
 
       await createAdminUser(
-        mockAdmin,
+        mockAuth,
+        mockFirestore,
         mockLogger,
         true,
         "admin@example.com",
