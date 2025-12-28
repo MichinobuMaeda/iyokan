@@ -4,7 +4,6 @@ import { useState, FormEvent } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/app/lib/firebase";
 import { useRouter } from "next/navigation";
-import styles from "./login.module.css";
 
 export default function LoginPage() {
   const [error, setError] = useState<string>();
@@ -33,48 +32,44 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.loginBox}>
-        <h1 className={styles.title}>Login</h1>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.inputGroup}>
-            <label htmlFor="email" className={styles.label}>
-              Email
-            </label>
+    <main>
+      <form className="column" onSubmit={handleSubmit}>
+        <h2>Login</h2>
+        <div className="row">
+          <div className="textfield outlined">
+            <label>Email</label>
             <input
               id="email"
               name="email"
               type="email"
               required
-              className={styles.input}
-              placeholder="your@email.com"
+              placeholder="Email"
               disabled={pending}
             />
           </div>
-
-          <div className={styles.inputGroup}>
-            <label htmlFor="password" className={styles.label}>
-              Password
-            </label>
+        </div>
+        <div className="row">
+          <div className="textfield outlined">
+            <label>Password</label>
             <input
               id="password"
               name="password"
               type="password"
               required
-              className={styles.input}
-              placeholder="••••••••"
+              placeholder="Password"
               disabled={pending}
-              minLength={8}
             />
           </div>
-
-          {error && <div className={styles.error}>{error}</div>}
-
-          <button type="submit" className={styles.button} disabled={pending}>
-            {pending ? "Logging in..." : "Login"}
-          </button>
-        </form>
-      </div>
-    </div>
+        </div>
+        {error && (
+          <div className="row" style={{ color: "red" }}>
+            {error}
+          </div>
+        )}
+        <button type="submit" className="button filled" disabled={pending}>
+          {pending ? "Logging in..." : "Login"}
+        </button>
+      </form>
+    </main>
   );
 }

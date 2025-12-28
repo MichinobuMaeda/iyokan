@@ -13,7 +13,13 @@
     "testuser",
     "YDGP"
   ],
-  "cSpell.ignorePaths": [".gitignore", "package*.json", ".vscode/*"],
+  "cSpell.ignorePaths": [
+    ".gitignore",
+    "package*.json",
+    ".vscode/*",
+    "functions/lib/*",
+    "app/*.css"
+  ],
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true
 }

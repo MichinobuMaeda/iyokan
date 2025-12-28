@@ -1,0 +1,19 @@
+:root {
+  --color-scheme: light dark;
+
+  --root-font-family: Roboto, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+    sans-serif;
+  --root-font-size: 16px;
+  --root-font-weight: 400;
+
+  --app-bar-z-index: 4;
+  --nav-bar-z-index: 6;
+  --nav-bar-height: calc(64px + env(safe-area-inset-bottom));
+  --nav-rail-z-index: 8;
+  --nav-rail-width: 240px;
+  --nav-drawer-z-index: 10;
+  --nav-drawer-width: 360px;
+
+  --menu-width: 256px;
+}
