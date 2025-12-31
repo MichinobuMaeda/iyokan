@@ -19,8 +19,7 @@ export const createAuthUserIfNotExists = async (
   auth: import("firebase-admin").auth.Auth,
   logger: typeof import("firebase-functions").logger,
   isTest: boolean,
-  email: string,
-  name: string
+  { email, name }: { email: string; name: string }
 ): Promise<import("firebase-admin").auth.UserRecord> => {
   // Get existing user by email
   const existingUser = await getExistingAuthUserByEmail(auth, email);
@@ -60,22 +59,18 @@ export const createAdminUser = async (
   db: import("firebase-admin").firestore.Firestore,
   logger: typeof import("firebase-functions").logger,
   isTest: boolean,
-  email: string,
-  name: string
+  { email, name, valid }: { email: string; name: string; valid: boolean }
 ) => {
   try {
-    const userRecord = await createAuthUserIfNotExists(
-      auth,
-      logger,
-      isTest,
+    const userRecord = await createAuthUserIfNotExists(auth, logger, isTest, {
       email,
-      name
-    );
+      name,
+    });
 
     await db.collection("admins").doc(userRecord.uid).set({
       name,
       email,
-      valid: true,
+      valid,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });

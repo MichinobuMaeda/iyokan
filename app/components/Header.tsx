@@ -8,7 +8,8 @@ import SvgLogout from "@/app/icons/SvgLogout";
 import SvgAccountCircle from "../icons/SvgAccountCircle";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { auth } from "@/app/lib/firebase";
+import { auth } from "@/app/lib/firebase-client";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -21,6 +22,9 @@ export default function Header() {
 
   const handleLogout = async () => {
     await signOut(auth);
+    // Clear the auth cookie
+    document.cookie = "__session=; path=/; max-age=0";
+    redirect("/login");
   };
 
   useEffect(() => {

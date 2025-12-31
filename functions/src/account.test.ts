@@ -75,8 +75,7 @@ describe("account", () => {
         mockAuth,
         mockLogger,
         false,
-        "test@example.com",
-        "Test User"
+        { email: "test@example.com", name: "Test User" }
       );
 
       expect(result).toEqual(mockUser);
@@ -97,8 +96,7 @@ describe("account", () => {
         mockAuth,
         mockLogger,
         false,
-        "new@example.com",
-        "New User"
+        { email: "new@example.com", name: "New User" }
       );
 
       expect(result).toEqual(mockNewUser);
@@ -122,13 +120,10 @@ describe("account", () => {
         email: "test@example.com",
       });
 
-      await createAuthUserIfNotExists(
-        mockAuth,
-        mockLogger,
-        true,
-        "test@example.com",
-        "Test User"
-      );
+      await createAuthUserIfNotExists(mockAuth, mockLogger, true, {
+        email: "test@example.com",
+        name: "Test User",
+      });
 
       expect(mockAuth.createUser).toHaveBeenCalledWith({
         displayName: "Test User",
@@ -146,13 +141,10 @@ describe("account", () => {
         email: "test@example.com",
       });
 
-      await createAuthUserIfNotExists(
-        mockAuth,
-        mockLogger,
-        true,
-        "test@example.com",
-        ""
-      );
+      await createAuthUserIfNotExists(mockAuth, mockLogger, true, {
+        email: "test@example.com",
+        name: "",
+      });
 
       expect(mockAuth.createUser).toHaveBeenCalledWith({
         displayName: undefined,
@@ -175,14 +167,11 @@ describe("account", () => {
       const mockCollection = vi.fn(() => ({ doc: mockDoc }));
       mockFirestore.collection = mockCollection;
 
-      await createAdminUser(
-        mockAuth,
-        mockFirestore,
-        mockLogger,
-        true,
-        "admin@example.com",
-        "Admin User"
-      );
+      await createAdminUser(mockAuth, mockFirestore, mockLogger, true, {
+        email: "admin@example.com",
+        name: "Admin User",
+        valid: true,
+      });
 
       expect(mockCollection).toHaveBeenCalledWith("admins");
       expect(mockDoc).toHaveBeenCalledWith("admin123");
@@ -199,6 +188,39 @@ describe("account", () => {
       );
     });
 
+    it("should create auth user and firestore document with valid=false", async () => {
+      const mockUser = { uid: "admin456", email: "admin2@example.com" };
+      mockAuth.getUserByEmail.mockRejectedValue({
+        code: "auth/user-not-found",
+      });
+      mockAuth.createUser.mockResolvedValue(mockUser);
+
+      const mockSet = vi.fn().mockResolvedValue(undefined);
+      const mockDoc = vi.fn(() => ({ set: mockSet }));
+      const mockCollection = vi.fn(() => ({ doc: mockDoc }));
+      mockFirestore.collection = mockCollection;
+
+      await createAdminUser(mockAuth, mockFirestore, mockLogger, true, {
+        email: "admin2@example.com",
+        name: "Admin Two",
+        valid: false,
+      });
+
+      expect(mockCollection).toHaveBeenCalledWith("admins");
+      expect(mockDoc).toHaveBeenCalledWith("admin456");
+      expect(mockSet).toHaveBeenCalledWith({
+        name: "Admin Two",
+        email: "admin2@example.com",
+        valid: false,
+        createdAt: expect.any(Object),
+        updatedAt: expect.any(Object),
+      });
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        "Admin user created in Firestore",
+        { uid: "admin456", email: "admin2@example.com" }
+      );
+    });
+
     it("should handle errors gracefully", async () => {
       const mockError = new Error("Firestore error");
       mockAuth.getUserByEmail.mockRejectedValue({
@@ -206,14 +228,11 @@ describe("account", () => {
       });
       mockAuth.createUser.mockRejectedValue(mockError);
 
-      await createAdminUser(
-        mockAuth,
-        mockFirestore,
-        mockLogger,
-        true,
-        "admin@example.com",
-        "Admin User"
-      );
+      await createAdminUser(mockAuth, mockFirestore, mockLogger, true, {
+        email: "admin@example.com",
+        name: "Admin User",
+        valid: true,
+      });
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to create auth account",

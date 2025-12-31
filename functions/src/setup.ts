@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { createAdminUser } from "./account.js";
 
-export const setupData = async (
+export const setUpData = async (
   auth: import("firebase-admin").auth.Auth,
   db: import("firebase-admin").firestore.Firestore,
   logger: typeof import("firebase-functions").logger,
@@ -28,7 +28,11 @@ export const setupData = async (
       }
 
       try {
-        await createAdminUser(auth, db, logger, isTest, email, name);
+        await createAdminUser(auth, db, logger, isTest, {
+          email,
+          name,
+          valid: true,
+        });
 
         logger.info("Admin user created for version 0", { name, email });
       } catch (error) {

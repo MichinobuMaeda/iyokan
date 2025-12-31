@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { setupData } from "./setup.js";
+import { setUpData } from "./setup.js";
 import * as account from "./account.js";
 
 vi.mock("./account.js", () => ({
@@ -45,9 +45,9 @@ describe("setup", () => {
     };
   });
 
-  describe("setupData", () => {
+  describe("setUpData", () => {
     it("should return early if no event provided", async () => {
-      await setupData(mockAuth, mockDb, mockLogger, false, undefined);
+      await setUpData(mockAuth, mockDb, mockLogger, false, undefined);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         "No data associated with the event"
@@ -61,15 +61,14 @@ describe("setup", () => {
         email: "test@example.com",
       });
 
-      await setupData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
 
       expect(account.createAdminUser).toHaveBeenCalledWith(
         mockAuth,
         mockDb,
         mockLogger,
         false,
-        "test@example.com",
-        "Primary user"
+        { email: "test@example.com", name: "Primary user" }
       );
       expect(mockLogger.info).toHaveBeenCalledWith(
         "Admin user created for version 0",
@@ -86,15 +85,14 @@ describe("setup", () => {
         email: "test@example.com",
       });
 
-      await setupData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
 
       expect(account.createAdminUser).toHaveBeenCalledWith(
         mockAuth,
         mockDb,
         mockLogger,
         false,
-        "test@example.com",
-        "Primary user"
+        { email: "test@example.com", name: "Primary user" }
       );
       expect(mockLogger.info).toHaveBeenCalledWith(
         "Admin user created for version 0",
@@ -108,7 +106,7 @@ describe("setup", () => {
         version: 0,
       });
 
-      await setupData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "No email provided for creating admin user"
@@ -125,7 +123,7 @@ describe("setup", () => {
         email: "test@example.com",
       });
 
-      await setupData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to create admin user",
@@ -139,7 +137,7 @@ describe("setup", () => {
         version: 1,
       });
 
-      await setupData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         "No action for this version: 1"
@@ -157,7 +155,7 @@ describe("setup", () => {
         email: "test@example.com",
       });
 
-      await setupData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to create document version: 1",
@@ -168,7 +166,7 @@ describe("setup", () => {
     it("should handle null data from snapshot", async () => {
       mockSnapshot.data.mockReturnValue(null);
 
-      await setupData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "No email provided for creating admin user"
