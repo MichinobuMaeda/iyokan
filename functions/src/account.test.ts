@@ -71,12 +71,10 @@ describe("account", () => {
       const mockUser = { uid: "user123", email: "test@example.com" };
       mockAuth.getUserByEmail.mockResolvedValue(mockUser);
 
-      const result = await createAuthUserIfNotExists(
-        mockAuth,
-        mockLogger,
-        false,
-        { email: "test@example.com", name: "Test User" }
-      );
+      const result = await createAuthUserIfNotExists(mockAuth, mockLogger, {
+        email: "test@example.com",
+        name: "Test User",
+      });
 
       expect(result).toEqual(mockUser);
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -92,12 +90,10 @@ describe("account", () => {
       });
       mockAuth.createUser.mockResolvedValue(mockNewUser);
 
-      const result = await createAuthUserIfNotExists(
-        mockAuth,
-        mockLogger,
-        false,
-        { email: "new@example.com", name: "New User" }
-      );
+      const result = await createAuthUserIfNotExists(mockAuth, mockLogger, {
+        email: "new@example.com",
+        name: "New User",
+      });
 
       expect(result).toEqual(mockNewUser);
       expect(mockAuth.createUser).toHaveBeenCalledWith({
@@ -111,7 +107,7 @@ describe("account", () => {
       });
     });
 
-    it("should use test password when isTest is true", async () => {
+    it("should create user with random password", async () => {
       mockAuth.getUserByEmail.mockRejectedValue({
         code: "auth/user-not-found",
       });
@@ -120,7 +116,7 @@ describe("account", () => {
         email: "test@example.com",
       });
 
-      await createAuthUserIfNotExists(mockAuth, mockLogger, true, {
+      await createAuthUserIfNotExists(mockAuth, mockLogger, {
         email: "test@example.com",
         name: "Test User",
       });
@@ -128,7 +124,7 @@ describe("account", () => {
       expect(mockAuth.createUser).toHaveBeenCalledWith({
         displayName: "Test User",
         email: "test@example.com",
-        password: "P@ssword123",
+        password: expect.any(String),
       });
     });
 
@@ -141,7 +137,7 @@ describe("account", () => {
         email: "test@example.com",
       });
 
-      await createAuthUserIfNotExists(mockAuth, mockLogger, true, {
+      await createAuthUserIfNotExists(mockAuth, mockLogger, {
         email: "test@example.com",
         name: "",
       });
@@ -149,7 +145,7 @@ describe("account", () => {
       expect(mockAuth.createUser).toHaveBeenCalledWith({
         displayName: undefined,
         email: "test@example.com",
-        password: "P@ssword123",
+        password: expect.any(String),
       });
     });
   });
@@ -167,7 +163,7 @@ describe("account", () => {
       const mockCollection = vi.fn(() => ({ doc: mockDoc }));
       mockFirestore.collection = mockCollection;
 
-      await createAdminUser(mockAuth, mockFirestore, mockLogger, true, {
+      await createAdminUser(mockAuth, mockFirestore, mockLogger, {
         email: "admin@example.com",
         name: "Admin User",
         valid: true,
@@ -200,7 +196,7 @@ describe("account", () => {
       const mockCollection = vi.fn(() => ({ doc: mockDoc }));
       mockFirestore.collection = mockCollection;
 
-      await createAdminUser(mockAuth, mockFirestore, mockLogger, true, {
+      await createAdminUser(mockAuth, mockFirestore, mockLogger, {
         email: "admin2@example.com",
         name: "Admin Two",
         valid: false,
@@ -228,7 +224,7 @@ describe("account", () => {
       });
       mockAuth.createUser.mockRejectedValue(mockError);
 
-      await createAdminUser(mockAuth, mockFirestore, mockLogger, true, {
+      await createAdminUser(mockAuth, mockFirestore, mockLogger, {
         email: "admin@example.com",
         name: "Admin User",
         valid: true,

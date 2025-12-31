@@ -6,6 +6,7 @@ import Link from "next/link";
 interface Admin {
   id: string;
   email: string;
+  name: string;
   valid: boolean;
 }
 
@@ -27,6 +28,7 @@ export default async function Home() {
       admins.push({
         id: doc.id,
         email: String(data.email || ""),
+        name: String(data.name || ""),
         valid: Boolean(data.valid),
       });
     });
@@ -36,7 +38,7 @@ export default async function Home() {
   }
 
   return (
-    <main>
+    <main style={{ maxWidth: "32rem", width: "100%" }}>
       <div className="column">
         <h2>Admins</h2>
         {error ? (
@@ -44,15 +46,22 @@ export default async function Home() {
         ) : admins.length === 0 ? (
           <p>No admins found</p>
         ) : (
-          <ul>
-            {admins.map((admin) => (
-              <li key={admin.id}>
-                <Link href={`/admins/${admin.id}`}>
-                  {admin.email} {!admin.valid && "(Invalid)"}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <>
+            <Link href="/admins">Add admin</Link>
+            <table style={{ borderCollapse: "collapse" }}>
+              {admins.map((admin) => (
+                <tr
+                  key={admin.id}
+                  style={{ background: admin.valid ? "transparent" : "#ccc" }}
+                >
+                  <td style={{ padding: "0.125rem 0.5rem" }}>
+                    <Link href={`/admins/${admin.id}`}>{admin.email}</Link>
+                  </td>
+                  <td style={{ padding: "0.125rem 0.5rem" }}>{admin.name}</td>
+                </tr>
+              ))}
+            </table>
+          </>
         )}
       </div>
     </main>

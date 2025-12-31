@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import SvgHome from "@/app/icons/SvgHome";
 import SvgLogin from "@/app/icons/SvgLogin";
 import SvgLogout from "@/app/icons/SvgLogout";
 import SvgAccountCircle from "../icons/SvgAccountCircle";
@@ -43,9 +44,14 @@ export default function Header() {
         </div>
         <div style={{ flexGrow: 1 }}></div>
         {user ? (
-          <button onClick={() => setMenuOpen(!menuOpen)}>
-            <SvgAccountCircle />
-          </button>
+          <>
+            <Link href="/">
+              <SvgHome />
+            </Link>
+            <button onClick={() => setMenuOpen(!menuOpen)}>
+              <SvgAccountCircle />
+            </button>
+          </>
         ) : (
           <Link href="/login">
             <SvgLogin />

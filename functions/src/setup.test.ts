@@ -47,7 +47,7 @@ describe("setup", () => {
 
   describe("setUpData", () => {
     it("should return early if no event provided", async () => {
-      await setUpData(mockAuth, mockDb, mockLogger, false, undefined);
+      await setUpData(mockAuth, mockDb, mockLogger, undefined);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         "No data associated with the event"
@@ -61,14 +61,13 @@ describe("setup", () => {
         email: "test@example.com",
       });
 
-      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
 
       expect(account.createAdminUser).toHaveBeenCalledWith(
         mockAuth,
         mockDb,
         mockLogger,
-        false,
-        { email: "test@example.com", name: "Primary user" }
+        { email: "test@example.com", name: "Primary user", valid: true }
       );
       expect(mockLogger.info).toHaveBeenCalledWith(
         "Admin user created for version 0",
@@ -85,14 +84,13 @@ describe("setup", () => {
         email: "test@example.com",
       });
 
-      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
 
       expect(account.createAdminUser).toHaveBeenCalledWith(
         mockAuth,
         mockDb,
         mockLogger,
-        false,
-        { email: "test@example.com", name: "Primary user" }
+        { email: "test@example.com", name: "Primary user", valid: true }
       );
       expect(mockLogger.info).toHaveBeenCalledWith(
         "Admin user created for version 0",
@@ -106,7 +104,7 @@ describe("setup", () => {
         version: 0,
       });
 
-      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "No email provided for creating admin user"
@@ -123,7 +121,7 @@ describe("setup", () => {
         email: "test@example.com",
       });
 
-      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to create admin user",
@@ -137,7 +135,7 @@ describe("setup", () => {
         version: 1,
       });
 
-      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         "No action for this version: 1"
@@ -155,7 +153,7 @@ describe("setup", () => {
         email: "test@example.com",
       });
 
-      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to create document version: 1",
@@ -166,7 +164,7 @@ describe("setup", () => {
     it("should handle null data from snapshot", async () => {
       mockSnapshot.data.mockReturnValue(null);
 
-      await setUpData(mockAuth, mockDb, mockLogger, false, mockEvent);
+      await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "No email provided for creating admin user"

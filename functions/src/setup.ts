@@ -5,7 +5,6 @@ export const setUpData = async (
   auth: import("firebase-admin").auth.Auth,
   db: import("firebase-admin").firestore.Firestore,
   logger: typeof import("firebase-functions").logger,
-  isTest: boolean,
   event?: import("firebase-functions/v2/firestore").FirestoreEvent<any>
 ) => {
   const snapshot = event?.data;
@@ -28,7 +27,7 @@ export const setUpData = async (
       }
 
       try {
-        await createAdminUser(auth, db, logger, isTest, {
+        await createAdminUser(auth, db, logger, {
           email,
           name,
           valid: true,

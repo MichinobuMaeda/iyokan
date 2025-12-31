@@ -74,11 +74,11 @@ export default function LoginPage() {
   };
 
   return (
-    <main>
+    <main style={{ maxWidth: "32rem", width: "100%" }}>
       <form className="column" onSubmit={handleSubmit}>
         <h2>Login</h2>
         <div className="row">
-          <div className="textfield outlined">
+          <div className="textfield outlined" style={{ width: "100%" }}>
             <label>Email</label>
             <input
               id="email"
@@ -91,7 +91,7 @@ export default function LoginPage() {
           </div>
         </div>
         <div className="row">
-          <div className="textfield outlined">
+          <div className="textfield outlined" style={{ width: "100%" }}>
             <label>Password</label>
             <input
               id="password"

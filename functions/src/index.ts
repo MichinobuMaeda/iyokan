@@ -12,16 +12,13 @@ const admin = initializeApp();
 const auth = getAuth(admin);
 const db = getFirestore(admin);
 
-const isTest =
-  process.env.NODE_ENV === "test" || process.env.FUNCTIONS_EMULATOR === "true";
-
 setGlobalOptions({ region: "asia-northeast1", maxInstances: 10 });
 
 export const createAdmin = onCall({ timeoutSeconds: 60 }, async (request) =>
-  createAdminUser(auth, db, logger, isTest, request.data)
+  createAdminUser(auth, db, logger, request.data)
 );
 
 export const onServiceVersionDelete = onDocumentDeleted(
   "service/version",
-  (event) => setUpData(auth, db, logger, isTest, event)
+  (event) => setUpData(auth, db, logger, event)
 );

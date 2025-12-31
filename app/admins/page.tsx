@@ -51,54 +51,62 @@ export default function AdminsPage() {
   };
 
   return (
-    <form className="column" onSubmit={handleSubmit}>
-      <h3>Create Admin</h3>
-      <div className="row">
-        <div className="textfield outlined">
-          <label>Name</label>
+    <main style={{ maxWidth: "32rem", width: "100%" }}>
+      <form className="column" onSubmit={handleSubmit}>
+        <h3>Create Admin</h3>
+        <div className="row">
+          <div className="textfield outlined" style={{ width: "100%" }}>
+            <label>Name</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              required
+              disabled={pending}
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
+        <div className="row">
+          <div className="textfield outlined" style={{ width: "100%" }}>
+            <label>Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              disabled={pending}
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
+        <label className="row">
           <input
-            id="name"
-            name="name"
-            type="text"
-            required
+            id="valid"
+            name="valid"
+            className="switch"
+            type="checkbox"
             disabled={pending}
           />
-        </div>
-      </div>
-      <div className="row">
-        <div className="textfield outlined">
-          <label>Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            disabled={pending}
-          />
-        </div>
-      </div>
-      <div className="row">
-        <label>
-          <input id="valid" name="valid" type="checkbox" disabled={pending} />{" "}
           Valid
         </label>
-      </div>
 
-      {error && (
-        <div className="row" style={{ color: "red" }}>
-          {error}
-        </div>
-      )}
+        {error && (
+          <div className="row" style={{ color: "red" }}>
+            {error}
+          </div>
+        )}
 
-      {success && (
-        <div className="row" style={{ color: "green" }}>
-          {success}
-        </div>
-      )}
+        {success && (
+          <div className="row" style={{ color: "green" }}>
+            {success}
+          </div>
+        )}
 
-      <button type="submit" className="button filled" disabled={pending}>
-        {pending ? "Creating..." : "Create admin"}
-      </button>
-    </form>
+        <button type="submit" className="button filled" disabled={pending}>
+          {pending ? "Creating..." : "Create admin"}
+        </button>
+      </form>
+    </main>
   );
 }

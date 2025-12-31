@@ -75,9 +75,6 @@ export default async function AdminDetailPage({
             <strong>Created At:</strong> {admin.createdAt}
           </div>
         )}
-        <div style={{ marginTop: "1rem" }}>
-          <Link href="/admins">← Back to admins list</Link>
-        </div>
       </div>
     </main>
   );

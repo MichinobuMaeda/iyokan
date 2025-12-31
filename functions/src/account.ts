@@ -18,7 +18,6 @@ export const getExistingAuthUserByEmail = async (
 export const createAuthUserIfNotExists = async (
   auth: import("firebase-admin").auth.Auth,
   logger: typeof import("firebase-functions").logger,
-  isTest: boolean,
   { email, name }: { email: string; name: string }
 ): Promise<import("firebase-admin").auth.UserRecord> => {
   // Get existing user by email
@@ -33,10 +32,11 @@ export const createAuthUserIfNotExists = async (
     return existingUser;
   } else {
     // Generate random password
-    const randomPassword = isTest
-      ? "P@ssword123"
-      : Math.random().toString(36).slice(-10) +
-        Math.random().toString(36).slice(-10);
+    const randomPassword =
+      Math.random().toString(36).slice(-10) +
+      Math.random().toString(36).slice(-10) +
+      Math.random().toString(36).slice(-10) +
+      Math.random().toString(36).slice(-10);
 
     // Create auth account
     const userRecord = await auth.createUser({
@@ -58,11 +58,10 @@ export const createAdminUser = async (
   auth: import("firebase-admin").auth.Auth,
   db: import("firebase-admin").firestore.Firestore,
   logger: typeof import("firebase-functions").logger,
-  isTest: boolean,
   { email, name, valid }: { email: string; name: string; valid: boolean }
 ) => {
   try {
-    const userRecord = await createAuthUserIfNotExists(auth, logger, isTest, {
+    const userRecord = await createAuthUserIfNotExists(auth, logger, {
       email,
       name,
     });

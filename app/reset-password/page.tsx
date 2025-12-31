@@ -39,11 +39,11 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <main>
+    <main style={{ maxWidth: "32rem", width: "100%" }}>
       <form className="column" onSubmit={handleSubmit}>
         <h2>Reset Password</h2>
         <div className="row">
-          <div className="textfield outlined">
+          <div className="textfield outlined" style={{ width: "100%" }}>
             <label>Email</label>
             <input
               id="email"
