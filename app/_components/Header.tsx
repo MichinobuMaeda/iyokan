@@ -3,14 +3,16 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import SvgHome from "@/app/icons/SvgHome";
-import SvgLogin from "@/app/icons/SvgLogin";
-import SvgLogout from "@/app/icons/SvgLogout";
-import SvgAccountCircle from "../icons/SvgAccountCircle";
+import SvgHome from "@/app/_components/SvgHome";
+import SvgLogin from "@/app/_components/SvgLogin";
+import SvgLogout from "@/app/_components/SvgLogout";
+import SvgAccountCircle from "./SvgAccountCircle";
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { auth } from "@/app/lib/firebase-client";
-import { redirect } from "next/navigation";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "@/app/_client/firebase";
+import { logout } from "@/app/_client/auth";
+import { useRouter } from "next/navigation";
+import * as E from "fp-ts/Either";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -20,12 +22,13 @@ export const metadata: Metadata = {
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut(auth);
-    // Clear the auth cookie
-    document.cookie = "__session=; path=/; max-age=0";
-    redirect("/login");
+    const result = await logout();
+    if (E.isRight(result)) {
+      router.push("/login");
+    }
   };
 
   useEffect(() => {

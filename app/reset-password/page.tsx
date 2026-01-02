@@ -1,22 +1,16 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
-import { sendPasswordResetEmail, onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/app/lib/firebase-client";
-import { useRouter } from "next/navigation";
+import { useState, FormEvent } from "react";
+import { resetPassword } from "@/app/_client/auth";
+import { useRedirectIfAuthenticated } from "@/app/_client/auth";
+import * as E from "fp-ts/Either";
 
 export default function ResetPasswordPage() {
   const [error, setError] = useState<string | undefined>();
   const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState<string | undefined>();
-  const router = useRouter();
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) router.replace("/");
-    });
-    return () => unsub();
-  }, [router]);
+  useRedirectIfAuthenticated();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,15 +21,15 @@ export default function ResetPasswordPage() {
     const formData = new FormData(e.currentTarget);
     const email = (formData.get("email") as string) || "";
 
-    try {
-      await sendPasswordResetEmail(auth, email);
+    const result = await resetPassword(email);
+
+    if (E.isLeft(result)) {
+      setError(result.left.message);
+    } else {
       setSuccess("Password reset email sent. Check your inbox.");
-    } catch (err) {
-      console.error("Password reset error:", err);
-      setError("Failed to send password reset email.");
-    } finally {
-      setPending(false);
     }
+
+    setPending(false);
   };
 
   return (

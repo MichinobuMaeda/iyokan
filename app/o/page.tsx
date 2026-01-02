@@ -1,20 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useClientAuth } from "@/app/_client/auth";
+import { saveOrg } from "@/app/_client/firestore";
 import Link from "next/link";
 import * as E from "fp-ts/Either";
 
-import { useClientAuth } from "@/app/_client/auth";
-import { createAdmin } from "@/app/_client/functions";
-import { UserData } from "@/app/_types/User";
 import SvgSync from "../_components/SvgSync";
 
-export default function AdminsPage() {
-  const [formData, setFormData] = useState<UserData>({
-    name: "",
-    email: "",
-    valid: true,
-  });
+export default function CreateOrgPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const { router } = useClientAuth();
@@ -24,13 +18,24 @@ export default function AdminsPage() {
     setError(undefined);
     setPending(true);
 
-    if (!formData.email || !formData.name) {
-      setError("Name and email are required");
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const oid = String(formData.get("oid") || "").trim();
+    const name = String(formData.get("name") || "").trim();
+    const desc = String(formData.get("desc") || "").trim();
+    const active = formData.get("active") === "on";
+
+    if (!oid || !name) {
+      setError("Organization ID and name are required");
       setPending(false);
       return;
     }
 
-    const result = await createAdmin(formData);
+    const result = await saveOrg(oid, {
+      name,
+      desc: desc || undefined,
+      active,
+    });
 
     if (E.isLeft(result)) {
       setError(result.left.message);
@@ -44,7 +49,21 @@ export default function AdminsPage() {
   return (
     <main>
       <form className="column" onSubmit={handleSubmit}>
-        <h2>Add Admin</h2>
+        <h2>Add Organization</h2>
+        <div className="row">
+          <div className="textfield outlined" style={{ width: "100%" }}>
+            <label>ID</label>
+            <input
+              id="oid"
+              name="oid"
+              type="text"
+              placeholder="ID"
+              required
+              disabled={pending}
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
         <div className="row">
           <div className="textfield outlined" style={{ width: "100%" }}>
             <label>Name</label>
@@ -53,10 +72,6 @@ export default function AdminsPage() {
               name="name"
               type="text"
               placeholder="Name"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
               required
               disabled={pending}
               style={{ width: "100%" }}
@@ -65,45 +80,37 @@ export default function AdminsPage() {
         </div>
         <div className="row">
           <div className="textfield outlined" style={{ width: "100%" }}>
-            <label>Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              required
+            <label>Description</label>
+            <textarea
+              id="desc"
+              name="desc"
+              placeholder="Description"
               disabled={pending}
               style={{ width: "100%" }}
+              rows={3}
             />
           </div>
         </div>
+
         <label className="row">
           <input
-            id="valid"
-            name="valid"
+            id="active"
+            name="active"
             className="switch"
             type="checkbox"
-            checked={formData.valid}
-            onChange={(e) =>
-              setFormData({ ...formData, valid: e.target.checked })
-            }
             disabled={pending}
+            defaultChecked
           />
-          Valid
+          Active
         </label>
 
         <hr />
         <div className="error">{error}</div>
-
         <div className="row right">
           <Link href="/" className="button outlined">
             Cancel
           </Link>
-          <button type="submit" className="button filled" disabled={pending}>
+          <button type="submit" disabled={pending} className="button filled">
             <SvgSync /> Save
           </button>
         </div>

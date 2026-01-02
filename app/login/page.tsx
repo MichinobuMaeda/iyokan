@@ -1,54 +1,16 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
-import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import { getDoc, doc } from "firebase/firestore";
-import { auth, db } from "@/app/lib/firebase-client";
+import { useState, FormEvent } from "react";
+import { login } from "@/app/_client/auth";
+import { useRedirectIfAuthenticated } from "@/app/_client/auth";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import * as E from "fp-ts/Either";
 
 export default function LoginPage() {
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
-  const [idToken, setIdToken] = useState<string | null>(null);
-  const router = useRouter();
 
-  useEffect(() => {
-    if (idToken) {
-      const unsub = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          console.log("User UID:", user.uid);
-
-          // Check if user is an admin
-          const admin = await getDoc(doc(db, "admins", user.uid));
-          console.log(admin.toJSON());
-          console.log("User document data:", admin.data());
-
-          if (!admin.exists()) {
-            setError("Failed to login as admin");
-            setIdToken(null);
-            // return;
-          }
-
-          if (!admin.data()?.valid) {
-            setError("Invalid admin account");
-            setIdToken(null);
-            // return;
-          }
-
-          // Get the ID token and set it in a cookie
-          document.cookie = `__session=${idToken}; path=/; max-age=3600; SameSite=Lax`;
-          console.info("Login success");
-          router.replace("/");
-        } else {
-          // Clear the auth cookie
-          document.cookie = "__session=; path=/; max-age=0";
-          console.log("No user is signed in");
-        }
-      });
-      return () => unsub();
-    }
-  }, [idToken, router]);
+  useRedirectIfAuthenticated(pending);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -59,16 +21,13 @@ export default function LoginPage() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      const uid = cred.user.uid;
-      console.log("uid:", uid);
-      const idToken = await cred.user.getIdToken();
-      console.log("ID Token:", idToken);
-      setIdToken(idToken);
-    } catch (err: unknown) {
-      console.error("Auth error:", err);
-    } finally {
+    const result = await login(email, password);
+
+    if (E.isLeft(result)) {
+      setError(result.left.message);
+      setPending(false);
+    } else {
+      console.info("Login success");
       setPending(false);
     }
   };

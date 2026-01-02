@@ -1,23 +1,23 @@
 import { getServerApp } from "@/app/_server/firebase";
 import { requireServerAuth } from "@/app/_server/auth";
-import { getAdmin } from "@/app/_server/firestore";
+import { getOrg } from "@/app/_server/firestore";
 import * as E from "fp-ts/Either";
-import AdminUpdateForm from "./AdminUpdateForm";
+import OrgUpdateForm from "./OrgUpdateForm";
 
-export default async function AdminDetailPage({
+export default async function OrgDetailPage({
   params,
 }: {
-  params: Promise<{ adminId: string }>;
+  params: Promise<{ oid: string }>;
 }) {
-  const { adminId } = await params;
+  const { oid } = await params;
   const { auth, db } = await getServerApp();
   requireServerAuth(auth);
 
-  const result = await getAdmin(db, adminId);
+  const result = await getOrg(db, oid);
 
   return (
     <main>
-      <h2>Admin</h2>
+      <h2>Organization</h2>
       {E.isLeft(result) ? (
         <p className="error">{result.left.message}</p>
       ) : (
@@ -27,12 +27,12 @@ export default async function AdminDetailPage({
             <div>Created: {result.right.createdAt?.toISOString() ?? "-"}</div>
             <div>Updated: {result.right.updatedAt?.toISOString() ?? "-"}</div>
           </div>
-          <AdminUpdateForm
-            adminId={adminId}
+          <OrgUpdateForm
+            oid={oid}
             initialData={{
               name: result.right.name,
-              email: result.right.email,
-              valid: result.right.valid,
+              desc: result.right.desc,
+              active: result.right.active,
             }}
           />
         </>

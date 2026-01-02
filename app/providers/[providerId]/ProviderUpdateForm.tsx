@@ -1,0 +1,123 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import * as E from "fp-ts/Either";
+
+import { updateProvider } from "@/app/_client/firestore";
+import { ProviderData } from "@/app/_types/Provider";
+import SvgRemove from "@/app/_components/SvgRemove";
+import SvgAdd from "@/app/_components/SvgAdd";
+import SvgSync from "@/app/_components/SvgSync";
+
+interface ProviderUpdateFormProps {
+  providerId: string;
+  initialData: ProviderData;
+}
+
+export default function ProviderUpdateForm({
+  providerId,
+  initialData,
+}: ProviderUpdateFormProps) {
+  const router = useRouter();
+  const [formData, setFormData] = useState<ProviderData>(initialData);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPending(true);
+    setError(null);
+
+    const result = await updateProvider(providerId, formData);
+
+    if (E.isLeft(result)) {
+      setError(result.left.message);
+      setPending(false);
+    } else {
+      setPending(false);
+      router.push("/");
+    }
+  };
+
+  const addParam = () => {
+    setFormData({
+      ...formData,
+      params: [...formData.params, { key: "", value: "" }],
+    });
+  };
+
+  const updateParam = (index: number, value: string) => {
+    const newParams = [...formData.params];
+    newParams[index].key = value;
+    newParams[index].value = "";
+    setFormData({ ...formData, params: newParams });
+  };
+
+  const removeParam = (index: number) => {
+    setFormData({
+      ...formData,
+      params: formData.params.filter((_, i) => i !== index),
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {formData.params.map((param, index) => (
+        <div className="row" key={index}>
+          <div className="textfield outlined" style={{ flexGrow: 1 }}>
+            <label>Parameter {index + 1}</label>
+            <input
+              type="text"
+              placeholder={`Parameter ${index + 1}`}
+              value={param.key}
+              onChange={(e) => updateParam(index, e.target.value)}
+              disabled={pending}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => removeParam(index)}
+            disabled={pending}
+            className="button icon error"
+          >
+            <SvgRemove />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addParam}
+        disabled={pending}
+        className="button tonal"
+      >
+        <SvgAdd /> Add Parameter
+      </button>
+
+      <div className="row">
+        <input
+          id="valid"
+          type="checkbox"
+          className="switch"
+          checked={formData.valid}
+          onChange={(e) =>
+            setFormData({ ...formData, valid: e.target.checked })
+          }
+        />
+        Valid
+      </div>
+
+      <hr />
+      <div className="error">{error}</div>
+      <div className="row right">
+        <Link href="/" className="button outlined">
+          Cancel
+        </Link>
+        <button type="submit" disabled={pending} className="button filled">
+          <SvgSync /> Save
+        </button>
+      </div>
+    </form>
+  );
+}

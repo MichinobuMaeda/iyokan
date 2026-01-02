@@ -1,69 +1,111 @@
-import { collection, getDocs } from "firebase/firestore";
-import { getServerApp } from "@/app/lib/firebase-server";
-import { redirect } from "next/navigation";
+import { getServerApp } from "@/app/_server/firebase";
+import { requireServerAuth } from "@/app/_server/auth";
 import Link from "next/link";
-
-interface Admin {
-  id: string;
-  email: string;
-  name: string;
-  valid: boolean;
-}
+import { getAdmins, getOrgs, getProviders } from "@/app/_server/firestore";
+import * as E from "fp-ts/Either";
+import SvgAdd from "./_components/SvgAdd";
 
 export default async function Home() {
   const { auth, db } = await getServerApp();
-  const user = auth.currentUser;
+  requireServerAuth(auth);
 
-  if (!user) {
-    redirect("/login");
-  }
+  // Fetch admins
+  const adminsResult = await getAdmins(db);
+  let adminsError: string | undefined;
+  const admins = E.isRight(adminsResult)
+    ? adminsResult.right
+    : (() => {
+        adminsError = adminsResult.left.message;
+        return [];
+      })();
 
-  const admins: Admin[] = [];
-  let error: string | undefined;
+  // Fetch orgs
+  const orgsResult = await getOrgs(db);
+  let orgsError: string | undefined;
+  const orgs = E.isRight(orgsResult)
+    ? orgsResult.right
+    : (() => {
+        orgsError = orgsResult.left.message;
+        return [];
+      })();
 
-  try {
-    const querySnapshot = await getDocs(collection(db, "admins"));
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      admins.push({
-        id: doc.id,
-        email: String(data.email || ""),
-        name: String(data.name || ""),
-        valid: Boolean(data.valid),
-      });
-    });
-  } catch (err) {
-    console.error("Error fetching admins:", err);
-    error = "Failed to load admins";
-  }
+  // Fetch providers
+  const providersResult = await getProviders(db);
+  let providersError: string | undefined;
+  const providers = E.isRight(providersResult)
+    ? providersResult.right
+    : (() => {
+        providersError = providersResult.left.message;
+        return [];
+      })();
 
   return (
-    <main style={{ maxWidth: "32rem", width: "100%" }}>
-      <div className="column">
-        <h2>Admins</h2>
-        {error ? (
-          <p className="error">{error}</p>
-        ) : admins.length === 0 ? (
-          <p>No admins found</p>
-        ) : (
-          <>
-            <Link href="/admins">Add admin</Link>
-            <table style={{ borderCollapse: "collapse" }}>
-              {admins.map((admin) => (
-                <tr
-                  key={admin.id}
-                  style={{ background: admin.valid ? "transparent" : "#ccc" }}
-                >
-                  <td style={{ padding: "0.125rem 0.5rem" }}>
-                    <Link href={`/admins/${admin.id}`}>{admin.email}</Link>
-                  </td>
-                  <td style={{ padding: "0.125rem 0.5rem" }}>{admin.name}</td>
-                </tr>
-              ))}
-            </table>
-          </>
-        )}
-      </div>
+    <main>
+      <Link href="/o" className="button outlined" style={{ width: "100%" }}>
+        <SvgAdd /> Add organization
+      </Link>
+      {orgsError ? (
+        <p className="error">{orgsError}</p>
+      ) : (
+        <div className="list">
+          {orgs.map((org) => (
+            <Link
+              key={org.id}
+              href={`/o/${org.id}`}
+              className="button text"
+              style={{ width: "100%" }}
+            >
+              {org.name}
+            </Link>
+          ))}
+        </div>
+      )}
+      <Link
+        href="/admins"
+        className="button outlined"
+        style={{ width: "100%" }}
+      >
+        <SvgAdd /> Add admin
+      </Link>
+      {adminsError ? (
+        <p className="error">{adminsError}</p>
+      ) : (
+        <div className="list">
+          {admins.map((admin) => (
+            <Link
+              key={admin.id}
+              href={`/admins/${admin.id}`}
+              className="button text"
+              style={{ width: "100%" }}
+            >
+              {admin.email}
+            </Link>
+          ))}
+        </div>
+      )}
+      <Link
+        href="/providers"
+        className="button outlined"
+        style={{ width: "100%" }}
+      >
+        <SvgAdd /> Add provider
+      </Link>
+      {providersError ? (
+        <p className="error">{providersError}</p>
+      ) : (
+        <div className="list">
+          {providers.map((provider) => (
+            <Link
+              key={provider.id}
+              href={`/providers/${provider.id}`}
+              className="button text"
+              style={{ width: "100%" }}
+            >
+              {provider.type}
+            </Link>
+          ))}
+        </div>
+      )}
     </main>
   );
 }
