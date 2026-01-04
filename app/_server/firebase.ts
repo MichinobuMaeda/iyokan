@@ -4,7 +4,7 @@ import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 import { cookies, headers } from "next/headers";
 
-import { firebaseConfig } from "../_lib/firebase";
+import { firebaseConfig } from "@/app/_lib/firebase";
 
 export async function getServerApp(): Promise<{
   auth: ReturnType<typeof getAuth>;

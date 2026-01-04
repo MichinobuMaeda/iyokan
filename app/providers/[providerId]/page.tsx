@@ -23,7 +23,7 @@ export default async function ProviderDetailPage({
     <main>
       <h2>{t("provider")}</h2>
       {E.isLeft(result) ? (
-        <p className="error">{t(result.left)}</p>
+        <p className="message error">{t(result.left)}</p>
       ) : (
         <>
           <MetaItems meta={result.right} />

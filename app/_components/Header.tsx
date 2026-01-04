@@ -11,10 +11,10 @@ import * as E from "fp-ts/Either";
 import { useI18n } from "@/app/_i18n/context";
 import { auth } from "@/app/_client/firebase";
 import { logout } from "@/app/_client/auth";
-import SvgHome from "@/app/_components/SvgHome";
-import SvgLogin from "@/app/_components/SvgLogin";
-import SvgLogout from "@/app/_components/SvgLogout";
-import SvgAccountCircle from "./SvgAccountCircle";
+import SvgHome from "@/app/_icons/SvgHome";
+import SvgLogin from "@/app/_icons/SvgLogin";
+import SvgLogout from "@/app/_icons/SvgLogout";
+import SvgAccountCircle from "@/app/_icons/SvgAccountCircle";
 
 export const metadata: Metadata = {
   title: "Create Next App",

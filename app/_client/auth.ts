@@ -24,6 +24,11 @@ export interface LoginResult {
   idToken: string;
 }
 
+export interface LoginData {
+  email: string;
+  password: string;
+}
+
 /**
  * Signs in a user with email and password, validates they are an admin
  * @param email - User's email address
@@ -33,10 +38,7 @@ export interface LoginResult {
 export async function login({
   email,
   password,
-}: {
-  email: string;
-  password: string;
-}): Promise<
+}: LoginData): Promise<
   E.Either<
     "errorLoginNotAdmin" | "errorInvalidAdmin" | "errorLogin",
     LoginResult
@@ -77,6 +79,10 @@ export async function login({
   }
 }
 
+export interface ResetPasswordData {
+  email: string;
+}
+
 /**
  * Sends a password reset email to the specified email address
  * @param email - User's email address
@@ -84,9 +90,7 @@ export async function login({
  */
 export async function resetPassword({
   email,
-}: {
-  email: string;
-}): Promise<E.Either<"errorResetPassword", void>> {
+}: ResetPasswordData): Promise<E.Either<"errorResetPassword", void>> {
   try {
     await sendPasswordResetEmail(auth, email);
     return E.right(undefined);
@@ -190,6 +194,12 @@ export async function reauthenticate(
   }
 }
 
+export interface ChangeEmailData {
+  currentPassword: string;
+  newEmail: string;
+  confirmEmail: string;
+}
+
 /**
  * Changes the user's email address after re-authentication
  * @param currentPassword - User's current password for re-authentication
@@ -199,12 +209,14 @@ export async function reauthenticate(
 export async function changeEmail({
   currentPassword,
   newEmail,
-}: {
-  currentPassword: string;
-  newEmail: string;
-}): Promise<
+  confirmEmail,
+}: ChangeEmailData): Promise<
   E.Either<"errorNoUser" | "errorReauthenticate" | "errorChangeEmail", void>
 > {
+  if (newEmail !== confirmEmail) {
+    return E.left("errorChangeEmail");
+  }
+
   try {
     // Re-authenticate first
     const reauthResult = await reauthenticate(currentPassword);
@@ -225,6 +237,12 @@ export async function changeEmail({
   }
 }
 
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 /**
  * Changes the user's password after re-authentication
  * @param currentPassword - User's current password for re-authentication
@@ -234,12 +252,13 @@ export async function changeEmail({
 export async function changePassword({
   currentPassword,
   newPassword,
-}: {
-  currentPassword: string;
-  newPassword: string;
-}): Promise<
+  confirmPassword,
+}: ChangePasswordData): Promise<
   E.Either<"errorNoUser" | "errorReauthenticate" | "errorChangePassword", void>
 > {
+  if (newPassword !== confirmPassword) {
+    return E.left("errorChangePassword");
+  }
   try {
     // Re-authenticate first
     const reauthResult = await reauthenticate(currentPassword);

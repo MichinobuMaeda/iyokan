@@ -5,22 +5,22 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import * as E from "fp-ts/Either";
 
-import { changeEmail, useRequireAuth } from "@/app/_client/auth";
+import {
+  useRequireAuth,
+  changeEmail,
+  ChangeEmailData,
+} from "@/app/_client/auth";
 import { validateEmail } from "@/app/_lib/validators";
 import { useI18n } from "@/app/_i18n/context";
 import PasswordInput from "@/app/_components/PasswordInput";
-import SvgSync from "@/app/_components/SvgSync";
+import SvgSync from "@/app/_icons/SvgSync";
 
 export default function ChangeEmailPage() {
   useRequireAuth();
   const { t } = useI18n();
   const router = useRouter();
 
-  const [formData, setFormData] = useState<{
-    currentPassword: string;
-    newEmail: string;
-    confirmEmail: string;
-  }>({
+  const [formData, setFormData] = useState<ChangeEmailData>({
     currentPassword: "",
     newEmail: "",
     confirmEmail: "",
@@ -145,12 +145,7 @@ export default function ChangeEmailPage() {
           </div>
         </div>
 
-        {errorOnSave && (
-          <div className="row" style={{ color: "red" }}>
-            {errorOnSave}
-          </div>
-        )}
-
+        {errorOnSave && <div className="message error">{errorOnSave}</div>}
         <div className="row right">
           <Link href="/" className="button outlined">
             {t("cancel")}

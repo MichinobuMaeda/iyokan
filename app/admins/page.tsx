@@ -8,7 +8,7 @@ import { useClientAuth } from "@/app/_client/auth";
 import { createAdmin } from "@/app/_client/functions";
 import { UserData } from "@/app/_types/User";
 import { useI18n } from "@/app/_i18n/context";
-import SvgSync from "../_components/SvgSync";
+import SvgSync from "@/app/_icons/SvgSync";
 
 export default function AdminsPage() {
   const { t } = useI18n();
@@ -18,16 +18,16 @@ export default function AdminsPage() {
     valid: true,
   });
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | undefined>();
+  const [errorOnSave, setErrorOnSave] = useState<string | undefined>();
   const { router } = useClientAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(undefined);
+    setErrorOnSave(undefined);
     setPending(true);
 
     if (!formData.email || !formData.name) {
-      setError(t("errorNameEmailRequired"));
+      setErrorOnSave(t("errorNameEmailRequired"));
       setPending(false);
       return;
     }
@@ -35,7 +35,7 @@ export default function AdminsPage() {
     const result = await createAdmin(formData);
 
     if (E.isLeft(result)) {
-      setError(t(result.left));
+      setErrorOnSave(t(result.left));
       setPending(false);
     } else {
       setPending(false);
@@ -99,8 +99,7 @@ export default function AdminsPage() {
         </label>
 
         <hr />
-        <div className="error">{error}</div>
-
+        {errorOnSave && <div className="message error">{errorOnSave}</div>}
         <div className="row right">
           <Link href="/" className="button outlined">
             {t("cancel")}

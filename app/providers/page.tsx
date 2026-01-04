@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import * as E from "fp-ts/Either";
+
 import { useClientAuth } from "@/app/_client/auth";
 import { saveProvider } from "@/app/_client/firestore";
 import { ProviderData } from "@/app/_types/Provider";
 import { useI18n } from "@/app/_i18n/context";
-import Link from "next/link";
-import * as E from "fp-ts/Either";
-
-import SvgRemove from "../_components/SvgRemove";
-import SvgAdd from "../_components/SvgAdd";
-import SvgSync from "../_components/SvgSync";
+import SvgRemove from "@/app/_icons/SvgRemove";
+import SvgAdd from "@/app/_icons/SvgAdd";
+import SvgSync from "@/app/_icons/SvgSync";
 
 export default function CreateProviderPage() {
   const { t } = useI18n();
@@ -21,16 +21,16 @@ export default function CreateProviderPage() {
     params: [],
   });
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | undefined>();
+  const [errorOnSave, setErrorOnSave] = useState<string | undefined>();
   const { router } = useClientAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(undefined);
+    setErrorOnSave(undefined);
     setPending(true);
 
     if (!formData.type) {
-      setError(t("errorProviderTypeRequired"));
+      setErrorOnSave(t("errorProviderTypeRequired"));
       setPending(false);
       return;
     }
@@ -38,7 +38,7 @@ export default function CreateProviderPage() {
     const result = await saveProvider(formData);
 
     if (E.isLeft(result)) {
-      setError(t(result.left));
+      setErrorOnSave(t(result.left));
       setPending(false);
     } else {
       router.push("/");
@@ -130,6 +130,10 @@ export default function CreateProviderPage() {
           <input
             id="valid"
             name="valid"
+            checked={formData.valid}
+            onChange={(e) =>
+              setFormData({ ...formData, valid: e.target.checked })
+            }
             className="switch"
             type="checkbox"
             disabled={pending}
@@ -139,7 +143,7 @@ export default function CreateProviderPage() {
         </label>
 
         <hr />
-        <div className="error">{error}</div>
+        {errorOnSave && <div className="message error">{errorOnSave}</div>}
         <div className="row right">
           <Link href="/" className="button outlined">
             {t("cancel")}

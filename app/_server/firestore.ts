@@ -7,9 +7,9 @@ import {
 } from "firebase/firestore";
 import * as E from "fp-ts/Either";
 
-import { User, userFromDoc } from "../_types/User";
-import { Org, orgFromDoc } from "../_types/Org";
-import { Provider, providerFromDoc } from "../_types/Provider";
+import { User, userFromDoc } from "@/app/_types/User";
+import { Org, orgFromDoc } from "@/app/_types/Org";
+import { Provider, providerFromDoc } from "@/app/_types/Provider";
 
 /**
  * Gets an array of User objects from the "admins" collection

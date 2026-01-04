@@ -23,7 +23,7 @@ export default async function OrgDetailPage({
     <main>
       <h2>{t("organization")}</h2>
       {E.isLeft(result) ? (
-        <p className="error">{t(result.left)}</p>
+        <p className="message error">{t(result.left)}</p>
       ) : (
         <>
           <MetaItems meta={result.right} />

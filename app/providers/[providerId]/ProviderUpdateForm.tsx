@@ -8,9 +8,9 @@ import * as E from "fp-ts/Either";
 import { updateProvider } from "@/app/_client/firestore";
 import { Provider } from "@/app/_types/Provider";
 import { useI18n } from "@/app/_i18n/context";
-import SvgRemove from "@/app/_components/SvgRemove";
-import SvgAdd from "@/app/_components/SvgAdd";
-import SvgSync from "@/app/_components/SvgSync";
+import SvgRemove from "@/app/_icons/SvgRemove";
+import SvgAdd from "@/app/_icons/SvgAdd";
+import SvgSync from "@/app/_icons/SvgSync";
 
 export default function ProviderUpdateForm({
   initialData,
@@ -21,17 +21,17 @@ export default function ProviderUpdateForm({
   const router = useRouter();
   const [formData, setFormData] = useState<Provider>(initialData);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorOnSave, setErrorOnSave] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPending(true);
-    setError(null);
+    setErrorOnSave(null);
 
     const result = await updateProvider(formData);
 
     if (E.isLeft(result)) {
-      setError(t(result.left));
+      setErrorOnSave(t(result.left));
       setPending(false);
     } else {
       setPending(false);
@@ -109,7 +109,7 @@ export default function ProviderUpdateForm({
       </div>
 
       <hr />
-      <div className="error">{error}</div>
+      {errorOnSave && <div className="message error">{errorOnSave}</div>}
       <div className="row right">
         <Link href="/" className="button outlined">
           {t("cancel")}

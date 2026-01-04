@@ -1,10 +1,11 @@
+import Link from "next/link";
+import * as E from "fp-ts/Either";
+
 import { getServerApp } from "@/app/_server/firebase";
 import { requireServerAuth } from "@/app/_server/auth";
-import Link from "next/link";
 import { getAdmins, getOrgs, getProviders } from "@/app/_server/firestore";
 import { getTranslations } from "@/app/_i18n/server";
-import * as E from "fp-ts/Either";
-import SvgAdd from "./_components/SvgAdd";
+import SvgAdd from "@/app/_icons/SvgAdd";
 
 export default async function Home() {
   const { auth, db } = await getServerApp();
@@ -47,7 +48,7 @@ export default async function Home() {
         <SvgAdd /> {t("addOrganization")}
       </Link>
       {orgsError ? (
-        <p className="error">{orgsError}</p>
+        <p className="message error">{orgsError}</p>
       ) : (
         <div className="list">
           {orgs.map((org) => (
@@ -70,7 +71,7 @@ export default async function Home() {
         <SvgAdd /> {t("addAdmin")}
       </Link>
       {adminsError ? (
-        <p className="error">{adminsError}</p>
+        <p className="message error">{adminsError}</p>
       ) : (
         <div className="list">
           {admins.map((admin) => (
@@ -93,7 +94,7 @@ export default async function Home() {
         <SvgAdd /> {t("addProvider")}
       </Link>
       {providersError ? (
-        <p className="error">{providersError}</p>
+        <p className="message error">{providersError}</p>
       ) : (
         <div className="list">
           {providers.map((provider) => (

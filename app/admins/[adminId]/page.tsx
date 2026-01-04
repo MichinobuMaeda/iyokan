@@ -23,7 +23,7 @@ export default async function AdminDetailPage({
     <main>
       <h2>{t("admin")}</h2>
       {E.isLeft(result) ? (
-        <p className="error">{t(result.left)}</p>
+        <p className="message error">{t(result.left)}</p>
       ) : (
         <>
           <MetaItems meta={result.right} />

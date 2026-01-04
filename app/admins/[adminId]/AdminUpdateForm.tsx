@@ -8,7 +8,7 @@ import { useClientAuth } from "@/app/_client/auth";
 import { updateAdmin } from "@/app/_client/firestore";
 import { User } from "@/app/_types/User";
 import { useI18n } from "@/app/_i18n/context";
-import SvgSync from "@/app/_components/SvgSync";
+import SvgSync from "@/app/_icons/SvgSync";
 
 export default function AdminUpdateForm({
   initialData,
@@ -18,18 +18,18 @@ export default function AdminUpdateForm({
   const { t } = useI18n();
   const [formData, setFormData] = useState<User>(initialData);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorOnSave, setErrorOnSave] = useState<string | null>(null);
   const { router } = useClientAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPending(true);
-    setError(null);
+    setErrorOnSave(null);
 
     const result = await updateAdmin(formData);
 
     if (E.isLeft(result)) {
-      setError(t(result.left));
+      setErrorOnSave(t(result.left));
       setPending(false);
     } else {
       setPending(false);
@@ -86,7 +86,7 @@ export default function AdminUpdateForm({
       </div>
 
       <hr />
-      <div className="error">{error}</div>
+      {errorOnSave && <div className="message error">{errorOnSave}</div>}
       <div className="row right">
         <Link href="/" className="button outlined">
           {t("cancel")}

@@ -1,20 +1,19 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { login } from "@/app/_client/auth";
-import { useRedirectIfAuthenticated } from "@/app/_client/auth";
-import { useI18n } from "@/app/_i18n/context";
 import Link from "next/link";
 import * as E from "fp-ts/Either";
 
+import { login, LoginData } from "@/app/_client/auth";
+import { useRedirectIfAuthenticated } from "@/app/_client/auth";
+import { useI18n } from "@/app/_i18n/context";
+
 export default function LoginPage() {
   const { t } = useI18n();
-  const [formData, setFormData] = useState<{ email: string; password: string }>(
-    {
-      email: "",
-      password: "",
-    }
-  );
+  const [formData, setFormData] = useState<LoginData>({
+    email: "",
+    password: "",
+  });
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
 
@@ -74,12 +73,7 @@ export default function LoginPage() {
             />
           </div>
         </div>
-        {error && (
-          <div className="row" style={{ color: "red" }}>
-            {error}
-          </div>
-        )}
-
+        {error && <div className="message error">{error}</div>}
         <div className="row">
           <Link href="/reset-password">{t("forgotPassword")}</Link>
         </div>

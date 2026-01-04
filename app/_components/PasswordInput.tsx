@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, InputHTMLAttributes } from "react";
-import SvgVisibility from "./SvgVisibility";
-import SvgVisibilityOff from "./SvgVisibilityOff";
+import SvgVisibility from "@/app/_icons/SvgVisibility";
+import SvgVisibilityOff from "@/app/_icons/SvgVisibilityOff";
 
 interface PasswordInputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {

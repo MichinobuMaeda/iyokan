@@ -2,3 +2,31 @@
 @import "./glassine-paper-variables.css";
 @import "./theme.css";
 @import "./glassine-paper.min.css";
+
+.message {
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.message.error {
+  background-color: light-dark(
+    var(--color-light-error-container),
+    var(--color-dark-error-container)
+  );
+  color: light-dark(
+    var(--color-light-on-error-container),
+    var(--color-dark-on-error-container)
+  );
+}
+
+.message.success {
+  background-color: light-dark(
+    var(--color-light-tertiary-container),
+    var(--color-dark-tertiary-container)
+  );
+  color: light-dark(
+    var(--color-light-on-tertiary-container),
+    var(--color-dark-on-tertiary-container)
+  );
+}

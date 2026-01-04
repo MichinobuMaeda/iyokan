@@ -4,13 +4,13 @@ import { useState, FormEvent } from "react";
 import Link from "next/link";
 import * as E from "fp-ts/Either";
 
-import { resetPassword } from "@/app/_client/auth";
+import { resetPassword, ResetPasswordData } from "@/app/_client/auth";
 import { useRedirectIfAuthenticated } from "@/app/_client/auth";
 import { useI18n } from "@/app/_i18n/context";
 
 export default function ResetPasswordPage() {
   const { t } = useI18n();
-  const [formData, setFormData] = useState<{ email: string }>({ email: "" });
+  const [formData, setFormData] = useState<ResetPasswordData>({ email: "" });
   const [error, setError] = useState<string | undefined>();
   const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState<string | undefined>();
@@ -56,18 +56,8 @@ export default function ResetPasswordPage() {
           </div>
         </div>
 
-        {error && (
-          <div className="row" style={{ color: "red" }}>
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="row" style={{ color: "green" }}>
-            {success}
-          </div>
-        )}
-
+        {error && <div className="message error">{error}</div>}
+        {success && <div className="message success">{success}</div>}
         <div className="row right">
           <Link href="/login" className="button outlined">
             {t("cancel")}
