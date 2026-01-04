@@ -6,13 +6,13 @@ service cloud.firestore {
       return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid)) && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.valid == true;
     }
     function isUser(orgId) {
-      return request.auth != null && exists(/databases/$(database)/documents/org/$(orgId)/users/$(request.auth.uid)) && request.auth.uid in get(/databases/$(database)/documents/org/$(orgId)/users/$(request.auth.uid)).data.valid == true;
+      return request.auth != null && exists(/databases/$(database)/documents/orgs/$(orgId)/users/$(request.auth.uid)) && request.auth.uid in get(/databases/$(database)/documents/orgs/$(orgId)/users/$(request.auth.uid)).data.valid == true;
     }
     function isManager(orgId) {
-      return isUser(orgId) && get(/databases/$(database)/documents/org/$(orgId)/groups/managers).data.members == true;
+      return isUser(orgId) && get(/databases/$(database)/documents/orgs/$(orgId)/groups/managers).data.members == true;
     }
     function isAdmins(orgId) {
-      return isUser(orgId) && get(/databases/$(database)/documents/org/$(orgId)/groups/admins).data.members == true;
+      return isUser(orgId) && get(/databases/$(database)/documents/orgs/$(orgId)/groups/admins).data.members == true;
     }
     match /service/conf {
       allow read: if true;
@@ -26,28 +26,28 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow read, write: if isSystemAdmin();
     }
-    match /org/{orgId} {
+    match /orgs/{orgId} {
       allow read: if isUser(orgId);
       allow read, write: if isSystemAdmin() || isManager(orgId) || isAdmin(orgId);
     }
-    match /org/{orgId}/providers/{providerId} {
+    match /orgs/{orgId}/providers/{providerId} {
       allow read, write: if isSystemAdmin() || isAdmin(orgId);
     }
-    match /org/{orgId}/users/{userId} {
+    match /orgs/{orgId}/users/{userId} {
       allow read: if isUser(orgId);
       allow read, write: if isSystemAdmin() || isManager(orgId);
     }
-    match /org/{orgId}/groups/{groutId} {
+    match /orgs/{orgId}/groups/{groutId} {
       allow read: if isUser(orgId);
       allow read, write: if isSystemAdmin() || isManager(orgId);
     }
-    match /org/{orgId}/groups/manager {
+    match /orgs/{orgId}/groups/manager {
       allow read, write: if isSystemAdmin() || isManager(orgId);
     }
-    match /org/{orgId}/groups/admins {
+    match /orgs/{orgId}/groups/admins {
       allow read, write: if isSystemAdmin() || isManager(orgId);
     }
-    match /org/{orgId}/groups/manager {
+    match /orgs/{orgId}/groups/manager {
       allow read, write: if isSystemAdmin();
     }
     match /{document=**} {

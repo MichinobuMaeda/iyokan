@@ -1,0 +1,128 @@
+export const ja = {
+  // Common
+  cancel: "キャンセル",
+  save: "保存",
+  logout: "ログアウト",
+  login: "ログイン",
+  required: "必須",
+
+  // Header
+  changeEmail: "メールアドレス変更",
+  changePassword: "パスワード変更",
+
+  // Login page
+  loginTitle: "ログイン",
+  email: "メールアドレス",
+  password: "パスワード",
+  forgotPassword: "パスワードをお忘れですか？",
+  loggingIn: "ログイン中...",
+
+  // Reset Password page
+  resetPasswordTitle: "パスワードリセット",
+  sendResetEmail: "リセットメールを送信",
+  sending: "送信中...",
+  passwordResetEmailSent:
+    "パスワードリセットメールを送信しました。受信トレイをご確認ください。",
+
+  // Change Email page
+  changeEmailTitle: "メールアドレス変更",
+  currentPassword: "現在のパスワード",
+  newEmail: "新しいメールアドレス",
+  confirmEmail: "メールアドレス確認",
+  updating: "更新中...",
+  changeEmailButton: "メールアドレス変更",
+  emailMismatch: "メールアドレスが一致しません",
+
+  // Change Password page
+  changePasswordTitle: "パスワード変更",
+  newPassword: "新しいパスワード",
+  confirmPassword: "パスワード確認",
+  changePasswordButton: "パスワード変更",
+  passwordMismatch: "パスワードが一致しません",
+  passwordTooShort: "パスワードは10文字以上である必要があります",
+
+  // Admin page
+  adminTitle: "管理者",
+  name: "名前",
+  valid: "有効",
+  active: "有効",
+  adminUpdateSuccess: "管理者情報を更新しました",
+  emailChangeNote: "メールアドレスはアカウント所有者のみ変更できます",
+
+  // Organization page
+  orgTitle: "組織",
+  description: "説明",
+  orgUpdateSuccess: "組織情報を更新しました",
+
+  // Provider page
+  providerTitle: "プロバイダー",
+  type: "タイプ",
+  parameters: "パラメータ",
+  parameterKey: "パラメータキー",
+  addParameter: "パラメータ追加",
+  remove: "削除",
+  providerUpdateSuccess: "プロバイダー情報を更新しました",
+
+  // Meta component
+  id: "ID",
+  created: "作成日時",
+  updated: "更新日時",
+
+  // Detail page titles
+  admin: "管理者",
+  organization: "組織",
+  provider: "プロバイダー",
+
+  // Home page
+  addOrganization: "組織を追加",
+  addAdmin: "管理者を追加",
+  addProvider: "プロバイダーを追加",
+
+  // Validation errors
+  errorEmailRequired: "メールアドレスは必須です",
+  errorInvalidEmail: "メールアドレスの形式が無効です",
+  errorNameEmailRequired: "名前とメールアドレスは必須です",
+  errorOrgIdNameRequired: "組織IDと名前は必須です",
+  errorProviderTypeRequired: "プロバイダータイプは必須です",
+  errorPasswordMin10: "10文字以上が必要です",
+  errorPasswordUppercase: "大文字を使用してください",
+  errorPasswordLowercase: "小文字を使用してください",
+  errorPasswordNumber: "数字を使用してください",
+  errorPasswordSymbol: "記号を使用してください",
+  errorPasswordMismatch: "パスワードが一致しません",
+  errorEmailMismatch: "メールアドレスが一致しません",
+
+  // Auth errors
+  errorLoginNotAdmin: "管理者としてログインできません",
+  errorInvalidAdmin: "無効な管理者アカウントです",
+  errorLogin: "ログインに失敗しました",
+  errorResetPassword: "パスワードリセットメールの送信に失敗しました",
+  errorLogout: "ログアウトに失敗しました",
+  errorNoUser: "ユーザーがログインしていません",
+  errorReauthenticate: "再認証に失敗しました",
+  errorChangeEmail: "メールアドレスの変更に失敗しました",
+  errorChangePassword: "パスワードの変更に失敗しました",
+
+  // Firestore errors
+  errorUpdateAdmin: "管理者情報の更新に失敗しました",
+  errorSaveOrg: "組織の保存に失敗しました",
+  errorUpdateOrg: "組織情報の更新に失敗しました",
+  errorSaveProvider: "プロバイダーの保存に失敗しました",
+  errorUpdateProvider: "プロバイダー情報の更新に失敗しました",
+
+  // Server Firestore errors
+  errorFetchAdmins: "管理者一覧の取得に失敗しました",
+  errorAdminNotFound: "管理者が見つかりません",
+  errorFetchAdmin: "管理者の取得に失敗しました",
+  errorFetchOrgs: "組織一覧の取得に失敗しました",
+  errorOrgNotFound: "組織が見つかりません",
+  errorFetchOrg: "組織の取得に失敗しました",
+  errorFetchProviders: "プロバイダー一覧の取得に失敗しました",
+  errorProviderNotFound: "プロバイダーが見つかりません",
+  errorFetchProvider: "プロバイダーの取得に失敗しました",
+
+  // Functions errors
+  errorCreateAdmin: "管理者の作成に失敗しました",
+} as const;
+
+export type TranslationKey = keyof typeof ja;

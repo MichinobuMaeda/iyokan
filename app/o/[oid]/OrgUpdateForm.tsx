@@ -6,20 +6,14 @@ import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { updateOrg } from "@/app/_client/firestore";
-import { OrgData } from "@/app/_types/Org";
+import { Org } from "@/app/_types/Org";
+import { useI18n } from "@/app/_i18n/context";
 import SvgSync from "@/app/_components/SvgSync";
 
-interface OrgUpdateFormProps {
-  oid: string;
-  initialData: OrgData;
-}
-
-export default function OrgUpdateForm({
-  oid,
-  initialData,
-}: OrgUpdateFormProps) {
+export default function OrgUpdateForm({ initialData }: { initialData: Org }) {
+  const { t } = useI18n();
   const router = useRouter();
-  const [formData, setFormData] = useState<OrgData>(initialData);
+  const [formData, setFormData] = useState<Org>(initialData);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,10 +22,10 @@ export default function OrgUpdateForm({
     setPending(true);
     setError(null);
 
-    const result = await updateOrg(oid, formData);
+    const result = await updateOrg(formData);
 
     if (E.isLeft(result)) {
-      setError(result.left.message);
+      setError(t(result.left));
       setPending(false);
     } else {
       setPending(false);
@@ -43,7 +37,7 @@ export default function OrgUpdateForm({
     <form onSubmit={handleSubmit}>
       <div className="row">
         <div className="textfield outlined" style={{ width: "100%" }}>
-          <label>Name</label>
+          <label>{t("name")}</label>
           <input
             id="name"
             name="name"
@@ -59,7 +53,7 @@ export default function OrgUpdateForm({
 
       <div className="row">
         <div className="textfield outlined" style={{ width: "100%" }}>
-          <label>Description</label>
+          <label>{t("description")}</label>
           <textarea
             id="desc"
             name="desc"
@@ -84,17 +78,17 @@ export default function OrgUpdateForm({
             setFormData({ ...formData, active: e.target.checked })
           }
         />
-        Active
+        {t("active")}
       </div>
 
       <hr />
       <div className="error">{error}</div>
       <div className="row right">
         <Link href="/" className="button outlined">
-          Cancel
+          {t("cancel")}
         </Link>
         <button type="submit" disabled={pending} className="button filled">
-          <SvgSync /> Save
+          <SvgSync /> {t("save")}
         </button>
       </div>
     </form>

@@ -7,9 +7,11 @@ import * as E from "fp-ts/Either";
 import { useClientAuth } from "@/app/_client/auth";
 import { createAdmin } from "@/app/_client/functions";
 import { UserData } from "@/app/_types/User";
+import { useI18n } from "@/app/_i18n/context";
 import SvgSync from "../_components/SvgSync";
 
 export default function AdminsPage() {
+  const { t } = useI18n();
   const [formData, setFormData] = useState<UserData>({
     name: "",
     email: "",
@@ -25,7 +27,7 @@ export default function AdminsPage() {
     setPending(true);
 
     if (!formData.email || !formData.name) {
-      setError("Name and email are required");
+      setError(t("errorNameEmailRequired"));
       setPending(false);
       return;
     }
@@ -33,7 +35,7 @@ export default function AdminsPage() {
     const result = await createAdmin(formData);
 
     if (E.isLeft(result)) {
-      setError(result.left.message);
+      setError(t(result.left));
       setPending(false);
     } else {
       setPending(false);
@@ -44,15 +46,15 @@ export default function AdminsPage() {
   return (
     <main>
       <form className="column" onSubmit={handleSubmit}>
-        <h2>Add Admin</h2>
+        <h2>{t("addAdmin")}</h2>
         <div className="row">
           <div className="textfield outlined" style={{ width: "100%" }}>
-            <label>Name</label>
+            <label>{t("name")}</label>
             <input
               id="name"
               name="name"
               type="text"
-              placeholder="Name"
+              placeholder={t("name")}
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -65,12 +67,12 @@ export default function AdminsPage() {
         </div>
         <div className="row">
           <div className="textfield outlined" style={{ width: "100%" }}>
-            <label>Email</label>
+            <label>{t("email")}</label>
             <input
               id="email"
               name="email"
               type="email"
-              placeholder="Email"
+              placeholder={t("email")}
               value={formData.email}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
@@ -93,7 +95,7 @@ export default function AdminsPage() {
             }
             disabled={pending}
           />
-          Valid
+          {t("valid")}
         </label>
 
         <hr />
@@ -101,10 +103,10 @@ export default function AdminsPage() {
 
         <div className="row right">
           <Link href="/" className="button outlined">
-            Cancel
+            {t("cancel")}
           </Link>
           <button type="submit" className="button filled" disabled={pending}>
-            <SvgSync /> Save
+            <SvgSync /> {t("save")}
           </button>
         </div>
       </form>

@@ -3,16 +3,18 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import * as E from "fp-ts/Either";
+
+import { useI18n } from "@/app/_i18n/context";
+import { auth } from "@/app/_client/firebase";
+import { logout } from "@/app/_client/auth";
 import SvgHome from "@/app/_components/SvgHome";
 import SvgLogin from "@/app/_components/SvgLogin";
 import SvgLogout from "@/app/_components/SvgLogout";
 import SvgAccountCircle from "./SvgAccountCircle";
-import { useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/app/_client/firebase";
-import { logout } from "@/app/_client/auth";
-import { useRouter } from "next/navigation";
-import * as E from "fp-ts/Either";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -20,6 +22,7 @@ export const metadata: Metadata = {
 };
 
 export default function Header() {
+  const { t, locale, setLocale } = useI18n();
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
@@ -65,17 +68,33 @@ export default function Header() {
         className={`menu ${menuOpen ? "" : "hidden"}`}
         onClick={() => setMenuOpen(false)}
         style={{
-          width: "12rem",
+          width: "16rem",
           position: "absolute",
           right: "0.5rem",
           top: "3.5rem",
         }}
       >
+        <button
+          onClick={() => setLocale("en")}
+          className={locale === "en" ? "active" : ""}
+        >
+          English
+        </button>
+        <button
+          onClick={() => setLocale("ja")}
+          className={locale === "ja" ? "active" : ""}
+        >
+          日本語
+        </button>
+        <hr />
+        <Link href="/me/email">{t("changeEmail")}</Link>
+        <Link href="/me/password">{t("changePassword")}</Link>
+        <hr />
         <button onClick={handleLogout}>
           <span className="prefix">
             <SvgLogout />
           </span>
-          Logout
+          {t("logout")}
         </button>
       </div>
     </div>

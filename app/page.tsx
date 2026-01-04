@@ -2,12 +2,14 @@ import { getServerApp } from "@/app/_server/firebase";
 import { requireServerAuth } from "@/app/_server/auth";
 import Link from "next/link";
 import { getAdmins, getOrgs, getProviders } from "@/app/_server/firestore";
+import { getTranslations } from "@/app/_i18n/server";
 import * as E from "fp-ts/Either";
 import SvgAdd from "./_components/SvgAdd";
 
 export default async function Home() {
   const { auth, db } = await getServerApp();
   requireServerAuth(auth);
+  const { t } = await getTranslations();
 
   // Fetch admins
   const adminsResult = await getAdmins(db);
@@ -15,7 +17,7 @@ export default async function Home() {
   const admins = E.isRight(adminsResult)
     ? adminsResult.right
     : (() => {
-        adminsError = adminsResult.left.message;
+        adminsError = t(adminsResult.left);
         return [];
       })();
 
@@ -25,7 +27,7 @@ export default async function Home() {
   const orgs = E.isRight(orgsResult)
     ? orgsResult.right
     : (() => {
-        orgsError = orgsResult.left.message;
+        orgsError = t(orgsResult.left);
         return [];
       })();
 
@@ -35,14 +37,14 @@ export default async function Home() {
   const providers = E.isRight(providersResult)
     ? providersResult.right
     : (() => {
-        providersError = providersResult.left.message;
+        providersError = t(providersResult.left);
         return [];
       })();
 
   return (
     <main>
       <Link href="/o" className="button outlined" style={{ width: "100%" }}>
-        <SvgAdd /> Add organization
+        <SvgAdd /> {t("addOrganization")}
       </Link>
       {orgsError ? (
         <p className="error">{orgsError}</p>
@@ -52,7 +54,7 @@ export default async function Home() {
             <Link
               key={org.id}
               href={`/o/${org.id}`}
-              className="button text"
+              className="button text square"
               style={{ width: "100%" }}
             >
               {org.name}
@@ -65,7 +67,7 @@ export default async function Home() {
         className="button outlined"
         style={{ width: "100%" }}
       >
-        <SvgAdd /> Add admin
+        <SvgAdd /> {t("addAdmin")}
       </Link>
       {adminsError ? (
         <p className="error">{adminsError}</p>
@@ -75,7 +77,7 @@ export default async function Home() {
             <Link
               key={admin.id}
               href={`/admins/${admin.id}`}
-              className="button text"
+              className="button text square"
               style={{ width: "100%" }}
             >
               {admin.email}
@@ -88,7 +90,7 @@ export default async function Home() {
         className="button outlined"
         style={{ width: "100%" }}
       >
-        <SvgAdd /> Add provider
+        <SvgAdd /> {t("addProvider")}
       </Link>
       {providersError ? (
         <p className="error">{providersError}</p>
@@ -98,7 +100,7 @@ export default async function Home() {
             <Link
               key={provider.id}
               href={`/providers/${provider.id}`}
-              className="button text"
+              className="button text square"
               style={{ width: "100%" }}
             >
               {provider.type}

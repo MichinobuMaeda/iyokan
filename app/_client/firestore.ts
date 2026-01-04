@@ -1,38 +1,37 @@
 "use client";
 
-import { doc, updateDoc, setDoc, Firestore } from "firebase/firestore";
+import { doc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import * as E from "fp-ts/Either";
 
-import { OrgData } from "@/app/_types/Org";
-import { ProviderData } from "@/app/_types/Provider";
-import { UserData } from "@/app/_types/User";
+import { OrgData, Org } from "@/app/_types/Org";
+import { ProviderData, Provider } from "@/app/_types/Provider";
+import { User } from "@/app/_types/User";
 import { db } from "./firebase";
 
 /**
  * Updates an admin document with the provided data
- * @param id - The admin document ID
- * @param data - UserData object containing the fields to update
- * @param firestore - Optional Firestore instance (defaults to client db)
- * @returns Promise that resolves to Either containing an Error or void
+ * @param formData - User object containing the fields to update
+ * @returns Promise that resolves to Either containing an i18n key or void
  */
 export async function updateAdmin(
-  id: string,
-  data: UserData,
-  firestore?: Firestore
-): Promise<E.Either<Error, void>> {
-  const dbInstance = firestore || db;
-  const adminRef = doc(dbInstance, "admins", id);
-
+  formData: User
+): Promise<E.Either<"errorUpdateAdmin", void>> {
   try {
-    await updateDoc(adminRef, {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, createdAt, updatedAt, ...data } = formData;
+
+    data.email = data.email.trim();
+    data.name = data.name.trim();
+    data.valid = Boolean(data.valid);
+
+    await updateDoc(doc(db, "admins", id), {
       ...data,
-      updatedAt: new Date(),
+      updatedAt: serverTimestamp(),
     });
     return E.right(undefined);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to update admin")
-    );
+    console.error("updateAdmin error:", error);
+    return E.left("errorUpdateAdmin");
   }
 }
 
@@ -40,120 +39,116 @@ export async function updateAdmin(
  * Creates or updates an org document with the provided data
  * @param id - The org document ID
  * @param data - OrgData object containing the fields to save
- * @param firestore - Optional Firestore instance (defaults to client db)
- * @returns Promise that resolves to Either containing an Error or void
+ * @returns Promise that resolves to Either containing an i18n key or void
  */
 export async function saveOrg(
   id: string,
-  data: OrgData,
-  firestore?: Firestore
-): Promise<E.Either<Error, void>> {
-  const dbInstance = firestore || db;
-  const orgRef = doc(dbInstance, "org", id);
-
+  data: OrgData
+): Promise<E.Either<"errorSaveOrg", void>> {
   try {
+    data.name = data.name.trim();
+    data.desc = data.desc?.trim() ?? "";
+    data.active = Boolean(data.active);
+
     await setDoc(
-      orgRef,
+      doc(db, "orgs", id),
       {
         ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       },
       { merge: true }
     );
     return E.right(undefined);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to save org")
-    );
+    console.error("saveOrg error:", error);
+    return E.left("errorSaveOrg");
   }
 }
 
 /**
  * Updates an org document with the provided data
- * @param id - The org document ID
- * @param data - OrgData object containing the fields to update
- * @param firestore - Optional Firestore instance (defaults to client db)
- * @returns Promise that resolves to Either containing an Error or void
+ * @param formData - Org object containing the fields to update
+ * @returns Promise that resolves to Either containing an i18n key or void
  */
 export async function updateOrg(
-  id: string,
-  data: OrgData,
-  firestore?: Firestore
-): Promise<E.Either<Error, void>> {
-  const dbInstance = firestore || db;
-  const orgRef = doc(dbInstance, "org", id);
-
+  formData: Org
+): Promise<E.Either<"errorUpdateOrg", void>> {
   try {
-    await updateDoc(orgRef, {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, createdAt, updatedAt, ...data } = formData;
+
+    data.name = data.name.trim();
+    data.desc = data.desc?.trim() ?? "";
+    data.active = Boolean(data.active);
+
+    await updateDoc(doc(db, "orgs", id), {
       ...data,
-      updatedAt: new Date(),
+      updatedAt: serverTimestamp(),
     });
     return E.right(undefined);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to update org")
-    );
+    console.error("updateOrg error:", error);
+    return E.left("errorUpdateOrg");
   }
 }
 
 /**
  * Creates or updates a provider document with the provided data
- * @param id - The provider document ID
  * @param data - ProviderData object containing the fields to save
- * @param firestore - Optional Firestore instance (defaults to client db)
- * @returns Promise that resolves to Either containing an Error or void
+ * @returns Promise that resolves to Either containing an i18n key or void
  */
 export async function saveProvider(
-  id: string,
-  data: ProviderData,
-  firestore?: Firestore
-): Promise<E.Either<Error, void>> {
-  const dbInstance = firestore || db;
-  const providerRef = doc(dbInstance, "providers", id);
-
+  data: ProviderData
+): Promise<E.Either<"errorSaveProvider", void>> {
   try {
+    data.type = data.type.trim();
+    data.name = data.type;
+    const id = data.type;
+
     await setDoc(
-      providerRef,
+      doc(db, "providers", id),
       {
         ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       },
       { merge: true }
     );
     return E.right(undefined);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to save provider")
-    );
+    console.error("saveProvider error:", error);
+    return E.left("errorSaveProvider");
   }
 }
 
 /**
  * Updates a provider document with the provided data
- * @param id - The provider document ID
- * @param data - ProviderData object containing the fields to update
- * @param firestore - Optional Firestore instance (defaults to client db)
- * @returns Promise that resolves to Either containing an Error or void
+ * @param formData - Provider object containing the fields to update
+ * @returns Promise that resolves to Either containing an i18n key or void
  */
 export async function updateProvider(
-  id: string,
-  data: ProviderData,
-  firestore?: Firestore
-): Promise<E.Either<Error, void>> {
-  const dbInstance = firestore || db;
-  const providerRef = doc(dbInstance, "providers", id);
-
+  formData: Provider
+): Promise<E.Either<"errorUpdateProvider", void>> {
   try {
-    await updateDoc(providerRef, {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, createdAt, updatedAt, ...data } = formData;
+
+    data.type = id;
+    data.name = id;
+    data.params = data.params.map((param) => ({
+      key: param.key.trim(),
+      value: param.value.trim(),
+    }));
+    data.valid = Boolean(data.valid);
+
+    await updateDoc(doc(db, "providers", id), {
       ...data,
-      updatedAt: new Date(),
+      updatedAt: serverTimestamp(),
     });
     return E.right(undefined);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to update provider")
-    );
+    console.error("updateProvider error:", error);
+    return E.left("errorUpdateProvider");
   }
 }

@@ -1,4 +1,5 @@
 import { DocumentSnapshot } from "firebase/firestore";
+import { Meta } from "./Meta";
 
 export interface ProviderParam {
   key: string;
@@ -12,7 +13,7 @@ export interface ProviderData {
   valid: boolean;
 }
 
-export class Provider implements ProviderData {
+export interface Provider extends Meta, ProviderData {
   id: string;
   type: string;
   name: string;
@@ -20,45 +21,27 @@ export class Provider implements ProviderData {
   valid: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+}
 
-  constructor(
-    id: string,
-    type: string,
-    name: string,
-    params: ProviderParam[],
-    valid: boolean,
-    createdAt?: Date,
-    updatedAt?: Date
-  ) {
-    this.id = id;
-    this.type = type;
-    this.name = name;
-    this.params = params;
-    this.valid = valid;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
+/**
+ * Creates a Provider object from a Firebase document snapshot
+ * @param doc - Firebase document snapshot
+ * @returns Provider object or null if document doesn't exist
+ */
+export function providerFromDoc(doc: DocumentSnapshot): Provider | null {
+  if (!doc.exists()) {
+    return null;
   }
 
-  /**
-   * Creates a Provider object from a Firebase document snapshot
-   * @param doc - Firebase document snapshot
-   * @returns Provider object or null if document doesn't exist
-   */
-  static fromDoc(doc: DocumentSnapshot): Provider | null {
-    if (!doc.exists()) {
-      return null;
-    }
+  const data = doc.data();
 
-    const data = doc.data();
-
-    return new Provider(
-      doc.id,
-      data?.type ?? "",
-      data?.name ?? "",
-      data?.params ?? [],
-      data?.valid ?? false,
-      data?.createdAt?.toDate(),
-      data?.updatedAt?.toDate()
-    );
-  }
+  return {
+    id: doc.id,
+    type: data?.type ?? "",
+    name: data?.name ?? "",
+    params: data?.params ?? [],
+    valid: data?.valid ?? false,
+    createdAt: data?.createdAt?.toDate(),
+    updatedAt: data?.updatedAt?.toDate(),
+  };
 }

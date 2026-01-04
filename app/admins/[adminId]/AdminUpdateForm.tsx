@@ -6,19 +6,17 @@ import * as E from "fp-ts/Either";
 
 import { useClientAuth } from "@/app/_client/auth";
 import { updateAdmin } from "@/app/_client/firestore";
-import { UserData } from "@/app/_types/User";
+import { User } from "@/app/_types/User";
+import { useI18n } from "@/app/_i18n/context";
 import SvgSync from "@/app/_components/SvgSync";
 
-interface AdminUpdateFormProps {
-  adminId: string;
-  initialData: UserData;
-}
-
 export default function AdminUpdateForm({
-  adminId,
   initialData,
-}: AdminUpdateFormProps) {
-  const [formData, setFormData] = useState<UserData>(initialData);
+}: {
+  initialData: User;
+}) {
+  const { t } = useI18n();
+  const [formData, setFormData] = useState<User>(initialData);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { router } = useClientAuth();
@@ -28,10 +26,10 @@ export default function AdminUpdateForm({
     setPending(true);
     setError(null);
 
-    const result = await updateAdmin(adminId, formData);
+    const result = await updateAdmin(formData);
 
     if (E.isLeft(result)) {
-      setError(result.left.message);
+      setError(t(result.left));
       setPending(false);
     } else {
       setPending(false);
@@ -43,7 +41,7 @@ export default function AdminUpdateForm({
     <form onSubmit={handleSubmit}>
       <div className="row">
         <div className="textfield outlined" style={{ width: "100%" }}>
-          <label>Name</label>
+          <label>{t("name")}</label>
           <input
             id="name"
             name="name"
@@ -59,7 +57,7 @@ export default function AdminUpdateForm({
 
       <div className="row">
         <div className="textfield outlined" style={{ width: "100%" }}>
-          <label>E-mail</label>
+          <label>{t("email")}</label>
           <input
             id="email"
             name="email"
@@ -70,9 +68,7 @@ export default function AdminUpdateForm({
             disabled={pending}
             style={{ width: "100%" }}
           />
-          <div className="helper-text">
-            Only the account holder can change their email
-          </div>
+          <div className="helper-text">{t("emailChangeNote")}</div>
         </div>
       </div>
 
@@ -86,17 +82,17 @@ export default function AdminUpdateForm({
             setFormData({ ...formData, valid: e.target.checked })
           }
         />
-        Valid
+        {t("valid")}
       </div>
 
       <hr />
       <div className="error">{error}</div>
       <div className="row right">
         <Link href="/" className="button outlined">
-          Cancel
+          {t("cancel")}
         </Link>
         <button type="submit" disabled={pending} className="button filled">
-          <SvgSync /> Save
+          <SvgSync /> {t("save")}
         </button>
       </div>
     </form>

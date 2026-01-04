@@ -1,7 +1,10 @@
+import * as E from "fp-ts/Either";
+
 import { getServerApp } from "@/app/_server/firebase";
 import { requireServerAuth } from "@/app/_server/auth";
 import { getAdmin } from "@/app/_server/firestore";
-import * as E from "fp-ts/Either";
+import { getTranslations } from "@/app/_i18n/server";
+import MetaItems from "@/app/_components/MetaItems";
 import AdminUpdateForm from "./AdminUpdateForm";
 
 export default async function AdminDetailPage({
@@ -11,30 +14,20 @@ export default async function AdminDetailPage({
 }) {
   const { adminId } = await params;
   const { auth, db } = await getServerApp();
+  const { t } = await getTranslations();
   requireServerAuth(auth);
 
   const result = await getAdmin(db, adminId);
 
   return (
     <main>
-      <h2>Admin</h2>
+      <h2>{t("admin")}</h2>
       {E.isLeft(result) ? (
-        <p className="error">{result.left.message}</p>
+        <p className="error">{t(result.left)}</p>
       ) : (
         <>
-          <div className="meta">
-            <div>ID: {result.right.id}</div>
-            <div>Created: {result.right.createdAt?.toISOString() ?? "-"}</div>
-            <div>Updated: {result.right.updatedAt?.toISOString() ?? "-"}</div>
-          </div>
-          <AdminUpdateForm
-            adminId={adminId}
-            initialData={{
-              name: result.right.name,
-              email: result.right.email,
-              valid: result.right.valid,
-            }}
-          />
+          <MetaItems meta={result.right} />
+          <AdminUpdateForm initialData={result.right} />
         </>
       )}
     </main>

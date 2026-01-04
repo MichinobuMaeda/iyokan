@@ -1,11 +1,16 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { resetPassword } from "@/app/_client/auth";
-import { useRedirectIfAuthenticated } from "@/app/_client/auth";
+import Link from "next/link";
 import * as E from "fp-ts/Either";
 
+import { resetPassword } from "@/app/_client/auth";
+import { useRedirectIfAuthenticated } from "@/app/_client/auth";
+import { useI18n } from "@/app/_i18n/context";
+
 export default function ResetPasswordPage() {
+  const { t } = useI18n();
+  const [formData, setFormData] = useState<{ email: string }>({ email: "" });
   const [error, setError] = useState<string | undefined>();
   const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState<string | undefined>();
@@ -18,33 +23,34 @@ export default function ResetPasswordPage() {
     setSuccess(undefined);
     setPending(true);
 
-    const formData = new FormData(e.currentTarget);
-    const email = (formData.get("email") as string) || "";
-
-    const result = await resetPassword(email);
+    const result = await resetPassword(formData);
 
     if (E.isLeft(result)) {
-      setError(result.left.message);
+      setError(t(result.left));
     } else {
-      setSuccess("Password reset email sent. Check your inbox.");
+      setSuccess(t("passwordResetEmailSent"));
     }
 
     setPending(false);
   };
 
   return (
-    <main style={{ maxWidth: "32rem", width: "100%" }}>
+    <main>
       <form className="column" onSubmit={handleSubmit}>
-        <h2>Reset Password</h2>
+        <h2>{t("resetPasswordTitle")}</h2>
         <div className="row">
           <div className="textfield outlined" style={{ width: "100%" }}>
-            <label>Email</label>
+            <label>{t("email")}</label>
             <input
               id="email"
               name="email"
               type="email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               required
-              placeholder="Email"
+              placeholder={t("email")}
               disabled={pending}
             />
           </div>
@@ -62,9 +68,14 @@ export default function ResetPasswordPage() {
           </div>
         )}
 
-        <button type="submit" className="button filled" disabled={pending}>
-          {pending ? "Sending..." : "Send reset email"}
-        </button>
+        <div className="row right">
+          <Link href="/login" className="button outlined">
+            {t("cancel")}
+          </Link>
+          <button type="submit" className="button filled" disabled={pending}>
+            {pending ? t("sending") : t("sendResetEmail")}
+          </button>
+        </div>
       </form>
     </main>
   );

@@ -7,18 +7,18 @@ import {
 } from "firebase/firestore";
 import * as E from "fp-ts/Either";
 
-import { User } from "../_types/User";
-import { Org } from "../_types/Org";
-import { Provider } from "../_types/Provider";
+import { User, userFromDoc } from "../_types/User";
+import { Org, orgFromDoc } from "../_types/Org";
+import { Provider, providerFromDoc } from "../_types/Provider";
 
 /**
  * Gets an array of User objects from the "admins" collection
  * @param firestore - Firestore instance
- * @returns Promise that resolves to Either containing an Error or array of User objects
+ * @returns Promise that resolves to Either containing an i18n key or array of User objects
  */
 export async function getAdmins(
   firestore: Firestore
-): Promise<E.Either<Error, User[]>> {
+): Promise<E.Either<"errorFetchAdmins", User[]>> {
   const adminsRef = collection(firestore, "admins");
 
   try {
@@ -26,7 +26,7 @@ export async function getAdmins(
 
     const users: User[] = [];
     snapshot.forEach((doc) => {
-      const user = User.fromDoc(doc);
+      const user = userFromDoc(doc);
       if (user) {
         users.push(user);
       }
@@ -34,9 +34,8 @@ export async function getAdmins(
 
     return E.right(users);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to fetch admins")
-    );
+    console.error("getAdmins error:", error);
+    return E.left("errorFetchAdmins");
   }
 }
 
@@ -44,45 +43,44 @@ export async function getAdmins(
  * Gets a single User object from the "admins" collection by ID
  * @param firestore - Firestore instance
  * @param adminId - The admin document ID
- * @returns Promise that resolves to Either containing an Error or User object
+ * @returns Promise that resolves to Either containing an i18n key or User object
  */
 export async function getAdmin(
   firestore: Firestore,
   adminId: string
-): Promise<E.Either<Error, User>> {
+): Promise<E.Either<"errorAdminNotFound" | "errorFetchAdmin", User>> {
   try {
     const adminRef = doc(firestore, "admins", adminId);
     const snapshot = await getDoc(adminRef);
 
-    const user = User.fromDoc(snapshot);
+    const user = userFromDoc(snapshot);
     if (!user) {
-      return E.left(new Error("Admin not found"));
+      return E.left("errorAdminNotFound");
     }
 
     return E.right(user);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to fetch admin")
-    );
+    console.error("getAdmin error:", error);
+    return E.left("errorFetchAdmin");
   }
 }
 
 /**
- * Gets an array of Org objects from the "org" collection
+ * Gets an array of Org objects from the "orgs" collection
  * @param firestore - Firestore instance
- * @returns Promise that resolves to Either containing an Error or array of Org objects
+ * @returns Promise that resolves to Either containing an i18n key or array of Org objects
  */
 export async function getOrgs(
   firestore: Firestore
-): Promise<E.Either<Error, Org[]>> {
-  const orgsRef = collection(firestore, "org");
+): Promise<E.Either<"errorFetchOrgs", Org[]>> {
+  const orgsRef = collection(firestore, "orgs");
 
   try {
     const snapshot = await getDocs(orgsRef);
 
     const orgs: Org[] = [];
     snapshot.forEach((doc) => {
-      const org = Org.fromDoc(doc);
+      const org = orgFromDoc(doc);
       if (org) {
         orgs.push(org);
       }
@@ -90,47 +88,45 @@ export async function getOrgs(
 
     return E.right(orgs);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to fetch orgs")
-    );
+    console.error("getOrgs error:", error);
+    return E.left("errorFetchOrgs");
   }
 }
 
 /**
- * Gets a single Org object from the "org" collection by ID
+ * Gets a single Org object from the "orgs" collection by ID
  * @param firestore - Firestore instance
  * @param oid - The org document ID
- * @returns Promise that resolves to Either containing an Error or Org object
+ * @returns Promise that resolves to Either containing an i18n key or Org object
  */
 export async function getOrg(
   firestore: Firestore,
   oid: string
-): Promise<E.Either<Error, Org>> {
+): Promise<E.Either<"errorOrgNotFound" | "errorFetchOrg", Org>> {
   try {
-    const orgRef = doc(firestore, "org", oid);
+    const orgRef = doc(firestore, "orgs", oid);
     const snapshot = await getDoc(orgRef);
 
-    const org = Org.fromDoc(snapshot);
+    const org = orgFromDoc(snapshot);
     if (!org) {
-      return E.left(new Error("Organization not found"));
+      return E.left("errorOrgNotFound");
     }
 
     return E.right(org);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to fetch org")
-    );
+    console.error("getOrg error:", error);
+    return E.left("errorFetchOrg");
   }
 }
 
 /**
  * Gets an array of Provider objects from the "providers" collection
  * @param firestore - Firestore instance
- * @returns Promise that resolves to Either containing an Error or array of Provider objects
+ * @returns Promise that resolves to Either containing an i18n key or array of Provider objects
  */
 export async function getProviders(
   firestore: Firestore
-): Promise<E.Either<Error, Provider[]>> {
+): Promise<E.Either<"errorFetchProviders", Provider[]>> {
   const providersRef = collection(firestore, "providers");
 
   try {
@@ -138,7 +134,7 @@ export async function getProviders(
 
     const providers: Provider[] = [];
     snapshot.forEach((doc) => {
-      const provider = Provider.fromDoc(doc);
+      const provider = providerFromDoc(doc);
       if (provider) {
         providers.push(provider);
       }
@@ -146,9 +142,8 @@ export async function getProviders(
 
     return E.right(providers);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to fetch providers")
-    );
+    console.error("getProviders error:", error);
+    return E.left("errorFetchProviders");
   }
 }
 
@@ -156,25 +151,24 @@ export async function getProviders(
  * Gets a single Provider object from the "providers" collection by ID
  * @param firestore - Firestore instance
  * @param providerId - The provider document ID
- * @returns Promise that resolves to Either containing an Error or Provider object
+ * @returns Promise that resolves to Either containing an i18n key or Provider object
  */
 export async function getProvider(
   firestore: Firestore,
   providerId: string
-): Promise<E.Either<Error, Provider>> {
+): Promise<E.Either<"errorProviderNotFound" | "errorFetchProvider", Provider>> {
   try {
     const providerRef = doc(firestore, "providers", providerId);
     const snapshot = await getDoc(providerRef);
 
-    const provider = Provider.fromDoc(snapshot);
+    const provider = providerFromDoc(snapshot);
     if (!provider) {
-      return E.left(new Error("Provider not found"));
+      return E.left("errorProviderNotFound");
     }
 
     return E.right(provider);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to fetch provider")
-    );
+    console.error("getProvider error:", error);
+    return E.left("errorFetchProvider");
   }
 }

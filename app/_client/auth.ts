@@ -6,6 +6,10 @@ import {
   signOut,
   UserCredential,
   onAuthStateChanged,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updateEmail,
+  updatePassword,
 } from "firebase/auth";
 import { getDoc, doc } from "firebase/firestore";
 import { redirect } from "next/navigation";
@@ -24,12 +28,20 @@ export interface LoginResult {
  * Signs in a user with email and password, validates they are an admin
  * @param email - User's email address
  * @param password - User's password
- * @returns Promise that resolves to Either containing an Error or LoginResult
+ * @returns Promise that resolves to Either containing an i18n key or LoginResult
  */
-export async function login(
-  email: string,
-  password: string
-): Promise<E.Either<Error, LoginResult>> {
+export async function login({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}): Promise<
+  E.Either<
+    "errorLoginNotAdmin" | "errorInvalidAdmin" | "errorLogin",
+    LoginResult
+  >
+> {
   try {
     // Sign in with Firebase Auth
     const cred: UserCredential = await signInWithEmailAndPassword(
@@ -43,12 +55,12 @@ export async function login(
     const adminDoc = await getDoc(doc(db, "admins", uid));
 
     if (!adminDoc.exists()) {
-      return E.left(new Error("Failed to login as admin"));
+      return E.left("errorLoginNotAdmin");
     }
 
     const adminData = adminDoc.data();
     if (!adminData?.valid) {
-      return E.left(new Error("Invalid admin account"));
+      return E.left("errorInvalidAdmin");
     }
 
     // Get the ID token
@@ -60,46 +72,43 @@ export async function login(
 
     return E.right({ uid, idToken });
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to login")
-    );
+    console.error("login error:", error);
+    return E.left("errorLogin");
   }
 }
 
 /**
  * Sends a password reset email to the specified email address
  * @param email - User's email address
- * @returns Promise that resolves to Either containing an Error or void
+ * @returns Promise that resolves to Either containing an i18n key or void
  */
-export async function resetPassword(
-  email: string
-): Promise<E.Either<Error, void>> {
+export async function resetPassword({
+  email,
+}: {
+  email: string;
+}): Promise<E.Either<"errorResetPassword", void>> {
   try {
     await sendPasswordResetEmail(auth, email);
     return E.right(undefined);
   } catch (error) {
-    return E.left(
-      error instanceof Error
-        ? error
-        : new Error("Failed to send password reset email")
-    );
+    console.error("resetPassword error:", error);
+    return E.left("errorResetPassword");
   }
 }
 
 /**
  * Signs out the current user and clears the auth cookie
- * @returns Promise that resolves to Either containing an Error or void
+ * @returns Promise that resolves to Either containing an i18n key or void
  */
-export async function logout(): Promise<E.Either<Error, void>> {
+export async function logout(): Promise<E.Either<"errorLogout", void>> {
   try {
     await signOut(auth);
     // Clear the auth cookie
     document.cookie = "__session=; path=/; max-age=0";
     return E.right(undefined);
   } catch (error) {
-    return E.left(
-      error instanceof Error ? error : new Error("Failed to logout")
-    );
+    console.error("logout error:", error);
+    return E.left("errorLogout");
   }
 }
 
@@ -135,4 +144,118 @@ export function useRedirectIfAuthenticated(disabled = false) {
     });
     return () => unsub();
   }, [router, disabled]);
+}
+
+/**
+ * Redirects to login page if user is not authenticated
+ * Used in protected pages like change-email and change-password
+ */
+export function useRequireAuth() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.replace("/login");
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+}
+
+/**
+ * Re-authenticates a user with their current password
+ * Required before sensitive operations like email or password changes
+ * @param currentPassword - User's current password
+ * @returns Promise that resolves to Either containing an i18n key or void
+ */
+export async function reauthenticate(
+  currentPassword: string
+): Promise<E.Either<"errorNoUser" | "errorReauthenticate", void>> {
+  try {
+    const user = auth.currentUser;
+    if (!user || !user.email) {
+      return E.left("errorNoUser");
+    }
+
+    const credential = EmailAuthProvider.credential(
+      user.email,
+      currentPassword
+    );
+    await reauthenticateWithCredential(user, credential);
+    return E.right(undefined);
+  } catch (error) {
+    console.error("reauthenticate error:", error);
+    return E.left("errorReauthenticate");
+  }
+}
+
+/**
+ * Changes the user's email address after re-authentication
+ * @param currentPassword - User's current password for re-authentication
+ * @param newEmail - New email address
+ * @returns Promise that resolves to Either containing an i18n key or void
+ */
+export async function changeEmail({
+  currentPassword,
+  newEmail,
+}: {
+  currentPassword: string;
+  newEmail: string;
+}): Promise<
+  E.Either<"errorNoUser" | "errorReauthenticate" | "errorChangeEmail", void>
+> {
+  try {
+    // Re-authenticate first
+    const reauthResult = await reauthenticate(currentPassword);
+    if (E.isLeft(reauthResult)) {
+      return reauthResult;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      return E.left("errorNoUser");
+    }
+
+    await updateEmail(user, newEmail);
+    return E.right(undefined);
+  } catch (error) {
+    console.error("changeEmail error:", error);
+    return E.left("errorChangeEmail");
+  }
+}
+
+/**
+ * Changes the user's password after re-authentication
+ * @param currentPassword - User's current password for re-authentication
+ * @param newPassword - New password
+ * @returns Promise that resolves to Either containing an i18n key or void
+ */
+export async function changePassword({
+  currentPassword,
+  newPassword,
+}: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<
+  E.Either<"errorNoUser" | "errorReauthenticate" | "errorChangePassword", void>
+> {
+  try {
+    // Re-authenticate first
+    const reauthResult = await reauthenticate(currentPassword);
+    if (E.isLeft(reauthResult)) {
+      return reauthResult;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      return E.left("errorNoUser");
+    }
+
+    await updatePassword(user, newPassword);
+    return E.right(undefined);
+  } catch (error) {
+    console.error("changePassword error:", error);
+    return E.left("errorChangePassword");
+  }
 }
