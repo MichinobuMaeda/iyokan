@@ -120,14 +120,74 @@ export async function getOrg(
 }
 
 /**
- * Gets an array of Provider objects from the "providers" collection
+ * Gets an array of User objects from an organization's users subcollection
  * @param firestore - Firestore instance
+ * @param oid - The organization ID
+ * @returns Promise that resolves to Either containing an i18n key or array of User objects
+ */
+export async function getOrgUsers(
+  firestore: Firestore,
+  oid: string
+): Promise<E.Either<"errorFetchUsers", User[]>> {
+  const usersRef = collection(firestore, "orgs", oid, "users");
+
+  try {
+    const snapshot = await getDocs(usersRef);
+
+    const users: User[] = [];
+    snapshot.forEach((doc) => {
+      const user = userFromDoc(doc);
+      if (user) {
+        users.push(user);
+      }
+    });
+
+    return E.right(users);
+  } catch (error) {
+    console.error("getOrgUsers error:", error);
+    return E.left("errorFetchUsers");
+  }
+}
+
+/**
+ * Gets a single User object from an organization's users subcollection by ID
+ * @param firestore - Firestore instance
+ * @param oid - The organization ID
+ * @param userId - The user document ID
+ * @returns Promise that resolves to Either containing an i18n key or User object
+ */
+export async function getOrgUser(
+  firestore: Firestore,
+  oid: string,
+  userId: string
+): Promise<E.Either<"errorUserNotFound" | "errorFetchUser", User>> {
+  try {
+    const userRef = doc(firestore, "orgs", oid, "users", userId);
+    const snapshot = await getDoc(userRef);
+
+    const user = userFromDoc(snapshot);
+    if (!user) {
+      return E.left("errorUserNotFound");
+    }
+
+    return E.right(user);
+  } catch (error) {
+    console.error("getOrgUser error:", error);
+    return E.left("errorFetchUser");
+  }
+}
+
+/**
+ * Gets an array of Provider objects from an organization's providers subcollection
+ * @param firestore - Firestore instance
+ * @param oid - The organization ID
  * @returns Promise that resolves to Either containing an i18n key or array of Provider objects
  */
-export async function getProviders(
-  firestore: Firestore
+export async function getOrgProviders(
+  firestore: Firestore,
+  oid: string
 ): Promise<E.Either<"errorFetchProviders", Provider[]>> {
-  const providersRef = collection(firestore, "providers");
+  const providersRef = collection(firestore, "orgs", oid, "providers");
 
   try {
     const snapshot = await getDocs(providersRef);
@@ -142,23 +202,25 @@ export async function getProviders(
 
     return E.right(providers);
   } catch (error) {
-    console.error("getProviders error:", error);
+    console.error("getOrgProviders error:", error);
     return E.left("errorFetchProviders");
   }
 }
 
 /**
- * Gets a single Provider object from the "providers" collection by ID
+ * Gets a single Provider object from an organization's providers subcollection by ID
  * @param firestore - Firestore instance
+ * @param oid - The organization ID
  * @param providerId - The provider document ID
  * @returns Promise that resolves to Either containing an i18n key or Provider object
  */
-export async function getProvider(
+export async function getOrgProvider(
   firestore: Firestore,
+  oid: string,
   providerId: string
 ): Promise<E.Either<"errorProviderNotFound" | "errorFetchProvider", Provider>> {
   try {
-    const providerRef = doc(firestore, "providers", providerId);
+    const providerRef = doc(firestore, "orgs", oid, "providers", providerId);
     const snapshot = await getDoc(providerRef);
 
     const provider = providerFromDoc(snapshot);
@@ -168,7 +230,7 @@ export async function getProvider(
 
     return E.right(provider);
   } catch (error) {
-    console.error("getProvider error:", error);
+    console.error("getOrgProvider error:", error);
     return E.left("errorFetchProvider");
   }
 }

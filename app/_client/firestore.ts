@@ -9,6 +9,32 @@ import { User } from "@/app/_types/User";
 import { db } from "./firebase";
 
 /**
+ * Creates a new provider document
+ * @param oid - The organization ID
+ * @param data - ProviderData object containing the fields to save
+ * @returns Promise that resolves to Either containing an i18n key or void
+ */
+export async function saveProvider(
+  oid: string,
+  data: ProviderData & Record<string, unknown>
+): Promise<E.Either<"errorSaveProvider", void>> {
+  try {
+    const providerId = `${data.type}-${Date.now()}`;
+
+    await setDoc(doc(db, "orgs", oid, "providers", providerId), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    return E.right(undefined);
+  } catch (error) {
+    console.error("saveProvider error:", error);
+    return E.left("errorSaveProvider");
+  }
+}
+
+/**
  * Updates an admin document with the provided data
  * @param formData - User object containing the fields to update
  * @returns Promise that resolves to Either containing an i18n key or void
@@ -48,7 +74,7 @@ export async function saveOrg(
   try {
     data.name = data.name.trim();
     data.desc = data.desc?.trim() ?? "";
-    data.active = Boolean(data.active);
+    data.valid = Boolean(data.valid);
 
     await setDoc(
       doc(db, "orgs", id),
@@ -59,6 +85,29 @@ export async function saveOrg(
       },
       { merge: true }
     );
+
+    await setDoc(
+      doc(db, "orgs", id, "groups", "managers"),
+      {
+        name: "Managers",
+        members: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    await setDoc(
+      doc(db, "orgs", id, "groups", "admins"),
+      {
+        name: "Admins",
+        members: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
     return E.right(undefined);
   } catch (error) {
     console.error("saveOrg error:", error);
@@ -80,7 +129,7 @@ export async function updateOrg(
 
     data.name = data.name.trim();
     data.desc = data.desc?.trim() ?? "";
-    data.active = Boolean(data.active);
+    data.valid = Boolean(data.valid);
 
     await updateDoc(doc(db, "orgs", id), {
       ...data,
@@ -94,55 +143,52 @@ export async function updateOrg(
 }
 
 /**
- * Creates or updates a provider document with the provided data
- * @param data - ProviderData object containing the fields to save
+ * Updates an org user document with the provided data
+ * @param oid - The organization ID
+ * @param formData - User object containing the fields to update
  * @returns Promise that resolves to Either containing an i18n key or void
  */
-export async function saveProvider(
-  data: ProviderData
-): Promise<E.Either<"errorSaveProvider", void>> {
+export async function updateOrgUser(
+  oid: string,
+  formData: User
+): Promise<E.Either<"errorUpdateUser", void>> {
   try {
-    data.type = data.type.trim();
-    data.name = data.type;
-    const id = data.type;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, createdAt, updatedAt, ...data } = formData;
 
-    await setDoc(
-      doc(db, "providers", id),
-      {
-        ...data,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
+    data.email = data.email.trim();
+    data.name = data.name.trim();
+    data.valid = Boolean(data.valid);
+
+    await updateDoc(doc(db, "orgs", oid, "users", id), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
     return E.right(undefined);
   } catch (error) {
-    console.error("saveProvider error:", error);
-    return E.left("errorSaveProvider");
+    console.error("updateOrgUser error:", error);
+    return E.left("errorUpdateUser");
   }
 }
 
 /**
- * Updates a provider document with the provided data
+ * Updates a provider with the provided data
+ * @param oid - The organization ID
  * @param formData - Provider object containing the fields to update
  * @returns Promise that resolves to Either containing an i18n key or void
  */
 export async function updateProvider(
+  oid: string,
   formData: Provider
 ): Promise<E.Either<"errorUpdateProvider", void>> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, createdAt, updatedAt, ...data } = formData;
 
-    data.type = id;
-    data.name = id;
-    data.params = data.params.map((param) => ({
-      key: param.key.trim(),
-      value: param.value.trim(),
-    }));
+    data.name = data.name.trim();
     data.valid = Boolean(data.valid);
 
-    await updateDoc(doc(db, "providers", id), {
+    await updateDoc(doc(db, "orgs", oid, "providers", id), {
       ...data,
       updatedAt: serverTimestamp(),
     });

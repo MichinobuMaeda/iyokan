@@ -1,8 +1,8 @@
 import * as E from "fp-ts/Either";
 
 import { getServerApp } from "@/app/_server/firebase";
-import { requireServerAuth } from "@/app/_server/auth";
-import { getProvider } from "@/app/_server/firestore";
+import { requireAuth } from "@/app/_server/requireAuth";
+import { getOrgProvider } from "@/app/_server/firestore";
 import { getTranslations } from "@/app/_i18n/server";
 import MetaItems from "@/app/_components/MetaItems";
 import ProviderUpdateForm from "./ProviderUpdateForm";
@@ -10,14 +10,14 @@ import ProviderUpdateForm from "./ProviderUpdateForm";
 export default async function ProviderDetailPage({
   params,
 }: {
-  params: Promise<{ providerId: string }>;
+  params: Promise<{ oid: string; providerId: string }>;
 }) {
-  const { providerId } = await params;
+  const { oid, providerId } = await params;
   const { auth, db } = await getServerApp();
   const { t } = await getTranslations();
-  requireServerAuth(auth);
+  requireAuth(auth);
 
-  const result = await getProvider(db, providerId);
+  const result = await getOrgProvider(db, oid, providerId);
 
   return (
     <main>

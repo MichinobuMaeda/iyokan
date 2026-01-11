@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "npm test --prefix functions"
+    "test:app": "vitest run --coverage",
+    "test": "npm test --prefix functions && npm run test:app"
   },
   "dependencies": {
     "firebase": "^12.7.0",
@@ -22,13 +23,19 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "firebase-admin": "^13.6.0",
     "firebase-tools": "^15.1.0",
-    "typescript": "^5"
+    "happy-dom": "^20.1.0",
+    "jsdom": "^27.4.0",
+    "typescript": "^5",
+    "vitest": "^3.0.0"
   }
 }

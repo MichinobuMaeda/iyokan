@@ -1,15 +1,20 @@
 {
   "cSpell.words": [
     "apphosting",
+    "bsky",
     "firebaseapp",
     "firebasestorage",
     "firestore",
     "iyokan",
     "Maeda",
     "Michinobu",
+    "Misskey",
     "newuser",
+    "Oids",
     "predeploy",
+    "reauthentication",
     "ssword",
+    "subcollection",
     "testuser",
     "unsub",
     "YDGP"
@@ -19,7 +24,8 @@
     "package*.json",
     ".vscode/*",
     "functions/lib/*",
-    "app/*.css"
+    "app/*.css",
+    "test/emulator/*"
   ],
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true

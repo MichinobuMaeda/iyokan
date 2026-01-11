@@ -70,3 +70,38 @@ export function validatePassword(
 
   return E.right(password);
 }
+
+const reservedOids = ["id", "oid", "admin", "admins"];
+
+/**
+ * Validates an organization ID (oid) format
+ * Organization ID must:
+ * - Not be empty
+ * - Contain only lowercase letters (a-z) and numbers (0-9)
+ * - Not be a reserved word
+ *
+ * @param oid - Organization ID to validate
+ * @returns Either containing an Error with i18n key or the validated oid
+ */
+export function validateOid(
+  oid: string
+): E.Either<
+  "errorOidRequired" | "errorOidInvalidFormat" | "errorOrgIdReserved",
+  string
+> {
+  if (!oid || oid.trim().length === 0) {
+    return E.left("errorOidRequired");
+  }
+
+  // Only lowercase letters and numbers allowed
+  if (!/^[a-z0-9]+$/.test(oid)) {
+    return E.left("errorOidInvalidFormat");
+  }
+
+  // Check if oid is reserved
+  if (reservedOids.includes(oid.toLowerCase())) {
+    return E.left("errorOrgIdReserved");
+  }
+
+  return E.right(oid);
+}

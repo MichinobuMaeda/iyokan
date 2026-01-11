@@ -12,7 +12,6 @@ import {
   updatePassword,
 } from "firebase/auth";
 import { getDoc, doc } from "firebase/firestore";
-import { redirect } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import * as E from "fp-ts/Either";
@@ -114,57 +113,6 @@ export async function logout(): Promise<E.Either<"errorLogout", void>> {
     console.error("logout error:", error);
     return E.left("errorLogout");
   }
-}
-
-/**
- * Ensures user is authenticated on server-side
- * Redirects to /login if no user is logged in
- * @returns The authenticated user and router instance
- */
-export function useClientAuth() {
-  const router = useRouter();
-  const user = auth.currentUser;
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  return { user, router };
-}
-
-/**
- * Redirects to home page if user is already authenticated
- * Used in login and reset-password pages
- * @param disabled - If true, the redirect is disabled
- */
-export function useRedirectIfAuthenticated(disabled = false) {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (disabled) return;
-
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) router.replace("/");
-    });
-    return () => unsub();
-  }, [router, disabled]);
-}
-
-/**
- * Redirects to login page if user is not authenticated
- * Used in protected pages like change-email and change-password
- */
-export function useRequireAuth() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        router.replace("/login");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
 }
 
 /**

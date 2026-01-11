@@ -1,17 +1,19 @@
 import { DocumentSnapshot } from "firebase/firestore";
 import { Meta } from "./Meta";
 
+export const reservedOids = ["id", "oid", "admin", "admins"];
+
 export interface OrgData {
   name: string;
   desc?: string;
-  active: boolean;
+  valid: boolean;
 }
 
 export interface Org extends Meta, OrgData {
   id: string;
   name: string;
   desc?: string;
-  active: boolean;
+  valid: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -32,7 +34,7 @@ export function orgFromDoc(doc: DocumentSnapshot): Org | null {
     id: doc.id,
     name: data?.name ?? "",
     desc: data?.desc,
-    active: data?.active ?? false,
+    valid: data?.valid ?? false,
     createdAt: data?.createdAt?.toDate(),
     updatedAt: data?.updatedAt?.toDate(),
   };

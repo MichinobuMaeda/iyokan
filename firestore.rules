@@ -41,14 +41,11 @@ service cloud.firestore {
       allow read: if isUser(orgId);
       allow read, write: if isSystemAdmin() || isManager(orgId);
     }
-    match /orgs/{orgId}/groups/manager {
+    match /orgs/{orgId}/groups/managers {
       allow read, write: if isSystemAdmin() || isManager(orgId);
     }
     match /orgs/{orgId}/groups/admins {
       allow read, write: if isSystemAdmin() || isManager(orgId);
-    }
-    match /orgs/{orgId}/groups/manager {
-      allow read, write: if isSystemAdmin();
     }
     match /{document=**} {
       allow read, write: if false;

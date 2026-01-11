@@ -5,7 +5,7 @@ import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { login, LoginData } from "@/app/_client/auth";
-import { useRedirectIfAuthenticated } from "@/app/_client/auth";
+import { useGuestOnly } from "@/app/_client/useGuestOnly";
 import { useI18n } from "@/app/_i18n/context";
 
 export default function LoginPage() {
@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
 
-  useRedirectIfAuthenticated(pending);
+  useGuestOnly(pending);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

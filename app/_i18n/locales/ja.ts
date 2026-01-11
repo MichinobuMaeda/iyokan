@@ -48,7 +48,7 @@ export const ja = {
   active: "有効",
   adminUpdateSuccess: "管理者情報を更新しました",
   emailChangeNote: "メールアドレスはアカウント所有者のみ変更できます",
-
+  typeChangeNote: "プロバイダータイプは作成後に変更できません",
   // Organization page
   orgTitle: "組織",
   description: "説明",
@@ -72,17 +72,22 @@ export const ja = {
   admin: "管理者",
   organization: "組織",
   provider: "プロバイダー",
+  users: "ユーザー",
 
   // Home page
   addOrganization: "組織を追加",
   addAdmin: "管理者を追加",
   addProvider: "プロバイダーを追加",
+  addUser: "ユーザーを追加",
 
   // Validation errors
   errorEmailRequired: "メールアドレスは必須です",
   errorInvalidEmail: "メールアドレスの形式が無効です",
   errorNameEmailRequired: "名前とメールアドレスは必須です",
   errorOrgIdNameRequired: "組織IDと名前は必須です",
+  errorOrgIdReserved: "この組織IDは予約されており使用できません",
+  errorOidRequired: "組織IDは必須です",
+  errorOidInvalidFormat: "組織IDは小文字と数字のみ使用できます",
   errorProviderTypeRequired: "プロバイダータイプは必須です",
   errorPasswordMin10: "10文字以上が必要です",
   errorPasswordUppercase: "大文字を使用してください",
@@ -109,6 +114,7 @@ export const ja = {
   errorUpdateOrg: "組織情報の更新に失敗しました",
   errorSaveProvider: "プロバイダーの保存に失敗しました",
   errorUpdateProvider: "プロバイダー情報の更新に失敗しました",
+  errorUpdateUser: "ユーザー情報の更新に失敗しました",
 
   // Server Firestore errors
   errorFetchAdmins: "管理者一覧の取得に失敗しました",
@@ -120,9 +126,13 @@ export const ja = {
   errorFetchProviders: "プロバイダー一覧の取得に失敗しました",
   errorProviderNotFound: "プロバイダーが見つかりません",
   errorFetchProvider: "プロバイダーの取得に失敗しました",
+  errorFetchUsers: "ユーザー一覧の取得に失敗しました",
+  errorUserNotFound: "ユーザーが見つかりません",
+  errorFetchUser: "ユーザーの取得に失敗しました",
 
   // Functions errors
   errorCreateAdmin: "管理者の作成に失敗しました",
+  errorCreateUser: "ユーザーの作成に失敗しました",
 } as const;
 
 export type TranslationKey = keyof typeof ja;

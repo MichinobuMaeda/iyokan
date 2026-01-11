@@ -12,7 +12,8 @@ import { useI18n } from "@/app/_i18n/context";
 import { auth } from "@/app/_client/firebase";
 import { logout } from "@/app/_client/auth";
 import SvgHome from "@/app/_icons/SvgHome";
-import SvgLogin from "@/app/_icons/SvgLogin";
+import SvgLanguage from "../_icons/SvgLanguage";
+import SvgLogin from "../_icons/SvgLogin";
 import SvgLogout from "@/app/_icons/SvgLogout";
 import SvgAccountCircle from "@/app/_icons/SvgAccountCircle";
 
@@ -50,19 +51,17 @@ export default function Header() {
         </div>
         <div style={{ flexGrow: 1 }}></div>
         {user ? (
-          <>
-            <Link href="/">
-              <SvgHome />
-            </Link>
-            <button onClick={() => setMenuOpen(!menuOpen)}>
-              <SvgAccountCircle />
-            </button>
-          </>
+          <Link href="/">
+            <SvgHome />
+          </Link>
         ) : (
           <Link href="/login">
             <SvgLogin />
           </Link>
         )}
+        <button onClick={() => setMenuOpen(!menuOpen)}>
+          {user ? <SvgAccountCircle /> : <SvgLanguage />}
+        </button>
       </header>
       <div
         className={`menu ${menuOpen ? "" : "hidden"}`}
@@ -86,16 +85,20 @@ export default function Header() {
         >
           日本語
         </button>
-        <hr />
-        <Link href="/me/email">{t("changeEmail")}</Link>
-        <Link href="/me/password">{t("changePassword")}</Link>
-        <hr />
-        <button onClick={handleLogout}>
-          <span className="prefix">
-            <SvgLogout />
-          </span>
-          {t("logout")}
-        </button>
+        {user && (
+          <>
+            <hr />
+            <Link href="/me/email">{t("changeEmail")}</Link>
+            <Link href="/me/password">{t("changePassword")}</Link>
+            <hr />
+            <button onClick={handleLogout}>
+              <span className="prefix">
+                <SvgLogout />
+              </span>
+              {t("logout")}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

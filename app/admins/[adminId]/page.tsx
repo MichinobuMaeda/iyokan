@@ -1,7 +1,7 @@
 import * as E from "fp-ts/Either";
 
 import { getServerApp } from "@/app/_server/firebase";
-import { requireServerAuth } from "@/app/_server/auth";
+import { requireAuth } from "@/app/_server/requireAuth";
 import { getAdmin } from "@/app/_server/firestore";
 import { getTranslations } from "@/app/_i18n/server";
 import MetaItems from "@/app/_components/MetaItems";
@@ -15,7 +15,7 @@ export default async function AdminDetailPage({
   const { adminId } = await params;
   const { auth, db } = await getServerApp();
   const { t } = await getTranslations();
-  requireServerAuth(auth);
+  requireAuth(auth);
 
   const result = await getAdmin(db, adminId);
 

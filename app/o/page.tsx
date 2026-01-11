@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import * as E from "fp-ts/Either";
 
-import { useClientAuth } from "@/app/_client/auth";
+import { useAuth } from "@/app/_client/useAuth";
 import { saveOrg } from "@/app/_client/firestore";
 import { OrgData } from "@/app/_types/Org";
+import { validateOid } from "@/app/_lib/validators";
 import { useI18n } from "@/app/_i18n/context";
 import SvgSync from "@/app/_icons/SvgSync";
 
@@ -16,11 +17,11 @@ export default function CreateOrgPage() {
   const [formData, setFormData] = useState<OrgData>({
     name: "",
     desc: "",
-    active: true,
+    valid: true,
   });
   const [pending, setPending] = useState(false);
   const [errorOnSave, setErrorOnSave] = useState<string | undefined>();
-  const { router } = useClientAuth();
+  const { router } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,6 +30,13 @@ export default function CreateOrgPage() {
 
     if (!oid || !formData.name) {
       setErrorOnSave(t("errorOrgIdNameRequired"));
+      setPending(false);
+      return;
+    }
+
+    const oidValidation = validateOid(oid);
+    if (E.isLeft(oidValidation)) {
+      setErrorOnSave(t(oidValidation.left));
       setPending(false);
       return;
     }
@@ -56,8 +64,10 @@ export default function CreateOrgPage() {
               name="oid"
               type="text"
               value={oid}
-              onChange={(e) => setOid(e.target.value)}
+              onChange={(e) => setOid(e.target.value.toLowerCase())}
               placeholder={t("id")}
+              pattern="[a-z0-9]+"
+              title="Only lowercase letters and numbers are allowed"
               required
               disabled={pending}
               style={{ width: "100%" }}
@@ -102,14 +112,14 @@ export default function CreateOrgPage() {
 
         <label className="row">
           <input
-            id="active"
-            name="active"
+            id="valid"
+            name="valid"
             className="switch"
             type="checkbox"
             disabled={pending}
-            checked={formData.active}
+            checked={formData.valid}
             onChange={(e) =>
-              setFormData({ ...formData, active: e.target.checked })
+              setFormData({ ...formData, valid: e.target.checked })
             }
           />
           {t("active")}

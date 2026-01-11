@@ -5,7 +5,7 @@ import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { resetPassword, ResetPasswordData } from "@/app/_client/auth";
-import { useRedirectIfAuthenticated } from "@/app/_client/auth";
+import { useGuestOnly } from "@/app/_client/useGuestOnly";
 import { useI18n } from "@/app/_i18n/context";
 
 export default function ResetPasswordPage() {
@@ -15,7 +15,7 @@ export default function ResetPasswordPage() {
   const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState<string | undefined>();
 
-  useRedirectIfAuthenticated();
+  useGuestOnly();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

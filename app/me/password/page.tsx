@@ -5,18 +5,15 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import * as E from "fp-ts/Either";
 
-import {
-  useRequireAuth,
-  changePassword,
-  ChangePasswordData,
-} from "@/app/_client/auth";
+import { useAuth } from "@/app/_client/useAuth";
+import { changePassword, ChangePasswordData } from "@/app/_client/auth";
 import { validatePassword } from "@/app/_lib/validators";
 import { useI18n } from "@/app/_i18n/context";
 import PasswordInput from "@/app/_components/PasswordInput";
 import SvgSync from "@/app/_icons/SvgSync";
 
 export default function ChangePasswordPage() {
-  useRequireAuth();
+  useAuth();
   const { t } = useI18n();
   const router = useRouter();
 

@@ -2,14 +2,14 @@ import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { getServerApp } from "@/app/_server/firebase";
-import { requireServerAuth } from "@/app/_server/auth";
-import { getAdmins, getOrgs, getProviders } from "@/app/_server/firestore";
+import { requireAuth } from "@/app/_server/requireAuth";
+import { getAdmins, getOrgs } from "@/app/_server/firestore";
 import { getTranslations } from "@/app/_i18n/server";
 import SvgAdd from "@/app/_icons/SvgAdd";
 
 export default async function Home() {
   const { auth, db } = await getServerApp();
-  requireServerAuth(auth);
+  requireAuth(auth);
   const { t } = await getTranslations();
 
   // Fetch admins
@@ -29,16 +29,6 @@ export default async function Home() {
     ? orgsResult.right
     : (() => {
         orgsError = t(orgsResult.left);
-        return [];
-      })();
-
-  // Fetch providers
-  const providersResult = await getProviders(db);
-  let providersError: string | undefined;
-  const providers = E.isRight(providersResult)
-    ? providersResult.right
-    : (() => {
-        providersError = t(providersResult.left);
         return [];
       })();
 
@@ -82,29 +72,6 @@ export default async function Home() {
               style={{ width: "100%" }}
             >
               {admin.email}
-            </Link>
-          ))}
-        </div>
-      )}
-      <Link
-        href="/providers"
-        className="button outlined"
-        style={{ width: "100%" }}
-      >
-        <SvgAdd /> {t("addProvider")}
-      </Link>
-      {providersError ? (
-        <p className="message error">{providersError}</p>
-      ) : (
-        <div className="list">
-          {providers.map((provider) => (
-            <Link
-              key={provider.id}
-              href={`/providers/${provider.id}`}
-              className="button text square"
-              style={{ width: "100%" }}
-            >
-              {provider.type}
             </Link>
           ))}
         </div>

@@ -70,12 +70,12 @@ export default function OrgUpdateForm({ initialData }: { initialData: Org }) {
 
       <div className="row">
         <input
-          id="active"
+          id="valid"
           type="checkbox"
           className="switch"
-          checked={formData.active}
+          checked={formData.valid}
           onChange={(e) =>
-            setFormData({ ...formData, active: e.target.checked })
+            setFormData({ ...formData, valid: e.target.checked })
           }
         />
         {t("active")}

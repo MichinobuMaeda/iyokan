@@ -5,18 +5,15 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import * as E from "fp-ts/Either";
 
-import {
-  useRequireAuth,
-  changeEmail,
-  ChangeEmailData,
-} from "@/app/_client/auth";
+import { useAuth } from "@/app/_client/useAuth";
+import { changeEmail, ChangeEmailData } from "@/app/_client/auth";
 import { validateEmail } from "@/app/_lib/validators";
 import { useI18n } from "@/app/_i18n/context";
 import PasswordInput from "@/app/_components/PasswordInput";
 import SvgSync from "@/app/_icons/SvgSync";
 
 export default function ChangeEmailPage() {
-  useRequireAuth();
+  useAuth();
   const { t } = useI18n();
   const router = useRouter();
 

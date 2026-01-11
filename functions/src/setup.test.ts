@@ -55,13 +55,28 @@ describe("setup", () => {
       expect(account.createAdminUser).not.toHaveBeenCalled();
     });
 
-    it("should handle version 0 with email and create admin user", async () => {
+    it("should handle version 0 with email and create admin user and service config", async () => {
       mockSnapshot.data.mockReturnValue({
         version: 0,
         email: "test@example.com",
       });
 
+      const mockConfSet = vi.fn().mockResolvedValue(undefined);
+      const mockConfDoc = vi.fn(() => ({ set: mockConfSet }));
+      const mockServiceCollection = vi.fn(() => ({ doc: mockConfDoc }));
+      mockDb.collection = mockServiceCollection;
+
       await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
+
+      expect(mockDb.collection).toHaveBeenCalledWith("service");
+      expect(mockConfDoc).toHaveBeenCalledWith("conf");
+      expect(mockConfSet).toHaveBeenCalledWith({
+        admin_url: expect.any(String),
+        web_url: expect.any(String),
+        desc: "",
+        createdAt: expect.any(Object),
+        updatedAt: expect.any(Object),
+      });
 
       expect(account.createAdminUser).toHaveBeenCalledWith(
         mockAuth,
@@ -84,8 +99,14 @@ describe("setup", () => {
         email: "test@example.com",
       });
 
+      const mockConfSet = vi.fn().mockResolvedValue(undefined);
+      const mockConfDoc = vi.fn(() => ({ set: mockConfSet }));
+      const mockServiceCollection = vi.fn(() => ({ doc: mockConfDoc }));
+      mockDb.collection = mockServiceCollection;
+
       await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
 
+      expect(mockDb.collection).toHaveBeenCalledWith("service");
       expect(account.createAdminUser).toHaveBeenCalledWith(
         mockAuth,
         mockDb,
@@ -121,6 +142,11 @@ describe("setup", () => {
         email: "test@example.com",
       });
 
+      const mockConfSet = vi.fn().mockResolvedValue(undefined);
+      const mockConfDoc = vi.fn(() => ({ set: mockConfSet }));
+      const mockServiceCollection = vi.fn(() => ({ doc: mockConfDoc }));
+      mockDb.collection = mockServiceCollection;
+
       await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -152,6 +178,11 @@ describe("setup", () => {
         version: 0,
         email: "test@example.com",
       });
+
+      const mockConfSet = vi.fn().mockResolvedValue(undefined);
+      const mockConfDoc = vi.fn(() => ({ set: mockConfSet }));
+      const mockServiceCollection = vi.fn(() => ({ doc: mockConfDoc }));
+      mockDb.collection = mockServiceCollection;
 
       await setUpData(mockAuth, mockDb, mockLogger, mockEvent);
 

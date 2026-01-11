@@ -1,34 +1,27 @@
 import { DocumentSnapshot } from "firebase/firestore";
 import { Meta } from "./Meta";
 
-export interface ProviderParam {
-  key: string;
-  value: string;
-}
-
-export interface ProviderData {
-  type: string;
+export interface GroupData {
   name: string;
-  params: ProviderParam[];
+  members: string[];
   valid: boolean;
 }
 
-export interface Provider extends Meta, ProviderData {
+export interface Group extends Meta, GroupData {
   id: string;
-  type: string;
   name: string;
-  params: ProviderParam[];
+  members: string[];
   valid: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 /**
- * Creates a Provider object from a Firebase document snapshot
+ * Creates a Group object from a Firebase document snapshot
  * @param doc - Firebase document snapshot
- * @returns Provider object or null if document doesn't exist
+ * @returns Group object or null if document doesn't exist
  */
-export function providerFromDoc(doc: DocumentSnapshot): Provider | null {
+export function groupFromDoc(doc: DocumentSnapshot): Group | null {
   if (!doc.exists()) {
     return null;
   }
@@ -37,9 +30,8 @@ export function providerFromDoc(doc: DocumentSnapshot): Provider | null {
 
   return {
     id: doc.id,
-    type: data?.type ?? "",
     name: data?.name ?? "",
-    params: data?.params ?? [],
+    members: data?.members ?? [],
     valid: data?.valid ?? false,
     createdAt: data?.createdAt?.toDate(),
     updatedAt: data?.updatedAt?.toDate(),

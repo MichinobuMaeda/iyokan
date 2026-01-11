@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import * as E from "fp-ts/Either";
 
-import { useClientAuth } from "@/app/_client/auth";
+import { useAuth } from "@/app/_client/useAuth";
 import { updateAdmin } from "@/app/_client/firestore";
 import { User } from "@/app/_types/User";
 import { useI18n } from "@/app/_i18n/context";
@@ -19,7 +19,7 @@ export default function AdminUpdateForm({
   const [formData, setFormData] = useState<User>(initialData);
   const [pending, setPending] = useState(false);
   const [errorOnSave, setErrorOnSave] = useState<string | null>(null);
-  const { router } = useClientAuth();
+  const { router } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

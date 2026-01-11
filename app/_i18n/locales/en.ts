@@ -48,6 +48,7 @@ export const en = {
   active: "Active",
   adminUpdateSuccess: "Admin updated successfully",
   emailChangeNote: "Only the account holder can change their email",
+  typeChangeNote: "Provider type cannot be changed after creation",
 
   // Organization page
   orgTitle: "Organization",
@@ -72,17 +73,23 @@ export const en = {
   admin: "Admin",
   organization: "Organization",
   provider: "Provider",
+  users: "Users",
 
   // Home page
   addOrganization: "Add organization",
   addAdmin: "Add admin",
   addProvider: "Add provider",
+  addUser: "Add user",
 
   // Validation errors
   errorEmailRequired: "Email is required",
   errorInvalidEmail: "Invalid email format",
   errorNameEmailRequired: "Name and email are required",
   errorOrgIdNameRequired: "Organization ID and name are required",
+  errorOrgIdReserved: "Organization ID is reserved and cannot be used",
+  errorOidRequired: "Organization ID is required",
+  errorOidInvalidFormat:
+    "Organization ID must contain only lowercase letters and numbers",
   errorProviderTypeRequired: "Provider type is required",
   errorPasswordMin10: "Min 10 characters",
   errorPasswordUppercase: "Add uppercase letter",
@@ -108,6 +115,7 @@ export const en = {
   errorUpdateOrg: "Failed to update organization",
   errorSaveProvider: "Failed to save provider",
   errorUpdateProvider: "Failed to update provider",
+  errorUpdateUser: "Failed to update user",
 
   // Server Firestore errors
   errorFetchAdmins: "Failed to fetch admins",
@@ -119,7 +127,11 @@ export const en = {
   errorFetchProviders: "Failed to fetch providers",
   errorProviderNotFound: "Provider not found",
   errorFetchProvider: "Failed to fetch provider",
+  errorFetchUsers: "Failed to fetch users",
+  errorUserNotFound: "User not found",
+  errorFetchUser: "Failed to fetch user",
 
   // Functions errors
   errorCreateAdmin: "Failed to create admin",
+  errorCreateUser: "Failed to create user",
 } as const;

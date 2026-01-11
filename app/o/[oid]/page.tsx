@@ -1,10 +1,12 @@
+import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { getServerApp } from "@/app/_server/firebase";
-import { requireServerAuth } from "@/app/_server/auth";
-import { getOrg } from "@/app/_server/firestore";
+import { requireAuth } from "@/app/_server/requireAuth";
+import { getOrg, getOrgUsers, getOrgProviders } from "@/app/_server/firestore";
 import { getTranslations } from "@/app/_i18n/server";
 import MetaItems from "@/app/_components/MetaItems";
+import SvgAdd from "@/app/_icons/SvgAdd";
 import OrgUpdateForm from "./OrgUpdateForm";
 
 export default async function OrgDetailPage({
@@ -15,9 +17,29 @@ export default async function OrgDetailPage({
   const { oid } = await params;
   const { auth, db } = await getServerApp();
   const { t } = await getTranslations();
-  requireServerAuth(auth);
+  requireAuth(auth);
 
   const result = await getOrg(db, oid);
+
+  // Fetch users for this org
+  const usersResult = await getOrgUsers(db, oid);
+  let usersError: string | undefined;
+  const users = E.isRight(usersResult)
+    ? usersResult.right
+    : (() => {
+        usersError = t(usersResult.left);
+        return [];
+      })();
+
+  // Fetch providers for this org
+  const providersResult = await getOrgProviders(db, oid);
+  let providersError: string | undefined;
+  const providers = E.isRight(providersResult)
+    ? providersResult.right
+    : (() => {
+        providersError = t(providersResult.left);
+        return [];
+      })();
 
   return (
     <main>
@@ -29,6 +51,56 @@ export default async function OrgDetailPage({
           <MetaItems meta={result.right} />
           <OrgUpdateForm initialData={result.right} />
         </>
+      )}
+
+      <h3>Providers</h3>
+      <Link
+        href={`/o/${oid}/providers`}
+        className="button outlined"
+        style={{ width: "100%" }}
+      >
+        <SvgAdd /> {t("addProvider")}
+      </Link>
+      {providersError ? (
+        <p className="message error">{providersError}</p>
+      ) : (
+        <div className="list">
+          {providers.map((provider) => (
+            <Link
+              key={provider.id}
+              href={`/o/${oid}/providers/${provider.id}`}
+              className="button text square"
+              style={{ width: "100%" }}
+            >
+              {provider.name} ({provider.type})
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <h3>{t("users")}</h3>
+      <Link
+        href={`/o/${oid}/users`}
+        className="button outlined"
+        style={{ width: "100%" }}
+      >
+        <SvgAdd /> {t("addUser")}
+      </Link>
+      {usersError ? (
+        <p className="message error">{usersError}</p>
+      ) : (
+        <div className="list">
+          {users.map((user) => (
+            <Link
+              key={user.id}
+              href={`/o/${oid}/users/${user.id}`}
+              className="button text square"
+              style={{ width: "100%" }}
+            >
+              {user.email}
+            </Link>
+          ))}
+        </div>
       )}
     </main>
   );
