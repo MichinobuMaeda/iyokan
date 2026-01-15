@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import {
@@ -12,7 +11,7 @@ import {
 } from "@/app/_types/Provider";
 import { saveProvider } from "@/app/_client/firestore";
 import { useI18n } from "@/app/_i18n/context";
-import SvgSync from "@/app/_icons/SvgSync";
+import Form from "@/app/_components/Form";
 
 export default function ProviderCreateForm({ oid }: { oid: string }) {
   const router = useRouter();
@@ -20,7 +19,7 @@ export default function ProviderCreateForm({ oid }: { oid: string }) {
   const [selectedType, setSelectedType] = useState<ProviderType | null>(null);
   const [name, setName] = useState("");
   const [params, setParams] = useState<ProviderParam[]>([]);
-  const [errorOnSave, setErrorOnSave] = useState<string | null>(null);
+  const [errorOnSave, setErrorOnSave] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
 
   const handleTypeChange = (type: string) => {
@@ -53,7 +52,7 @@ export default function ProviderCreateForm({ oid }: { oid: string }) {
     }
 
     setLoading(true);
-    setErrorOnSave(null);
+    setErrorOnSave(undefined);
 
     const providerData = {
       type: selectedType.type,
@@ -74,7 +73,12 @@ export default function ProviderCreateForm({ oid }: { oid: string }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Form
+      onSubmit={handleSubmit}
+      errorOnSave={errorOnSave}
+      returnPath={`/o/${oid}`}
+      disabled={loading}
+    >
       <div>
         <label htmlFor="providerType">Provider Type</label>
         <select
@@ -130,19 +134,8 @@ export default function ProviderCreateForm({ oid }: { oid: string }) {
                 </div>
               );
             })}
-
-          <hr />
-          {errorOnSave && <div className="message error">{errorOnSave}</div>}
-          <div className="row right">
-            <Link href={`/o/${oid}`} className="button outlined">
-              {t("cancel")}
-            </Link>
-            <button type="submit" disabled={loading}>
-              <SvgSync /> {t("save")}
-            </button>
-          </div>
         </>
       )}
-    </form>
+    </Form>
   );
 }

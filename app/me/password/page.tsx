@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useMemo, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { useAuth } from "@/app/_client/useAuth";
 import { changePassword, ChangePasswordData } from "@/app/_client/auth";
-import { validatePassword } from "@/app/_lib/validators";
+import {
+  validatePassword,
+  validateRequiredString,
+} from "@/app/_lib/validators";
 import { useI18n } from "@/app/_i18n/context";
+import Form from "@/app/_components/Form";
 import PasswordInput from "@/app/_components/PasswordInput";
-import SvgSync from "@/app/_icons/SvgSync";
 
 export default function ChangePasswordPage() {
   useAuth();
@@ -26,15 +28,13 @@ export default function ChangePasswordPage() {
   const [pending, setPending] = useState(false);
   const [errorOnSave, setErrorOnSave] = useState<string | undefined>(undefined);
 
-  const errorCurrentPassword = (() => {
-    if (
-      !formData.currentPassword ||
-      formData.currentPassword.trim().length === 0
-    ) {
-      return t("required");
+  const errorCurrentPassword = useMemo(() => {
+    const validationResult = validateRequiredString(formData.currentPassword);
+    if (E.isLeft(validationResult)) {
+      return t(validationResult.left);
     }
     return undefined;
-  })();
+  }, [formData.currentPassword, t]);
 
   const errorNewPassword = (() => {
     if (!formData.newPassword || formData.newPassword.trim().length === 0) {
@@ -71,76 +71,61 @@ export default function ChangePasswordPage() {
 
   return (
     <main>
-      <form className="column" onSubmit={handleSubmit}>
+      <Form
+        onSubmit={handleSubmit}
+        returnPath="/"
+        disabled={
+          pending ||
+          !!errorCurrentPassword ||
+          !!errorNewPassword ||
+          !!errorConfirmPassword
+        }
+        errorOnSave={errorOnSave}
+      >
         <h2>{t("changePasswordTitle")}</h2>
 
-        <div className="row">
-          <PasswordInput
-            id="currentPassword"
-            name="currentPassword"
-            label={t("currentPassword")}
-            value={formData.currentPassword}
-            onChange={(e) =>
-              setFormData({ ...formData, currentPassword: e.target.value })
-            }
-            disabled={pending}
-            error={errorCurrentPassword}
-            helperText={t("required")}
-            required
-          />
-        </div>
+        <PasswordInput
+          id="currentPassword"
+          name="currentPassword"
+          label={t("currentPassword")}
+          value={formData.currentPassword}
+          onChange={(e) =>
+            setFormData({ ...formData, currentPassword: e.target.value })
+          }
+          disabled={pending}
+          error={errorCurrentPassword}
+          helperText={t("required")}
+          required
+        />
 
-        <div className="row">
-          <PasswordInput
-            id="newPassword"
-            name="newPassword"
-            label={t("newPassword")}
-            value={formData.newPassword}
-            onChange={(e) =>
-              setFormData({ ...formData, newPassword: e.target.value })
-            }
-            disabled={pending}
-            error={errorNewPassword}
-            helperText={t("required")}
-            required
-          />
-        </div>
+        <PasswordInput
+          id="newPassword"
+          name="newPassword"
+          label={t("newPassword")}
+          value={formData.newPassword}
+          onChange={(e) =>
+            setFormData({ ...formData, newPassword: e.target.value })
+          }
+          disabled={pending}
+          error={errorNewPassword}
+          helperText={t("required")}
+          required
+        />
 
-        <div className="row">
-          <PasswordInput
-            id="confirmPassword"
-            name="confirmPassword"
-            label={t("confirmPassword")}
-            value={formData.confirmPassword}
-            onChange={(e) =>
-              setFormData({ ...formData, confirmPassword: e.target.value })
-            }
-            disabled={pending}
-            error={errorConfirmPassword}
-            helperText={t("required")}
-            required
-          />
-        </div>
-
-        {errorOnSave && <div className="message error">{errorOnSave}</div>}
-        <div className="row right">
-          <Link href="/" className="button outlined">
-            {t("cancel")}
-          </Link>
-          <button
-            type="submit"
-            className="button filled"
-            disabled={
-              pending ||
-              !!errorCurrentPassword ||
-              !!errorNewPassword ||
-              !!errorConfirmPassword
-            }
-          >
-            <SvgSync /> {t("save")}
-          </button>
-        </div>
-      </form>
+        <PasswordInput
+          id="confirmPassword"
+          name="confirmPassword"
+          label={t("confirmPassword")}
+          value={formData.confirmPassword}
+          onChange={(e) =>
+            setFormData({ ...formData, confirmPassword: e.target.value })
+          }
+          disabled={pending}
+          error={errorConfirmPassword}
+          helperText={t("required")}
+          required
+        />
+      </Form>
     </main>
   );
 }

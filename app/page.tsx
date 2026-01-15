@@ -6,6 +6,9 @@ import { requireAuth } from "@/app/_server/requireAuth";
 import { getAdmins, getOrgs } from "@/app/_server/firestore";
 import { getTranslations } from "@/app/_i18n/server";
 import SvgAdd from "@/app/_icons/SvgAdd";
+import SvgBlock from "@/app/_icons/SvgBlock";
+import SvgDomain from "@/app/_icons/SvgDomain";
+import SvgPerson from "@/app/_icons/SvgPerson";
 
 export default async function Home() {
   const { auth, db } = await getServerApp();
@@ -48,6 +51,7 @@ export default async function Home() {
               className="button text square"
               style={{ width: "100%" }}
             >
+              {org.valid ? <SvgDomain /> : <SvgBlock />}
               {org.name}
             </Link>
           ))}
@@ -71,6 +75,7 @@ export default async function Home() {
               className="button text square"
               style={{ width: "100%" }}
             >
+              {admin.valid ? <SvgPerson /> : <SvgBlock />}
               {admin.email}
             </Link>
           ))}

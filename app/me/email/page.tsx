@@ -2,15 +2,14 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { useAuth } from "@/app/_client/useAuth";
 import { changeEmail, ChangeEmailData } from "@/app/_client/auth";
-import { validateEmail } from "@/app/_lib/validators";
+import { validateRequiredEmail } from "@/app/_lib/validators";
 import { useI18n } from "@/app/_i18n/context";
+import Form from "@/app/_components/Form";
 import PasswordInput from "@/app/_components/PasswordInput";
-import SvgSync from "@/app/_icons/SvgSync";
 
 export default function ChangeEmailPage() {
   useAuth();
@@ -40,7 +39,7 @@ export default function ChangeEmailPage() {
     if (!formData.newEmail || formData.newEmail.trim().length === 0) {
       return t("required");
     }
-    const validationResult = validateEmail(formData.newEmail);
+    const validationResult = validateRequiredEmail(formData.newEmail);
     if (E.isLeft(validationResult)) {
       return t(validationResult.left);
     }
@@ -77,90 +76,75 @@ export default function ChangeEmailPage() {
 
   return (
     <main>
-      <form className="column" onSubmit={handleSubmit}>
+      <Form
+        onSubmit={handleSubmit}
+        returnPath="/"
+        disabled={
+          pending ||
+          !!errorCurrentPassword ||
+          !!errorNewEmail ||
+          !!errorConfirmEmail
+        }
+        errorOnSave={errorOnSave}
+      >
         <h2>{t("changeEmailTitle")}</h2>
 
-        <div className="row">
-          <PasswordInput
-            id="currentPassword"
-            name="currentPassword"
-            label={t("currentPassword")}
-            value={formData.currentPassword}
+        <PasswordInput
+          id="currentPassword"
+          name="currentPassword"
+          label={t("currentPassword")}
+          value={formData.currentPassword}
+          onChange={(e) =>
+            setFormData({ ...formData, currentPassword: e.target.value })
+          }
+          disabled={pending}
+          error={errorCurrentPassword}
+          helperText={t("required")}
+          required
+        />
+
+        <div
+          className={`textfield outlined${errorNewEmail ? " error" : ""}`}
+          style={{ width: "100%" }}
+        >
+          <label>{t("newEmail")}</label>
+          <input
+            id="newEmail"
+            name="newEmail"
+            type="email"
+            value={formData.newEmail}
             onChange={(e) =>
-              setFormData({ ...formData, currentPassword: e.target.value })
+              setFormData({ ...formData, newEmail: e.target.value })
             }
-            disabled={pending}
-            error={errorCurrentPassword}
-            helperText={t("required")}
             required
+            placeholder={t("newEmail")}
+            disabled={pending}
+            style={{ fontFamily: "monospace" }}
           />
+          <div>{errorNewEmail || t("required")}</div>
         </div>
 
-        <div className="row">
-          <div
-            className={`textfield outlined${errorNewEmail ? " error" : ""}`}
-            style={{ width: "100%" }}
-          >
-            <label>{t("newEmail")}</label>
-            <input
-              id="newEmail"
-              name="newEmail"
-              type="email"
-              value={formData.newEmail}
-              onChange={(e) =>
-                setFormData({ ...formData, newEmail: e.target.value })
-              }
-              required
-              placeholder={t("newEmail")}
-              disabled={pending}
-              style={{ fontFamily: "monospace" }}
-            />
-            <div>{errorNewEmail || t("required")}</div>
-          </div>
-        </div>
-
-        <div className="row">
-          <div
-            className={`textfield outlined${errorConfirmEmail ? " error" : ""}`}
-            style={{ width: "100%" }}
-          >
-            <label>{t("confirmEmail")}</label>
-            <input
-              id="confirmEmail"
-              name="confirmEmail"
-              type="email"
-              value={formData.confirmEmail}
-              onChange={(e) =>
-                setFormData({ ...formData, confirmEmail: e.target.value })
-              }
-              required
-              placeholder={t("confirmEmail")}
-              disabled={pending}
-              style={{ fontFamily: "monospace" }}
-            />
-            <div>{errorConfirmEmail || t("required")}</div>
-          </div>
-        </div>
-
-        {errorOnSave && <div className="message error">{errorOnSave}</div>}
-        <div className="row right">
-          <Link href="/" className="button outlined">
-            {t("cancel")}
-          </Link>
-          <button
-            type="submit"
-            className="button filled"
-            disabled={
-              pending ||
-              !!errorCurrentPassword ||
-              !!errorNewEmail ||
-              !!errorConfirmEmail
+        <div
+          className={`textfield outlined${errorConfirmEmail ? " error" : ""}`}
+          style={{ width: "100%" }}
+        >
+          <label>{t("confirmEmail")}</label>
+          <input
+            id="confirmEmail"
+            name="confirmEmail"
+            type="email"
+            value={formData.confirmEmail}
+            onChange={(e) =>
+              setFormData({ ...formData, confirmEmail: e.target.value })
             }
-          >
-            <SvgSync /> {t("save")}
-          </button>
+            required
+            placeholder={t("confirmEmail")}
+            disabled={pending}
+            style={{ fontFamily: "monospace" }}
+          />
+          <div>{errorConfirmEmail || t("required")}</div>
         </div>
-      </form>
+      </Form>
     </main>
   );
 }

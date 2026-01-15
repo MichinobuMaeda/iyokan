@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { useAuth } from "@/app/_client/useAuth";
@@ -9,7 +8,7 @@ import { saveOrg } from "@/app/_client/firestore";
 import { OrgData } from "@/app/_types/Org";
 import { validateOid } from "@/app/_lib/validators";
 import { useI18n } from "@/app/_i18n/context";
-import SvgSync from "@/app/_icons/SvgSync";
+import Form from "@/app/_components/Form";
 
 export default function CreateOrgPage() {
   const { t } = useI18n();
@@ -54,7 +53,12 @@ export default function CreateOrgPage() {
 
   return (
     <main>
-      <form className="column" onSubmit={handleSubmit}>
+      <Form
+        onSubmit={handleSubmit}
+        errorOnSave={errorOnSave}
+        returnPath="/"
+        disabled={pending}
+      >
         <h2>{t("addOrganization")}</h2>
         <div className="row">
           <div className="textfield outlined" style={{ width: "100%" }}>
@@ -124,18 +128,7 @@ export default function CreateOrgPage() {
           />
           {t("active")}
         </label>
-
-        <hr />
-        {errorOnSave && <div className="message error">{errorOnSave}</div>}
-        <div className="row right">
-          <Link href="/" className="button outlined">
-            {t("cancel")}
-          </Link>
-          <button type="submit" disabled={pending} className="button filled">
-            <SvgSync /> {t("save")}
-          </button>
-        </div>
-      </form>
+      </Form>
     </main>
   );
 }

@@ -91,6 +91,7 @@ export const en = {
   errorOidInvalidFormat:
     "Organization ID must contain only lowercase letters and numbers",
   errorProviderTypeRequired: "Provider type is required",
+  errorPasswordRequired: "Password is required",
   errorPasswordMin10: "Min 10 characters",
   errorPasswordUppercase: "Add uppercase letter",
   errorPasswordLowercase: "Add lowercase letter",

@@ -8,6 +8,7 @@ import { useAuth } from "@/app/_client/useAuth";
 import { createUser } from "@/app/_client/functions";
 import { UserData } from "@/app/_types/User";
 import { useI18n } from "@/app/_i18n/context";
+import Form from "@/app/_components/Form";
 
 export default function UsersPage() {
   const { t } = useI18n();
@@ -46,7 +47,12 @@ export default function UsersPage() {
 
   return (
     <main>
-      <form className="column" onSubmit={handleSubmit}>
+      <Form
+        onSubmit={handleSubmit}
+        errorOnSave={errorOnSave}
+        returnPath={`/o/${oid}`}
+        disabled={pending}
+      >
         <h2>{t("addUser")}</h2>
         <div className="row">
           <div className="textfield outlined" style={{ width: "100%" }}>
@@ -98,20 +104,7 @@ export default function UsersPage() {
           />
           {t("valid")}
         </label>
-
-        {errorOnSave && <p className="message error">{errorOnSave}</p>}
-
-        <div className="row">
-          <button
-            type="submit"
-            className="button filled primary"
-            disabled={pending}
-            style={{ width: "100%" }}
-          >
-            {t("save")}
-          </button>
-        </div>
-      </form>
+      </Form>
     </main>
   );
 }

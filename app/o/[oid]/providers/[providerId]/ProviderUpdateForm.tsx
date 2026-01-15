@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { useAuth } from "@/app/_client/useAuth";
 import { updateProvider } from "@/app/_client/firestore";
 import { Provider, providerTypes } from "@/app/_types/Provider";
 import { useI18n } from "@/app/_i18n/context";
-import SvgSync from "@/app/_icons/SvgSync";
+import Form from "@/app/_components/Form";
 import PasswordInput from "@/app/_components/PasswordInput";
 
 export default function ProviderUpdateForm({
@@ -22,7 +21,7 @@ export default function ProviderUpdateForm({
   const oid = params?.oid ?? "";
   const [formData, setFormData] = useState<Provider>(initialData);
   const [pending, setPending] = useState(false);
-  const [errorOnSave, setErrorOnSave] = useState<string | null>(null);
+  const [errorOnSave, setErrorOnSave] = useState<string | undefined>(undefined);
   const { router } = useAuth();
 
   const selectedType = providerTypes.find((pt) => pt.type === formData.type);
@@ -30,7 +29,7 @@ export default function ProviderUpdateForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPending(true);
-    setErrorOnSave(null);
+    setErrorOnSave(undefined);
 
     const result = await updateProvider(oid, formData);
 
@@ -51,7 +50,12 @@ export default function ProviderUpdateForm({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Form
+      onSubmit={handleSubmit}
+      errorOnSave={errorOnSave}
+      returnPath={`/o/${oid}/providers`}
+      disabled={pending}
+    >
       <div className="row">
         <div className="textfield outlined" style={{ width: "100%" }}>
           <label>{t("name")}</label>
@@ -150,17 +154,6 @@ export default function ProviderUpdateForm({
         />
         {t("valid")}
       </div>
-
-      <hr />
-      {errorOnSave && <div className="message error">{errorOnSave}</div>}
-      <div className="row right">
-        <Link href={`/o/${oid}/providers`} className="button outlined">
-          {t("cancel")}
-        </Link>
-        <button type="submit" disabled={pending} className="button filled">
-          <SvgSync /> {t("save")}
-        </button>
-      </div>
-    </form>
+    </Form>
   );
 }

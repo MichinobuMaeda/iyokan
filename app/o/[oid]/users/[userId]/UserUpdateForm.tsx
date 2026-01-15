@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { useAuth } from "@/app/_client/useAuth";
 import { updateOrgUser } from "@/app/_client/firestore";
 import { User } from "@/app/_types/User";
 import { useI18n } from "@/app/_i18n/context";
-import SvgSync from "@/app/_icons/SvgSync";
+import Form from "@/app/_components/Form";
 
 export default function UserUpdateForm({ initialData }: { initialData: User }) {
   const { t } = useI18n();
@@ -17,13 +16,13 @@ export default function UserUpdateForm({ initialData }: { initialData: User }) {
   const oid = params?.oid ?? "";
   const [formData, setFormData] = useState<User>(initialData);
   const [pending, setPending] = useState(false);
-  const [errorOnSave, setErrorOnSave] = useState<string | null>(null);
+  const [errorOnSave, setErrorOnSave] = useState<string | undefined>(undefined);
   const { router } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPending(true);
-    setErrorOnSave(null);
+    setErrorOnSave(undefined);
 
     const result = await updateOrgUser(oid, formData);
 
@@ -37,7 +36,12 @@ export default function UserUpdateForm({ initialData }: { initialData: User }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Form
+      onSubmit={handleSubmit}
+      errorOnSave={errorOnSave}
+      returnPath={`/o/${oid}`}
+      disabled={pending}
+    >
       <div className="row">
         <div className="textfield outlined" style={{ width: "100%" }}>
           <label>{t("name")}</label>
@@ -83,17 +87,6 @@ export default function UserUpdateForm({ initialData }: { initialData: User }) {
         />
         {t("valid")}
       </div>
-
-      <hr />
-      {errorOnSave && <div className="message error">{errorOnSave}</div>}
-      <div className="row right">
-        <Link href={`/o/${oid}`} className="button outlined">
-          {t("cancel")}
-        </Link>
-        <button type="submit" disabled={pending} className="button filled">
-          <SvgSync /> {t("save")}
-        </button>
-      </div>
-    </form>
+    </Form>
   );
 }

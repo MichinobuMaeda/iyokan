@@ -74,8 +74,7 @@ describe("client auth", () => {
 
       expect(E.isRight(result)).toBe(true);
       if (E.isRight(result)) {
-        expect(result.right.uid).toBe("test-uid-123");
-        expect(result.right.idToken).toBe("mock-id-token");
+        expect(result.right).toBe("test-uid-123");
       }
     });
 

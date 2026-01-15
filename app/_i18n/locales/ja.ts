@@ -89,6 +89,7 @@ export const ja = {
   errorOidRequired: "組織IDは必須です",
   errorOidInvalidFormat: "組織IDは小文字と数字のみ使用できます",
   errorProviderTypeRequired: "プロバイダータイプは必須です",
+  errorPasswordRequired: "パスワードは必須です",
   errorPasswordMin10: "10文字以上が必要です",
   errorPasswordUppercase: "大文字を使用してください",
   errorPasswordLowercase: "小文字を使用してください",

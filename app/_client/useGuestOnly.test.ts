@@ -40,15 +40,24 @@ describe("useGuestOnly", () => {
 
     const unsubscribe = vi.fn();
     mockOnAuthStateChanged.mockImplementation((auth, callback) => {
-      // Simulate user is authenticated
-      callback({ uid: "test-uid", email: "test@example.com" });
+      // Simulate user is authenticated with getIdToken method
+      const mockUser = {
+        uid: "test-uid",
+        email: "test@example.com",
+        getIdToken: vi.fn().mockResolvedValue("mock-id-token"),
+      };
+      callback(mockUser);
       return unsubscribe;
     });
 
     const { unmount } = renderHook(() => useGuestOnly());
 
     expect(mockOnAuthStateChanged).toHaveBeenCalled();
-    expect(mockReplace).toHaveBeenCalledWith("/");
+
+    // Wait for async getIdToken to complete
+    await vi.waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith("/");
+    });
 
     // Test cleanup
     unmount();
@@ -92,7 +101,12 @@ describe("useGuestOnly", () => {
 
     const unsubscribe = vi.fn();
     mockOnAuthStateChanged.mockImplementation((auth, callback) => {
-      callback({ uid: "test-uid", email: "test@example.com" });
+      const mockUser = {
+        uid: "test-uid",
+        email: "test@example.com",
+        getIdToken: vi.fn().mockResolvedValue("mock-id-token"),
+      };
+      callback(mockUser);
       return unsubscribe;
     });
 

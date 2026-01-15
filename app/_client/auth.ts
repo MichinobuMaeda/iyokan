@@ -5,23 +5,15 @@ import {
   sendPasswordResetEmail,
   signOut,
   UserCredential,
-  onAuthStateChanged,
   EmailAuthProvider,
   reauthenticateWithCredential,
   updateEmail,
   updatePassword,
 } from "firebase/auth";
 import { getDoc, doc } from "firebase/firestore";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import * as E from "fp-ts/Either";
 
 import { auth, db } from "./firebase";
-
-export interface LoginResult {
-  uid: string;
-  idToken: string;
-}
 
 export interface LoginData {
   email: string;
@@ -38,10 +30,7 @@ export async function login({
   email,
   password,
 }: LoginData): Promise<
-  E.Either<
-    "errorLoginNotAdmin" | "errorInvalidAdmin" | "errorLogin",
-    LoginResult
-  >
+  E.Either<"errorLoginNotAdmin" | "errorInvalidAdmin" | "errorLogin", string>
 > {
   try {
     // Sign in with Firebase Auth
@@ -51,6 +40,7 @@ export async function login({
       password
     );
     const uid = cred.user.uid;
+    console.log("uid:", uid);
 
     // Check if user is an admin
     const adminDoc = await getDoc(doc(db, "admins", uid));
@@ -64,14 +54,7 @@ export async function login({
       return E.left("errorInvalidAdmin");
     }
 
-    // Get the ID token
-    const idToken = await cred.user.getIdToken();
-
-    document.cookie = `__session=${idToken}; path=/; max-age=3600; SameSite=Lax`;
-    console.log("uid:", uid);
-    console.log("ID Token:", idToken);
-
-    return E.right({ uid, idToken });
+    return E.right(uid);
   } catch (error) {
     console.error("login error:", error);
     return E.left("errorLogin");

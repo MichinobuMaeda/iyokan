@@ -12,8 +12,10 @@ import { useI18n } from "@/app/_i18n/context";
 import { auth } from "@/app/_client/firebase";
 import { logout } from "@/app/_client/auth";
 import SvgHome from "@/app/_icons/SvgHome";
-import SvgLanguage from "../_icons/SvgLanguage";
-import SvgLogin from "../_icons/SvgLogin";
+import SvgLanguage from "@/app/_icons/SvgLanguage";
+import SvgAlternateEmail from "@/app/_icons/SvgAlternateEmail";
+import SvgPassword from "@/app/_icons/SvgPassword";
+import SvgLogin from "@/app/_icons/SvgLogin";
 import SvgLogout from "@/app/_icons/SvgLogout";
 import SvgAccountCircle from "@/app/_icons/SvgAccountCircle";
 
@@ -88,8 +90,12 @@ export default function Header() {
         {user && (
           <>
             <hr />
-            <Link href="/me/email">{t("changeEmail")}</Link>
-            <Link href="/me/password">{t("changePassword")}</Link>
+            <Link href="/me/email">
+              <SvgAlternateEmail /> {t("changeEmail")}
+            </Link>
+            <Link href="/me/password">
+              <SvgPassword /> {t("changePassword")}
+            </Link>
             <hr />
             <button onClick={handleLogout}>
               <span className="prefix">

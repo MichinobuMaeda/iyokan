@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { useAuth } from "@/app/_client/useAuth";
 import { createAdmin } from "@/app/_client/functions";
 import { UserData } from "@/app/_types/User";
 import { useI18n } from "@/app/_i18n/context";
-import SvgSync from "@/app/_icons/SvgSync";
+import Form from "@/app/_components/Form";
 
 export default function AdminsPage() {
   const { t } = useI18n();
@@ -45,7 +44,12 @@ export default function AdminsPage() {
 
   return (
     <main>
-      <form className="column" onSubmit={handleSubmit}>
+      <Form
+        onSubmit={handleSubmit}
+        errorOnSave={errorOnSave}
+        returnPath="/"
+        disabled={pending}
+      >
         <h2>{t("addAdmin")}</h2>
         <div className="row">
           <div className="textfield outlined" style={{ width: "100%" }}>
@@ -97,18 +101,7 @@ export default function AdminsPage() {
           />
           {t("valid")}
         </label>
-
-        <hr />
-        {errorOnSave && <div className="message error">{errorOnSave}</div>}
-        <div className="row right">
-          <Link href="/" className="button outlined">
-            {t("cancel")}
-          </Link>
-          <button type="submit" className="button filled" disabled={pending}>
-            <SvgSync /> {t("save")}
-          </button>
-        </div>
-      </form>
+      </Form>
     </main>
   );
 }

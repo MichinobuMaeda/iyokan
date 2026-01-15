@@ -2,6 +2,7 @@
 
 import { Meta } from "@/app/_types/Meta";
 import { useI18n } from "@/app/_i18n/context";
+import { formatTimestamp } from "@/app/_lib/formatter";
 
 export default function MetaItems({
   meta: { id, createdAt, updatedAt },
@@ -15,10 +16,10 @@ export default function MetaItems({
         {t("id")}: {id}
       </div>
       <div>
-        {t("created")}: {createdAt?.toISOString() ?? "-"}
+        {t("created")}: {formatTimestamp(createdAt, "-")}
       </div>
       <div>
-        {t("updated")}: {updatedAt?.toISOString() ?? "-"}
+        {t("updated")}: {formatTimestamp(updatedAt, "-")}
       </div>
     </div>
   );

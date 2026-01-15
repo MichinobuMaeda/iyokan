@@ -7,6 +7,9 @@ import { getOrg, getOrgUsers, getOrgProviders } from "@/app/_server/firestore";
 import { getTranslations } from "@/app/_i18n/server";
 import MetaItems from "@/app/_components/MetaItems";
 import SvgAdd from "@/app/_icons/SvgAdd";
+import SvgBlock from "@/app/_icons/SvgBlock";
+import SvgKey from "@/app/_icons/SvgKey";
+import SvgPerson from "@/app/_icons/SvgPerson";
 import OrgUpdateForm from "./OrgUpdateForm";
 
 export default async function OrgDetailPage({
@@ -72,6 +75,7 @@ export default async function OrgDetailPage({
               className="button text square"
               style={{ width: "100%" }}
             >
+              {provider.valid ? <SvgKey /> : <SvgBlock />}
               {provider.name} ({provider.type})
             </Link>
           ))}
@@ -97,6 +101,7 @@ export default async function OrgDetailPage({
               className="button text square"
               style={{ width: "100%" }}
             >
+              {user.valid ? <SvgPerson /> : <SvgBlock />}
               {user.email}
             </Link>
           ))}

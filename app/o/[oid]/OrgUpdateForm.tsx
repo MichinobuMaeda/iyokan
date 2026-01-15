@@ -2,25 +2,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { updateOrg } from "@/app/_client/firestore";
 import { Org } from "@/app/_types/Org";
 import { useI18n } from "@/app/_i18n/context";
-import SvgSync from "@/app/_icons/SvgSync";
+import Form from "@/app/_components/Form";
 
 export default function OrgUpdateForm({ initialData }: { initialData: Org }) {
   const { t } = useI18n();
   const router = useRouter();
   const [formData, setFormData] = useState<Org>(initialData);
   const [pending, setPending] = useState(false);
-  const [errorOnSave, setErrorOnSave] = useState<string | null>(null);
+  const [errorOnSave, setErrorOnSave] = useState<string | undefined>(undefined);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPending(true);
-    setErrorOnSave(null);
+    setErrorOnSave(undefined);
 
     const result = await updateOrg(formData);
 
@@ -34,7 +33,12 @@ export default function OrgUpdateForm({ initialData }: { initialData: Org }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Form
+      onSubmit={handleSubmit}
+      errorOnSave={errorOnSave}
+      returnPath="/"
+      disabled={pending}
+    >
       <div className="row">
         <div className="textfield outlined" style={{ width: "100%" }}>
           <label>{t("name")}</label>
@@ -80,17 +84,6 @@ export default function OrgUpdateForm({ initialData }: { initialData: Org }) {
         />
         {t("active")}
       </div>
-
-      <hr />
-      {errorOnSave && <div className="message error">{errorOnSave}</div>}
-      <div className="row right">
-        <Link href="/" className="button outlined">
-          {t("cancel")}
-        </Link>
-        <button type="submit" disabled={pending} className="button filled">
-          <SvgSync /> {t("save")}
-        </button>
-      </div>
-    </form>
+    </Form>
   );
 }

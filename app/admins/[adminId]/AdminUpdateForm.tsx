@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import * as E from "fp-ts/Either";
 
 import { useAuth } from "@/app/_client/useAuth";
 import { updateAdmin } from "@/app/_client/firestore";
 import { User } from "@/app/_types/User";
 import { useI18n } from "@/app/_i18n/context";
-import SvgSync from "@/app/_icons/SvgSync";
+import Form from "@/app/_components/Form";
 
 export default function AdminUpdateForm({
   initialData,
@@ -18,13 +17,13 @@ export default function AdminUpdateForm({
   const { t } = useI18n();
   const [formData, setFormData] = useState<User>(initialData);
   const [pending, setPending] = useState(false);
-  const [errorOnSave, setErrorOnSave] = useState<string | null>(null);
+  const [errorOnSave, setErrorOnSave] = useState<string | undefined>(undefined);
   const { router } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPending(true);
-    setErrorOnSave(null);
+    setErrorOnSave(undefined);
 
     const result = await updateAdmin(formData);
 
@@ -38,7 +37,12 @@ export default function AdminUpdateForm({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Form
+      onSubmit={handleSubmit}
+      errorOnSave={errorOnSave}
+      returnPath="/"
+      disabled={pending}
+    >
       <div className="row">
         <div className="textfield outlined" style={{ width: "100%" }}>
           <label>{t("name")}</label>
@@ -84,17 +88,6 @@ export default function AdminUpdateForm({
         />
         {t("valid")}
       </div>
-
-      <hr />
-      {errorOnSave && <div className="message error">{errorOnSave}</div>}
-      <div className="row right">
-        <Link href="/" className="button outlined">
-          {t("cancel")}
-        </Link>
-        <button type="submit" disabled={pending} className="button filled">
-          <SvgSync /> {t("save")}
-        </button>
-      </div>
-    </form>
+    </Form>
   );
 }
