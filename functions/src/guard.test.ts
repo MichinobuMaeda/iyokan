@@ -1,549 +1,512 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import * as E from "fp-ts/lib/Either.js";
 import {
   guardAuth,
-  guardAdmin,
   guardOrgUsers,
-  guardOrgManager,
+  guardOrgGroupMember,
+  guardSystemAdmin,
+  guardManager,
+  guardAdmin,
 } from "./guard.js";
+import * as firebase from "./firebase.js";
+
+vi.mock("./firebase.js", () => ({
+  isOrganizationMember: vi.fn(),
+  isGroupMember: vi.fn(),
+}));
 
 describe("guard", () => {
+  const mockContext = {
+    auth: {} as any,
+    db: {} as any,
+    logger: {} as any,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe("guardAuth", () => {
-    it("should pass when user is authenticated", async () => {
+    it("should return Right when user is authenticated", async () => {
       const mockRequest = {
         auth: {
           uid: "user123",
         },
-      };
+        data: {},
+      } as any;
 
-      await expect(guardAuth(mockRequest as any)).resolves.toBeUndefined();
+      const result = await guardAuth(mockRequest);
+      expect(E.isRight(result)).toBe(true);
     });
 
-    it("should throw error when auth is missing", async () => {
-      const mockRequest = {};
+    it("should return Left when auth is missing", async () => {
+      const mockRequest = {
+        data: {},
+      } as any;
 
-      await expect(guardAuth(mockRequest as any)).rejects.toThrow(
-        "unauthenticated"
-      );
+      const result = await guardAuth(mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("unauthenticated");
+      }
     });
 
-    it("should throw error when uid is missing", async () => {
+    it("should return Left when uid is missing", async () => {
       const mockRequest = {
         auth: {},
-      };
+        data: {},
+      } as any;
 
-      await expect(guardAuth(mockRequest as any)).rejects.toThrow(
-        "unauthenticated"
-      );
-    });
-  });
-
-  describe("guardAdmin", () => {
-    let mockFirestore: any;
-
-    beforeEach(() => {
-      mockFirestore = {
-        collection: vi.fn(),
-      };
-    });
-
-    it("should pass when user is a valid admin", async () => {
-      const mockRequest = {
-        auth: {
-          uid: "admin123",
-        },
-      };
-
-      const mockDocData = { valid: true };
-      const mockDoc = {
-        exists: true,
-        data: () => mockDocData,
-      };
-
-      const mockDocRef = {
-        get: vi.fn().mockResolvedValue(mockDoc),
-      };
-
-      const mockCollection = {
-        doc: vi.fn().mockReturnValue(mockDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockCollection);
-
-      await expect(
-        guardAdmin(mockFirestore, mockRequest as any)
-      ).resolves.toBeUndefined();
-
-      expect(mockFirestore.collection).toHaveBeenCalledWith("admins");
-      expect(mockCollection.doc).toHaveBeenCalledWith("admin123");
-    });
-
-    it("should throw error when user is not authenticated", async () => {
-      const mockRequest = {};
-
-      await expect(
-        guardAdmin(mockFirestore, mockRequest as any)
-      ).rejects.toThrow("unauthenticated");
-    });
-
-    it("should throw error when admin document does not exist", async () => {
-      const mockRequest = {
-        auth: {
-          uid: "admin123",
-        },
-      };
-
-      const mockDoc = {
-        exists: false,
-      };
-
-      const mockDocRef = {
-        get: vi.fn().mockResolvedValue(mockDoc),
-      };
-
-      const mockCollection = {
-        doc: vi.fn().mockReturnValue(mockDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockCollection);
-
-      await expect(
-        guardAdmin(mockFirestore, mockRequest as any)
-      ).rejects.toThrow("unknown user");
-    });
-
-    it("should throw error when admin is not valid", async () => {
-      const mockRequest = {
-        auth: {
-          uid: "admin123",
-        },
-      };
-
-      const mockDocData = { valid: false };
-      const mockDoc = {
-        exists: true,
-        data: () => mockDocData,
-      };
-
-      const mockDocRef = {
-        get: vi.fn().mockResolvedValue(mockDoc),
-      };
-
-      const mockCollection = {
-        doc: vi.fn().mockReturnValue(mockDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockCollection);
-
-      await expect(
-        guardAdmin(mockFirestore, mockRequest as any)
-      ).rejects.toThrow("forbidden");
-    });
-
-    it("should throw error when admin data has no valid field", async () => {
-      const mockRequest = {
-        auth: {
-          uid: "admin123",
-        },
-      };
-
-      const mockDoc = {
-        exists: true,
-        data: () => ({}),
-      };
-
-      const mockDocRef = {
-        get: vi.fn().mockResolvedValue(mockDoc),
-      };
-
-      const mockCollection = {
-        doc: vi.fn().mockReturnValue(mockDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockCollection);
-
-      await expect(
-        guardAdmin(mockFirestore, mockRequest as any)
-      ).rejects.toThrow("forbidden");
+      const result = await guardAuth(mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("unauthenticated");
+      }
     });
   });
 
   describe("guardOrgUsers", () => {
-    let mockFirestore: any;
-
-    beforeEach(() => {
-      mockFirestore = {
-        collection: vi.fn(),
-      };
-    });
-
-    it("should pass when user is a valid org user", async () => {
+    it("should return Right when user is authenticated and valid org member", async () => {
       const mockRequest = {
         auth: {
           uid: "user123",
         },
-      };
+        data: {
+          oid: "org123",
+        },
+      } as any;
 
-      const mockDocData = { valid: true };
-      const mockDoc = {
-        exists: true,
-        data: () => mockDocData,
-      };
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(E.right(true));
 
-      const mockUserDocRef = {
-        get: vi.fn().mockResolvedValue(mockDoc),
-      };
-
-      const mockUsersCollection = {
-        doc: vi.fn().mockReturnValue(mockUserDocRef),
-      };
-
-      const mockOrgDocRef = {
-        collection: vi.fn().mockReturnValue(mockUsersCollection),
-      };
-
-      const mockOrgsCollection = {
-        doc: vi.fn().mockReturnValue(mockOrgDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockOrgsCollection);
-
-      await expect(
-        guardOrgUsers(mockFirestore, mockRequest as any, "org123")
-      ).resolves.toBeUndefined();
-
-      expect(mockFirestore.collection).toHaveBeenCalledWith("orgs");
-      expect(mockOrgsCollection.doc).toHaveBeenCalledWith("org123");
-      expect(mockOrgDocRef.collection).toHaveBeenCalledWith("users");
-      expect(mockUsersCollection.doc).toHaveBeenCalledWith("user123");
+      const result = await guardOrgUsers(mockContext, mockRequest);
+      expect(E.isRight(result)).toBe(true);
+      expect(firebase.isOrganizationMember).toHaveBeenCalledWith(mockContext, {
+        uid: "user123",
+        oid: "org123",
+      });
     });
 
-    it("should throw error when user is not authenticated", async () => {
-      const mockRequest = {};
+    it("should return Left when user is not authenticated", async () => {
+      const mockRequest = {
+        data: {
+          oid: "org123",
+        },
+      } as any;
 
-      await expect(
-        guardOrgUsers(mockFirestore, mockRequest as any, "org123")
-      ).rejects.toThrow("unauthenticated");
+      const result = await guardOrgUsers(mockContext, mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("unauthenticated");
+      }
+      expect(firebase.isOrganizationMember).not.toHaveBeenCalled();
     });
 
-    it("should throw error when user document does not exist", async () => {
+    it("should return Left when user is not a valid org member", async () => {
       const mockRequest = {
         auth: {
           uid: "user123",
         },
-      };
+        data: {
+          oid: "org123",
+        },
+      } as any;
 
-      const mockDoc = {
-        exists: false,
-      };
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(
+        E.right(false)
+      );
 
-      const mockUserDocRef = {
-        get: vi.fn().mockResolvedValue(mockDoc),
-      };
-
-      const mockUsersCollection = {
-        doc: vi.fn().mockReturnValue(mockUserDocRef),
-      };
-
-      const mockOrgDocRef = {
-        collection: vi.fn().mockReturnValue(mockUsersCollection),
-      };
-
-      const mockOrgsCollection = {
-        doc: vi.fn().mockReturnValue(mockOrgDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockOrgsCollection);
-
-      await expect(
-        guardOrgUsers(mockFirestore, mockRequest as any, "org123")
-      ).rejects.toThrow("unknown user");
+      const result = await guardOrgUsers(mockContext, mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("invalid user");
+      }
     });
 
-    it("should throw error when user is not valid", async () => {
+    it("should return Left when isOrganizationMember returns an error", async () => {
       const mockRequest = {
         auth: {
           uid: "user123",
         },
-      };
-
-      const mockDocData = { valid: false };
-      const mockDoc = {
-        exists: true,
-        data: () => mockDocData,
-      };
-
-      const mockUserDocRef = {
-        get: vi.fn().mockResolvedValue(mockDoc),
-      };
-
-      const mockUsersCollection = {
-        doc: vi.fn().mockReturnValue(mockUserDocRef),
-      };
-
-      const mockOrgDocRef = {
-        collection: vi.fn().mockReturnValue(mockUsersCollection),
-      };
-
-      const mockOrgsCollection = {
-        doc: vi.fn().mockReturnValue(mockOrgDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockOrgsCollection);
-
-      await expect(
-        guardOrgUsers(mockFirestore, mockRequest as any, "org123")
-      ).rejects.toThrow("invalid user");
-    });
-
-    it("should throw error when user data has no valid field", async () => {
-      const mockRequest = {
-        auth: {
-          uid: "user123",
+        data: {
+          oid: "org123",
         },
-      };
+      } as any;
 
-      const mockDoc = {
-        exists: true,
-        data: () => ({}),
-      };
+      const error = new Error("firestore error");
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(E.left(error));
 
-      const mockUserDocRef = {
-        get: vi.fn().mockResolvedValue(mockDoc),
-      };
-
-      const mockUsersCollection = {
-        doc: vi.fn().mockReturnValue(mockUserDocRef),
-      };
-
-      const mockOrgDocRef = {
-        collection: vi.fn().mockReturnValue(mockUsersCollection),
-      };
-
-      const mockOrgsCollection = {
-        doc: vi.fn().mockReturnValue(mockOrgDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockOrgsCollection);
-
-      await expect(
-        guardOrgUsers(mockFirestore, mockRequest as any, "org123")
-      ).rejects.toThrow("invalid user");
+      const result = await guardOrgUsers(mockContext, mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe(error);
+      }
     });
   });
 
-  describe("guardOrgManager", () => {
-    let mockFirestore: any;
-
-    beforeEach(() => {
-      mockFirestore = {
-        collection: vi.fn(),
-      };
-    });
-
-    it("should pass when user is a valid org manager", async () => {
-      const mockRequest = {
-        auth: {
-          uid: "manager123",
-        },
-      };
-
-      const mockUserDocData = { valid: true };
-      const mockUserDoc = {
-        exists: true,
-        data: () => mockUserDocData,
-      };
-
-      const mockUserDocRef = {
-        get: vi.fn().mockResolvedValue(mockUserDoc),
-      };
-
-      const mockUsersCollection = {
-        doc: vi.fn().mockReturnValue(mockUserDocRef),
-      };
-
-      const mockManagerDocData = { members: ["manager123", "other-user"] };
-      const mockManagerDoc = {
-        exists: true,
-        data: () => mockManagerDocData,
-      };
-
-      const mockManagerDocRef = {
-        get: vi.fn().mockResolvedValue(mockManagerDoc),
-      };
-
-      const mockGroupsCollection = {
-        doc: vi.fn().mockReturnValue(mockManagerDocRef),
-      };
-
-      const mockOrgDocRef = {
-        collection: vi.fn((name: string) => {
-          if (name === "users") return mockUsersCollection;
-          if (name === "groups") return mockGroupsCollection;
-          return null;
-        }),
-      };
-
-      const mockOrgsCollection = {
-        doc: vi.fn().mockReturnValue(mockOrgDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockOrgsCollection);
-
-      await expect(
-        guardOrgManager(mockFirestore, mockRequest as any, "org123")
-      ).resolves.toBeUndefined();
-
-      expect(mockGroupsCollection.doc).toHaveBeenCalledWith("managers");
-    });
-
-    it("should throw error when user is not authenticated", async () => {
-      const mockRequest = {};
-
-      await expect(
-        guardOrgManager(mockFirestore, mockRequest as any, "org123")
-      ).rejects.toThrow("unauthenticated");
-    });
-
-    it("should throw error when managers group does not exist", async () => {
-      const mockRequest = {
-        auth: {
-          uid: "manager123",
-        },
-      };
-
-      const mockUserDocData = { valid: true };
-      const mockUserDoc = {
-        exists: true,
-        data: () => mockUserDocData,
-      };
-
-      const mockUserDocRef = {
-        get: vi.fn().mockResolvedValue(mockUserDoc),
-      };
-
-      const mockUsersCollection = {
-        doc: vi.fn().mockReturnValue(mockUserDocRef),
-      };
-
-      const mockManagerDoc = {
-        exists: false,
-      };
-
-      const mockManagerDocRef = {
-        get: vi.fn().mockResolvedValue(mockManagerDoc),
-      };
-
-      const mockGroupsCollection = {
-        doc: vi.fn().mockReturnValue(mockManagerDocRef),
-      };
-
-      const mockOrgDocRef = {
-        collection: vi.fn((name: string) => {
-          if (name === "users") return mockUsersCollection;
-          if (name === "groups") return mockGroupsCollection;
-          return null;
-        }),
-      };
-
-      const mockOrgsCollection = {
-        doc: vi.fn().mockReturnValue(mockOrgDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockOrgsCollection);
-
-      await expect(
-        guardOrgManager(mockFirestore, mockRequest as any, "org123")
-      ).rejects.toThrow("unknown state");
-    });
-
-    it("should throw error when user is not in managers group", async () => {
+  describe("guardOrgGroupMember", () => {
+    it("should return Right when user is authenticated, valid org member, and group member", async () => {
       const mockRequest = {
         auth: {
           uid: "user123",
         },
-      };
+        data: {
+          oid: "org123",
+        },
+      } as any;
 
-      const mockUserDocData = { valid: true };
-      const mockUserDoc = {
-        exists: true,
-        data: () => mockUserDocData,
-      };
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(E.right(true));
+      vi.mocked(firebase.isGroupMember).mockResolvedValue(E.right(true));
 
-      const mockUserDocRef = {
-        get: vi.fn().mockResolvedValue(mockUserDoc),
-      };
-
-      const mockUsersCollection = {
-        doc: vi.fn().mockReturnValue(mockUserDocRef),
-      };
-
-      const mockManagerDocData = { members: ["manager123", "other-user"] };
-      const mockManagerDoc = {
-        exists: true,
-        data: () => mockManagerDocData,
-      };
-
-      const mockManagerDocRef = {
-        get: vi.fn().mockResolvedValue(mockManagerDoc),
-      };
-
-      const mockGroupsCollection = {
-        doc: vi.fn().mockReturnValue(mockManagerDocRef),
-      };
-
-      const mockOrgDocRef = {
-        collection: vi.fn((name: string) => {
-          if (name === "users") return mockUsersCollection;
-          if (name === "groups") return mockGroupsCollection;
-          return null;
-        }),
-      };
-
-      const mockOrgsCollection = {
-        doc: vi.fn().mockReturnValue(mockOrgDocRef),
-      };
-
-      mockFirestore.collection.mockReturnValue(mockOrgsCollection);
-
-      await expect(
-        guardOrgManager(mockFirestore, mockRequest as any, "org123")
-      ).rejects.toThrow("forbidden");
+      const result = await guardOrgGroupMember(
+        mockContext,
+        mockRequest,
+        "org123",
+        "group123"
+      );
+      expect(E.isRight(result)).toBe(true);
+      expect(firebase.isGroupMember).toHaveBeenCalledWith(mockContext, {
+        uid: "user123",
+        oid: "org123",
+        gid: "group123",
+      });
     });
 
-    it("should throw error when user is not a valid org user", async () => {
+    it("should return Left when user is not authenticated", async () => {
+      const mockRequest = {
+        data: {
+          oid: "org123",
+        },
+      } as any;
+
+      const result = await guardOrgGroupMember(
+        mockContext,
+        mockRequest,
+        "org123",
+        "group123"
+      );
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("unauthenticated");
+      }
+      expect(firebase.isGroupMember).not.toHaveBeenCalled();
+    });
+
+    it("should return Left when user is not a valid org member", async () => {
       const mockRequest = {
         auth: {
           uid: "user123",
         },
-      };
+        data: {
+          oid: "org123",
+        },
+      } as any;
 
-      const mockUserDocData = { valid: false };
-      const mockUserDoc = {
-        exists: true,
-        data: () => mockUserDocData,
-      };
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(
+        E.right(false)
+      );
 
-      const mockUserDocRef = {
-        get: vi.fn().mockResolvedValue(mockUserDoc),
-      };
+      const result = await guardOrgGroupMember(
+        mockContext,
+        mockRequest,
+        "org123",
+        "group123"
+      );
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("invalid user");
+      }
+      expect(firebase.isGroupMember).not.toHaveBeenCalled();
+    });
 
-      const mockUsersCollection = {
-        doc: vi.fn().mockReturnValue(mockUserDocRef),
-      };
+    it("should return Left when user is not a group member", async () => {
+      const mockRequest = {
+        auth: {
+          uid: "user123",
+        },
+        data: {
+          oid: "org123",
+        },
+      } as any;
 
-      const mockOrgDocRef = {
-        collection: vi.fn().mockReturnValue(mockUsersCollection),
-      };
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(E.right(true));
+      vi.mocked(firebase.isGroupMember).mockResolvedValue(E.right(false));
 
-      const mockOrgsCollection = {
-        doc: vi.fn().mockReturnValue(mockOrgDocRef),
-      };
+      const result = await guardOrgGroupMember(
+        mockContext,
+        mockRequest,
+        "org123",
+        "group123"
+      );
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("forbidden");
+      }
+    });
 
-      mockFirestore.collection.mockReturnValue(mockOrgsCollection);
+    it("should return Left when isGroupMember returns an error", async () => {
+      const mockRequest = {
+        auth: {
+          uid: "user123",
+        },
+        data: {
+          oid: "org123",
+        },
+      } as any;
 
-      await expect(
-        guardOrgManager(mockFirestore, mockRequest as any, "org123")
-      ).rejects.toThrow("invalid user");
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(E.right(true));
+      const error = new Error("unknown state");
+      vi.mocked(firebase.isGroupMember).mockResolvedValue(E.left(error));
+
+      const result = await guardOrgGroupMember(
+        mockContext,
+        mockRequest,
+        "org123",
+        "group123"
+      );
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe(error);
+      }
+    });
+  });
+
+  describe("guardSystemAdmin", () => {
+    it("should return Right when user is a system admin", async () => {
+      const mockRequest = {
+        auth: {
+          uid: "admin123",
+        },
+        data: {},
+      } as any;
+
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(E.right(true));
+      vi.mocked(firebase.isGroupMember).mockResolvedValue(E.right(true));
+
+      const result = await guardSystemAdmin(mockContext, mockRequest);
+      expect(E.isRight(result)).toBe(true);
+    });
+
+    it("should return Left when user is not authenticated", async () => {
+      const mockRequest = {
+        data: {
+          oid: "admin",
+        },
+      } as any;
+
+      const result = await guardSystemAdmin(mockContext, mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("unauthenticated");
+      }
+    });
+
+    it("should return Left when user is not a system admin", async () => {
+      const mockRequest = {
+        auth: {
+          uid: "user123",
+        },
+        data: {
+          oid: "admin",
+        },
+      } as any;
+
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(E.right(true));
+      vi.mocked(firebase.isGroupMember).mockResolvedValue(E.right(false));
+
+      const result = await guardSystemAdmin(mockContext, mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("forbidden");
+      }
+    });
+  });
+
+  describe("guardManager", () => {
+    it("should return Right when user is a system admin", async () => {
+      const mockRequest = {
+        auth: {
+          uid: "admin123",
+        },
+        data: {
+          oid: "admin",
+        },
+      } as any;
+
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(E.right(true));
+      vi.mocked(firebase.isGroupMember).mockResolvedValue(E.right(true));
+
+      const result = await guardManager(mockContext, mockRequest);
+      expect(E.isRight(result)).toBe(true);
+      // Should check system admin first
+      expect(firebase.isOrganizationMember).toHaveBeenCalledWith(mockContext, {
+        uid: "admin123",
+        oid: "admin",
+      });
+      expect(firebase.isGroupMember).toHaveBeenCalledWith(mockContext, {
+        uid: "admin123",
+        oid: "sys",
+        gid: "admins",
+      });
+    });
+
+    it("should return Right when user is an organization manager", async () => {
+      const mockRequest = {
+        auth: {
+          uid: "manager123",
+        },
+        data: {
+          oid: "org123",
+        },
+      } as any;
+
+      vi.mocked(firebase.isOrganizationMember)
+        .mockResolvedValueOnce(E.right(true)) // For system admin check (data.oid='org123', but won't match admin)
+        .mockResolvedValueOnce(E.right(true)); // For org manager check
+      vi.mocked(firebase.isGroupMember)
+        .mockResolvedValueOnce(E.right(false)) // Not system admin
+        .mockResolvedValueOnce(E.right(true)); // Is org manager
+
+      const result = await guardManager(mockContext, mockRequest);
+      expect(E.isRight(result)).toBe(true);
+      // Should check both system admin and org manager
+      // guardManager passes request.data.oid to guardOrgGroupMember
+      expect(firebase.isGroupMember).toHaveBeenLastCalledWith(mockContext, {
+        uid: "manager123",
+        oid: "org123",
+        gid: "managers",
+      });
+    });
+
+    it("should return Left when user is neither system admin nor org manager", async () => {
+      const mockRequest = {
+        auth: {
+          uid: "user123",
+        },
+        data: {
+          oid: "org123",
+        },
+      } as any;
+
+      vi.mocked(firebase.isOrganizationMember)
+        .mockResolvedValueOnce(E.right(true)) // For system admin check
+        .mockResolvedValueOnce(E.right(true)); // For org manager check
+      vi.mocked(firebase.isGroupMember)
+        .mockResolvedValueOnce(E.right(false)) // Not system admin
+        .mockResolvedValueOnce(E.right(false)); // Not org manager
+
+      const result = await guardManager(mockContext, mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("forbidden");
+      }
+    });
+
+    it("should return Left when user is not authenticated", async () => {
+      const mockRequest = {
+        data: {
+          oid: "org123",
+        },
+      } as any;
+
+      const result = await guardManager(mockContext, mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("unauthenticated");
+      }
+    });
+  });
+
+  describe("guardAdmin", () => {
+    it("should return Right when user is a system admin", async () => {
+      const mockRequest = {
+        auth: {
+          uid: "admin123",
+        },
+        data: {
+          oid: "org123",
+        },
+      } as any;
+
+      vi.mocked(firebase.isOrganizationMember).mockResolvedValue(E.right(true));
+      vi.mocked(firebase.isGroupMember).mockResolvedValue(E.right(true));
+
+      const result = await guardAdmin(mockContext, mockRequest);
+      expect(E.isRight(result)).toBe(true);
+      // guardAdmin calls guardSystemAdmin -> guardOrgGroupMember(oid="admin")
+      // but guardOrgGroupMember -> guardOrgUsers uses request.data.oid
+      expect(firebase.isOrganizationMember).toHaveBeenCalledWith(mockContext, {
+        uid: "admin123",
+        oid: mockRequest.data.oid, // Uses request.data.oid, not the hardcoded "admin"
+      });
+      expect(firebase.isGroupMember).toHaveBeenCalledWith(mockContext, {
+        uid: "admin123",
+        oid: "sys", // This uses the OID_SYSADMIN constant
+        gid: "admins",
+      });
+    });
+
+    it("should return Right when user is an organization admin", async () => {
+      const mockRequest = {
+        auth: {
+          uid: "orgadmin123",
+        },
+        data: {
+          oid: "org123",
+        },
+      } as any;
+
+      vi.mocked(firebase.isOrganizationMember)
+        .mockResolvedValueOnce(E.right(true)) // For system admin check
+        .mockResolvedValueOnce(E.right(true)); // For org admin check
+      vi.mocked(firebase.isGroupMember)
+        .mockResolvedValueOnce(E.right(false)) // Not system admin
+        .mockResolvedValueOnce(E.right(true)); // Is org admin
+
+      const result = await guardAdmin(mockContext, mockRequest);
+      expect(E.isRight(result)).toBe(true);
+      // Should check both system admin and org admin
+      // guardAdmin passes request.data.oid to guardOrgGroupMember
+      expect(firebase.isGroupMember).toHaveBeenLastCalledWith(mockContext, {
+        uid: "orgadmin123",
+        oid: mockRequest.data.oid,
+        gid: "admins",
+      });
+    });
+
+    it("should return Left when user is neither system admin nor org admin", async () => {
+      const mockRequest = {
+        auth: {
+          uid: "user123",
+        },
+        data: "org123",
+      } as any;
+
+      vi.mocked(firebase.isOrganizationMember)
+        .mockResolvedValueOnce(E.right(true)) // For system admin check
+        .mockResolvedValueOnce(E.right(true)); // For org admin check
+      vi.mocked(firebase.isGroupMember)
+        .mockResolvedValueOnce(E.right(false)) // Not system admin
+        .mockResolvedValueOnce(E.right(false)); // Not org admin
+
+      const result = await guardAdmin(mockContext, mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("forbidden");
+      }
+    });
+
+    it("should return Left when user is not authenticated", async () => {
+      const mockRequest = {
+        data: {
+          oid: "org123",
+        },
+      } as any;
+
+      const result = await guardAdmin(mockContext, mockRequest);
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("unauthenticated");
+      }
     });
   });
 });

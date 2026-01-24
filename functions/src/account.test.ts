@@ -1,278 +1,355 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import * as E from "fp-ts/lib/Either.js";
 import {
+  generateRandomPassword,
   getExistingAuthUserByEmail,
   createAuthUserIfNotExists,
-  createAdminUser,
   createOrgUser,
-  updateCustomUserClaims,
+  getUserPrivileges,
 } from "./account.js";
+import type { Context } from "./firebase.js";
+import * as firebase from "./firebase.js";
+
+vi.mock("./firebase.js", async () => {
+  const actual = await vi.importActual("./firebase.js");
+  return {
+    ...actual,
+    isOrganizationMember: vi.fn(),
+    isGroupMember: vi.fn(),
+  };
+});
 
 describe("account", () => {
-  let mockAuth: any;
-  let mockLogger: any;
-  let mockFirestore: any;
+  let mockContext: Context;
 
   beforeEach(() => {
-    // Create mock auth
-    mockAuth = {
-      getUserByEmail: vi.fn(),
-      createUser: vi.fn(),
-      getUser: vi.fn(),
-    };
-
-    // Create mock firestore
-    mockFirestore = {
-      collection: vi.fn(),
-    };
-
-    // Mock logger
-    mockLogger = {
-      info: vi.fn(),
-      error: vi.fn(),
+    vi.clearAllMocks();
+    mockContext = {
+      auth: {
+        getUserByEmail: vi.fn(),
+        createUser: vi.fn(),
+        getUser: vi.fn(),
+      } as any,
+      db: {
+        collection: vi.fn(),
+      } as any,
+      logger: {
+        info: vi.fn(),
+        error: vi.fn(),
+      } as any,
     };
   });
 
+  describe("generateRandomPassword", () => {
+    it("should return DEFAULT_PASSWORD from env if set", () => {
+      const originalPassword = process.env.DEFAULT_PASSWORD;
+      process.env.DEFAULT_PASSWORD = "test-default-password";
+
+      const password = generateRandomPassword();
+
+      expect(password).toBe("test-default-password");
+
+      // Restore original value
+      if (originalPassword) {
+        process.env.DEFAULT_PASSWORD = originalPassword;
+      } else {
+        delete process.env.DEFAULT_PASSWORD;
+      }
+    });
+
+    it("should generate random password if DEFAULT_PASSWORD not set", () => {
+      const originalPassword = process.env.DEFAULT_PASSWORD;
+      delete process.env.DEFAULT_PASSWORD;
+
+      const password = generateRandomPassword();
+
+      expect(password).toBeDefined();
+      expect(typeof password).toBe("string");
+      expect(password.length).toBeGreaterThan(0);
+      // Password should be composed of Math.random() results
+      expect(password.length).toBeGreaterThanOrEqual(4); // At least 4 characters from 4 random strings
+
+      // Restore original value
+      if (originalPassword) {
+        process.env.DEFAULT_PASSWORD = originalPassword;
+      }
+    });
+
+    it("should generate different passwords on each call when DEFAULT_PASSWORD not set", () => {
+      const originalPassword = process.env.DEFAULT_PASSWORD;
+      delete process.env.DEFAULT_PASSWORD;
+
+      const password1 = generateRandomPassword();
+      const password2 = generateRandomPassword();
+
+      expect(password1).not.toBe(password2);
+
+      // Restore original value
+      if (originalPassword) {
+        process.env.DEFAULT_PASSWORD = originalPassword;
+      }
+    });
+  });
+
   describe("getExistingAuthUserByEmail", () => {
-    it("should return user if exists", async () => {
+    it("should return Right(uid) if user exists", async () => {
       const mockUser = { uid: "user123", email: "test@example.com" };
-      mockAuth.getUserByEmail.mockResolvedValue(mockUser);
+      vi.mocked(mockContext.auth.getUserByEmail).mockResolvedValue(
+        mockUser as any
+      );
 
       const result = await getExistingAuthUserByEmail(
-        mockAuth,
+        mockContext,
         "test@example.com"
       );
 
-      expect(result).toEqual(mockUser);
-      expect(mockAuth.getUserByEmail).toHaveBeenCalledWith("test@example.com");
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toBe("user123");
+      }
+      expect(mockContext.auth.getUserByEmail).toHaveBeenCalledWith(
+        "test@example.com"
+      );
     });
 
-    it("should return null if user not found", async () => {
-      mockAuth.getUserByEmail.mockRejectedValue({
+    it("should return Right(null) if user not found", async () => {
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue({
         code: "auth/user-not-found",
       });
 
       const result = await getExistingAuthUserByEmail(
-        mockAuth,
+        mockContext,
         "nonexistent@example.com"
       );
 
-      expect(result).toBeNull();
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toBeNull();
+      }
     });
 
-    it("should throw error if other error occurs", async () => {
-      const mockError = { code: "auth/internal-error" };
-      mockAuth.getUserByEmail.mockRejectedValue(mockError);
+    it("should return Left(Error) if other error occurs", async () => {
+      const mockError = new Error("Internal error");
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue(mockError);
 
-      await expect(
-        getExistingAuthUserByEmail(mockAuth, "test@example.com")
-      ).rejects.toEqual(mockError);
+      const result = await getExistingAuthUserByEmail(
+        mockContext,
+        "test@example.com"
+      );
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe(mockError);
+      }
     });
   });
 
   describe("createAuthUserIfNotExists", () => {
-    it("should return existing user if found", async () => {
+    it("should return Right(uid) for existing user", async () => {
       const mockUser = { uid: "user123", email: "test@example.com" };
-      mockAuth.getUserByEmail.mockResolvedValue(mockUser);
+      vi.mocked(mockContext.auth.getUserByEmail).mockResolvedValue(
+        mockUser as any
+      );
 
-      const result = await createAuthUserIfNotExists(mockAuth, mockLogger, {
+      const result = await createAuthUserIfNotExists(mockContext, {
         email: "test@example.com",
         name: "Test User",
       });
 
-      expect(result).toEqual(mockUser);
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toBe("user123");
+      }
+      expect(mockContext.logger.info).toHaveBeenCalledWith(
         "Auth account already exists",
         { uid: "user123", email: "test@example.com" }
       );
     });
 
-    it("should create new user if not found", async () => {
+    it("should create new user and return Right(uid) if not found", async () => {
       const mockNewUser = { uid: "newuser123", email: "new@example.com" };
-      mockAuth.getUserByEmail.mockRejectedValue({
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue({
         code: "auth/user-not-found",
       });
-      mockAuth.createUser.mockResolvedValue(mockNewUser);
+      vi.mocked(mockContext.auth.createUser).mockResolvedValue(
+        mockNewUser as any
+      );
 
-      const result = await createAuthUserIfNotExists(mockAuth, mockLogger, {
+      const result = await createAuthUserIfNotExists(mockContext, {
         email: "new@example.com",
         name: "New User",
       });
 
-      expect(result).toEqual(mockNewUser);
-      expect(mockAuth.createUser).toHaveBeenCalledWith({
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toBe("newuser123");
+      }
+      expect(mockContext.auth.createUser).toHaveBeenCalledWith({
         displayName: "New User",
         email: "new@example.com",
         password: expect.any(String),
       });
-      expect(mockLogger.info).toHaveBeenCalledWith("Auth account created", {
-        uid: "newuser123",
-        email: "new@example.com",
-      });
+      expect(mockContext.logger.info).toHaveBeenCalledWith(
+        "Auth account created",
+        {
+          uid: "newuser123",
+          email: "new@example.com",
+        }
+      );
     });
 
     it("should create user with random password", async () => {
-      mockAuth.getUserByEmail.mockRejectedValue({
+      const originalPassword = process.env.DEFAULT_PASSWORD;
+      delete process.env.DEFAULT_PASSWORD;
+
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue({
         code: "auth/user-not-found",
       });
-      mockAuth.createUser.mockResolvedValue({
+      vi.mocked(mockContext.auth.createUser).mockResolvedValue({
         uid: "testuser123",
         email: "test@example.com",
-      });
+      } as any);
 
-      await createAuthUserIfNotExists(mockAuth, mockLogger, {
+      await createAuthUserIfNotExists(mockContext, {
         email: "test@example.com",
         name: "Test User",
       });
 
-      expect(mockAuth.createUser).toHaveBeenCalledWith({
+      expect(mockContext.auth.createUser).toHaveBeenCalledWith({
         displayName: "Test User",
         email: "test@example.com",
         password: expect.any(String),
       });
+
+      const calledPassword = vi.mocked(mockContext.auth.createUser).mock
+        .calls[0][0].password;
+      expect(calledPassword).toBeDefined();
+      expect(typeof calledPassword).toBe("string");
+      expect(calledPassword?.length).toBeGreaterThan(0);
+
+      // Restore original value
+      if (originalPassword) {
+        process.env.DEFAULT_PASSWORD = originalPassword;
+      }
+    });
+
+    it("should create user with DEFAULT_PASSWORD from env when set", async () => {
+      const originalPassword = process.env.DEFAULT_PASSWORD;
+      process.env.DEFAULT_PASSWORD = "test-env-password";
+
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue({
+        code: "auth/user-not-found",
+      });
+      vi.mocked(mockContext.auth.createUser).mockResolvedValue({
+        uid: "testuser456",
+        email: "env@example.com",
+      } as any);
+
+      await createAuthUserIfNotExists(mockContext, {
+        email: "env@example.com",
+        name: "Env Test User",
+      });
+
+      expect(mockContext.auth.createUser).toHaveBeenCalledWith({
+        displayName: "Env Test User",
+        email: "env@example.com",
+        password: "test-env-password",
+      });
+
+      // Restore original value
+      if (originalPassword) {
+        process.env.DEFAULT_PASSWORD = originalPassword;
+      } else {
+        delete process.env.DEFAULT_PASSWORD;
+      }
     });
 
     it("should create user with undefined displayName when name is empty", async () => {
-      mockAuth.getUserByEmail.mockRejectedValue({
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue({
         code: "auth/user-not-found",
       });
-      mockAuth.createUser.mockResolvedValue({
+      vi.mocked(mockContext.auth.createUser).mockResolvedValue({
         uid: "testuser123",
         email: "test@example.com",
-      });
+      } as any);
 
-      await createAuthUserIfNotExists(mockAuth, mockLogger, {
+      await createAuthUserIfNotExists(mockContext, {
         email: "test@example.com",
         name: "",
       });
 
-      expect(mockAuth.createUser).toHaveBeenCalledWith({
+      expect(mockContext.auth.createUser).toHaveBeenCalledWith({
         displayName: undefined,
         email: "test@example.com",
         password: expect.any(String),
       });
     });
-  });
 
-  describe("createAdminUser", () => {
-    it("should create auth user and firestore document", async () => {
-      const mockUser = { uid: "admin123", email: "admin@example.com" };
-      mockAuth.getUserByEmail.mockRejectedValue({
+    it("should return Left(Error) on creation failure", async () => {
+      const mockError = new Error("Creation failed");
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue({
         code: "auth/user-not-found",
       });
-      mockAuth.createUser.mockResolvedValue(mockUser);
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(mockContext.auth.createUser).mockRejectedValue(mockError);
 
-      const mockSet = vi.fn().mockResolvedValue(undefined);
-      const mockDoc = vi.fn(() => ({ set: mockSet }));
-      const mockCollection = vi.fn(() => ({ doc: mockDoc }));
-      mockFirestore.collection = mockCollection;
-
-      await createAdminUser(mockAuth, mockFirestore, mockLogger, {
-        email: "admin@example.com",
-        name: "Admin User",
-        valid: true,
+      const result = await createAuthUserIfNotExists(mockContext, {
+        email: "test@example.com",
+        name: "Test User",
       });
 
-      expect(mockAuth.setCustomUserClaims).toHaveBeenCalledWith("admin123", {
-        admin: true,
-      });
-      expect(mockCollection).toHaveBeenCalledWith("admins");
-      expect(mockDoc).toHaveBeenCalledWith("admin123");
-      expect(mockSet).toHaveBeenCalledWith({
-        name: "Admin User",
-        email: "admin@example.com",
-        valid: true,
-        createdAt: expect.any(Object),
-        updatedAt: expect.any(Object),
-      });
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        "Admin user created in Firestore",
-        { uid: "admin123", email: "admin@example.com" }
-      );
-    });
-
-    it("should create auth user and firestore document with valid=false", async () => {
-      const mockUser = { uid: "admin456", email: "admin2@example.com" };
-      mockAuth.getUserByEmail.mockRejectedValue({
-        code: "auth/user-not-found",
-      });
-      mockAuth.createUser.mockResolvedValue(mockUser);
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
-
-      const mockSet = vi.fn().mockResolvedValue(undefined);
-      const mockDoc = vi.fn(() => ({ set: mockSet }));
-      const mockCollection = vi.fn(() => ({ doc: mockDoc }));
-      mockFirestore.collection = mockCollection;
-
-      await createAdminUser(mockAuth, mockFirestore, mockLogger, {
-        email: "admin2@example.com",
-        name: "Admin Two",
-        valid: false,
-      });
-
-      expect(mockAuth.setCustomUserClaims).toHaveBeenCalledWith("admin456", {
-        admin: true,
-      });
-      expect(mockCollection).toHaveBeenCalledWith("admins");
-      expect(mockDoc).toHaveBeenCalledWith("admin456");
-      expect(mockSet).toHaveBeenCalledWith({
-        name: "Admin Two",
-        email: "admin2@example.com",
-        valid: false,
-        createdAt: expect.any(Object),
-        updatedAt: expect.any(Object),
-      });
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        "Admin user created in Firestore",
-        { uid: "admin456", email: "admin2@example.com" }
-      );
-    });
-
-    it("should handle errors gracefully", async () => {
-      const mockError = new Error("Firestore error");
-      mockAuth.getUserByEmail.mockRejectedValue({
-        code: "auth/user-not-found",
-      });
-      mockAuth.createUser.mockRejectedValue(mockError);
-
-      await createAdminUser(mockAuth, mockFirestore, mockLogger, {
-        email: "admin@example.com",
-        name: "Admin User",
-        valid: true,
-      });
-
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        "Failed to create admin account",
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe(mockError);
+      }
+      expect(mockContext.logger.error).toHaveBeenCalledWith(
+        "Failed to create auth account",
         { error: mockError }
       );
     });
+
+    it("should throw error when getExistingAuthUserByEmail returns Left", async () => {
+      const mockError = new Error("Database error");
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue(mockError);
+
+      await expect(
+        createAuthUserIfNotExists(mockContext, {
+          email: "test@example.com",
+          name: "Test User",
+        })
+      ).rejects.toThrow(mockError);
+    });
   });
+
   describe("createOrgUser", () => {
     it("should create auth user and firestore document in org subcollection", async () => {
       const mockUser = { uid: "user123", email: "user@example.com" };
-      mockAuth.getUserByEmail.mockRejectedValue({
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue({
         code: "auth/user-not-found",
       });
-      mockAuth.createUser.mockResolvedValue(mockUser);
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(mockContext.auth.createUser).mockResolvedValue(mockUser as any);
 
       const mockSet = vi.fn().mockResolvedValue(undefined);
       const mockDoc = vi.fn(() => ({ set: mockSet }));
       const mockSubCollection = vi.fn(() => ({ doc: mockDoc }));
       const mockOrgDoc = vi.fn(() => ({ collection: mockSubCollection }));
       const mockCollection = vi.fn(() => ({ doc: mockOrgDoc }));
-      mockFirestore.collection = mockCollection;
+      vi.mocked(mockContext.db.collection).mockImplementation(
+        mockCollection as any
+      );
 
-      await createOrgUser(mockAuth, mockFirestore, mockLogger, {
-        oid: "org123",
-        email: "user@example.com",
-        name: "Test User",
-        valid: true,
-      });
+      const result = await createOrgUser(mockContext, {
+        data: {
+          oid: "org123",
+          email: "user@example.com",
+          name: "Test User",
+          valid: true,
+        },
+      } as any);
 
-      expect(mockAuth.setCustomUserClaims).toHaveBeenCalledWith("user123", {
-        org123: true,
-      });
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toBe("user123");
+      }
       expect(mockCollection).toHaveBeenCalledWith("orgs");
       expect(mockOrgDoc).toHaveBeenCalledWith("org123");
       expect(mockSubCollection).toHaveBeenCalledWith("users");
@@ -284,7 +361,7 @@ describe("account", () => {
         createdAt: expect.any(Object),
         updatedAt: expect.any(Object),
       });
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      expect(mockContext.logger.info).toHaveBeenCalledWith(
         "User created in Firestore",
         { oid: "org123", uid: "user123", email: "user@example.com" }
       );
@@ -292,29 +369,33 @@ describe("account", () => {
 
     it("should create org user with valid=false", async () => {
       const mockUser = { uid: "user456", email: "user2@example.com" };
-      mockAuth.getUserByEmail.mockRejectedValue({
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue({
         code: "auth/user-not-found",
       });
-      mockAuth.createUser.mockResolvedValue(mockUser);
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(mockContext.auth.createUser).mockResolvedValue(mockUser as any);
 
       const mockSet = vi.fn().mockResolvedValue(undefined);
       const mockDoc = vi.fn(() => ({ set: mockSet }));
       const mockSubCollection = vi.fn(() => ({ doc: mockDoc }));
       const mockOrgDoc = vi.fn(() => ({ collection: mockSubCollection }));
       const mockCollection = vi.fn(() => ({ doc: mockOrgDoc }));
-      mockFirestore.collection = mockCollection;
+      vi.mocked(mockContext.db.collection).mockImplementation(
+        mockCollection as any
+      );
 
-      await createOrgUser(mockAuth, mockFirestore, mockLogger, {
-        oid: "org456",
-        email: "user2@example.com",
-        name: "User Two",
-        valid: false,
-      });
+      const result = await createOrgUser(mockContext, {
+        data: {
+          oid: "org456",
+          email: "user2@example.com",
+          name: "User Two",
+          valid: false,
+        },
+      } as any);
 
-      expect(mockAuth.setCustomUserClaims).toHaveBeenCalledWith("user456", {
-        org456: true,
-      });
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toBe("user456");
+      }
       expect(mockCollection).toHaveBeenCalledWith("orgs");
       expect(mockOrgDoc).toHaveBeenCalledWith("org456");
       expect(mockSubCollection).toHaveBeenCalledWith("users");
@@ -326,7 +407,7 @@ describe("account", () => {
         createdAt: expect.any(Object),
         updatedAt: expect.any(Object),
       });
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      expect(mockContext.logger.info).toHaveBeenCalledWith(
         "User created in Firestore",
         { oid: "org456", uid: "user456", email: "user2@example.com" }
       );
@@ -337,31 +418,34 @@ describe("account", () => {
         uid: "existingUser123",
         email: "existing@example.com",
       };
-      mockAuth.getUserByEmail.mockResolvedValue(mockUser);
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(mockContext.auth.getUserByEmail).mockResolvedValue(
+        mockUser as any
+      );
 
       const mockSet = vi.fn().mockResolvedValue(undefined);
       const mockDoc = vi.fn(() => ({ set: mockSet }));
       const mockSubCollection = vi.fn(() => ({ doc: mockDoc }));
       const mockOrgDoc = vi.fn(() => ({ collection: mockSubCollection }));
       const mockCollection = vi.fn(() => ({ doc: mockOrgDoc }));
-      mockFirestore.collection = mockCollection;
-
-      await createOrgUser(mockAuth, mockFirestore, mockLogger, {
-        oid: "org789",
-        email: "existing@example.com",
-        name: "Existing User",
-        valid: true,
-      });
-
-      expect(mockAuth.createUser).not.toHaveBeenCalled();
-      expect(mockAuth.setCustomUserClaims).toHaveBeenCalledWith(
-        "existingUser123",
-        {
-          org789: true,
-        }
+      vi.mocked(mockContext.db.collection).mockImplementation(
+        mockCollection as any
       );
-      expect(mockLogger.info).toHaveBeenCalledWith(
+
+      const result = await createOrgUser(mockContext, {
+        data: {
+          oid: "org789",
+          email: "existing@example.com",
+          name: "Existing User",
+          valid: true,
+        },
+      } as any);
+
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toBe("existingUser123");
+      }
+      expect(mockContext.auth.createUser).not.toHaveBeenCalled();
+      expect(mockContext.logger.info).toHaveBeenCalledWith(
         "Auth account already exists",
         { uid: "existingUser123", email: "existing@example.com" }
       );
@@ -371,344 +455,285 @@ describe("account", () => {
 
     it("should handle errors gracefully", async () => {
       const mockError = new Error("Firestore error");
-      mockAuth.getUserByEmail.mockRejectedValue({
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue({
         code: "auth/user-not-found",
       });
-      mockAuth.createUser.mockRejectedValue(mockError);
+      vi.mocked(mockContext.auth.createUser).mockRejectedValue(mockError);
 
-      await createOrgUser(mockAuth, mockFirestore, mockLogger, {
-        oid: "org123",
-        email: "user@example.com",
-        name: "Test User",
-        valid: true,
-      });
+      const result = await createOrgUser(mockContext, {
+        data: {
+          oid: "org123",
+          email: "user@example.com",
+          name: "Test User",
+          valid: true,
+        },
+      } as any);
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        "Failed to create user account",
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe(mockError);
+      }
+      expect(mockContext.logger.error).toHaveBeenCalledWith(
+        "Failed to create auth account",
         { error: mockError }
+      );
+    });
+
+    it("should return Left when oid is missing", async () => {
+      const result = await createOrgUser(mockContext, {
+        data: {
+          email: "user@example.com",
+          name: "Test User",
+          valid: true,
+        },
+      } as any);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("Missing required user data");
+      }
+      expect(mockContext.logger.error).toHaveBeenCalledWith(
+        "Missing required user data",
+        { data: { email: "user@example.com", name: "Test User", valid: true } }
+      );
+    });
+
+    it("should return Left when email is missing", async () => {
+      const result = await createOrgUser(mockContext, {
+        data: {
+          oid: "org123",
+          name: "Test User",
+          valid: true,
+        },
+      } as any);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("Missing required user data");
+      }
+      expect(mockContext.logger.error).toHaveBeenCalledWith(
+        "Missing required user data",
+        { data: { oid: "org123", name: "Test User", valid: true } }
+      );
+    });
+
+    it("should return Left when name is missing", async () => {
+      const result = await createOrgUser(mockContext, {
+        data: {
+          oid: "org123",
+          email: "user@example.com",
+          valid: true,
+        },
+      } as any);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("Missing required user data");
+      }
+      expect(mockContext.logger.error).toHaveBeenCalledWith(
+        "Missing required user data",
+        { data: { oid: "org123", email: "user@example.com", valid: true } }
+      );
+    });
+
+    it("should handle Firestore errors during document creation", async () => {
+      const mockUser = { uid: "user123", email: "user@example.com" };
+      const mockFirestoreError = new Error("Firestore write failed");
+
+      vi.mocked(mockContext.auth.getUserByEmail).mockRejectedValue({
+        code: "auth/user-not-found",
+      });
+      vi.mocked(mockContext.auth.createUser).mockResolvedValue(mockUser as any);
+
+      const mockSet = vi.fn().mockRejectedValue(mockFirestoreError);
+      const mockDoc = vi.fn(() => ({ set: mockSet }));
+      const mockSubCollection = vi.fn(() => ({ doc: mockDoc }));
+      const mockOrgDoc = vi.fn(() => ({ collection: mockSubCollection }));
+      const mockCollection = vi.fn(() => ({ doc: mockOrgDoc }));
+      vi.mocked(mockContext.db.collection).mockImplementation(
+        mockCollection as any
+      );
+
+      const result = await createOrgUser(mockContext, {
+        data: {
+          oid: "org123",
+          email: "user@example.com",
+          name: "Test User",
+          valid: true,
+        },
+      } as any);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe(mockFirestoreError);
+      }
+      expect(mockContext.logger.error).toHaveBeenCalledWith(
+        "Failed to create user account",
+        { error: mockFirestoreError }
       );
     });
   });
 
-  describe("updateCustomUserClaims", () => {
-    it("should throw error when uid is not provided", async () => {
-      await expect(
-        updateCustomUserClaims(mockAuth, mockFirestore, undefined)
-      ).rejects.toThrow("No UID provided for updating user claims");
+  describe("getUserPrivileges", () => {
+    it("should return Left when uid is not provided", async () => {
+      const result = await getUserPrivileges(mockContext, {
+        data: undefined,
+      } as any);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left.message).toBe("No UID provided");
+      }
     });
 
-    it("should update admin claim when user is valid admin", async () => {
+    it("should retrieve user privileges across organizations", async () => {
       const uid = "user123";
-      mockAuth.getUser = vi.fn().mockResolvedValue({ uid });
 
-      const mockAdminGet = vi.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({ valid: true }),
-      });
-      const mockAdminDoc = vi.fn(() => ({ get: mockAdminGet }));
-      const mockAdminsCollection = { doc: mockAdminDoc };
-
-      const mockOrgsGet = vi.fn().mockResolvedValue({ docs: [] });
-      const mockOrgsCollection = { get: mockOrgsGet };
-
-      mockFirestore.collection = vi
-        .fn()
-        .mockImplementation((collectionName: string) => {
-          if (collectionName === "admins") return mockAdminsCollection;
-          if (collectionName === "orgs") return mockOrgsCollection;
-          return undefined;
-        });
-
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
-
-      await updateCustomUserClaims(mockAuth, mockFirestore, uid);
-
-      expect(mockAdminDoc).toHaveBeenCalledWith(uid);
-      expect(mockAuth.setCustomUserClaims).toHaveBeenCalledWith(uid, {
-        admin: true,
-      });
-    });
-
-    it("should update admin claim to false when admin document does not exist", async () => {
-      const uid = "user456";
-      mockAuth.getUser = vi.fn().mockResolvedValue({ uid });
-
-      const mockAdminGet = vi.fn().mockResolvedValue({
-        exists: false,
-      });
-      const mockAdminDoc = vi.fn(() => ({ get: mockAdminGet }));
-      const mockAdminsCollection = { doc: mockAdminDoc };
-
-      const mockOrgsGet = vi.fn().mockResolvedValue({ docs: [] });
-      const mockOrgsCollection = { get: mockOrgsGet };
-
-      mockFirestore.collection = vi
-        .fn()
-        .mockImplementation((collectionName: string) => {
-          if (collectionName === "admins") return mockAdminsCollection;
-          if (collectionName === "orgs") return mockOrgsCollection;
-          return undefined;
-        });
-
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
-
-      await updateCustomUserClaims(mockAuth, mockFirestore, uid);
-
-      expect(mockAuth.setCustomUserClaims).toHaveBeenCalledWith(uid, {
-        admin: false,
-      });
-    });
-
-    it("should update org user claims when user is valid in org", async () => {
-      const uid = "user789";
-      mockAuth.getUser = vi.fn().mockResolvedValue({ uid });
-
-      const mockAdminGet = vi.fn().mockResolvedValue({ exists: false });
-      const mockAdminDoc = vi.fn(() => ({ get: mockAdminGet }));
-      const mockAdminsCollection = { doc: mockAdminDoc };
-
-      const mockUserGet = vi.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({ valid: true }),
-      });
-      const mockUserDoc = vi.fn(() => ({ get: mockUserGet }));
-      const mockUsersCollection = { doc: mockUserDoc };
-
-      const mockManagersGet = vi.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({ members: ["user789", "other"] }),
-      });
-      const mockManagersDoc = vi.fn(() => ({ get: mockManagersGet }));
-      const mockGroupsCollection = { doc: mockManagersDoc };
-
-      const mockOrgDoc = vi.fn(() => ({
-        collection: vi.fn((name: string) => {
-          if (name === "users") return mockUsersCollection;
-          if (name === "groups") return mockGroupsCollection;
-          return undefined;
-        }),
-      }));
-
-      const mockOrgsGet = vi.fn().mockResolvedValue({
-        docs: [{ id: "org123" }],
-      });
-      const mockOrgsCollection = {
-        get: mockOrgsGet,
-        doc: mockOrgDoc,
-      };
-
-      mockFirestore.collection = vi
-        .fn()
-        .mockImplementation((collectionName: string) => {
-          if (collectionName === "admins") return mockAdminsCollection;
-          if (collectionName === "orgs") return mockOrgsCollection;
-          return undefined;
-        });
-
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
-
-      await updateCustomUserClaims(mockAuth, mockFirestore, uid);
-
-      expect(mockAuth.setCustomUserClaims).toHaveBeenCalledTimes(3);
-      expect(mockAuth.setCustomUserClaims).toHaveBeenNthCalledWith(1, uid, {
-        admin: false,
-      });
-      expect(mockAuth.setCustomUserClaims).toHaveBeenNthCalledWith(2, uid, {
-        org123: true,
-      });
-      expect(mockAuth.setCustomUserClaims).toHaveBeenNthCalledWith(3, uid, {
-        "org123.manager": true,
-      });
-    });
-
-    it("should set org claim to false when user not valid in org", async () => {
-      const uid = "user999";
-      mockAuth.getUser = vi.fn().mockResolvedValue({ uid });
-
-      const mockAdminGet = vi.fn().mockResolvedValue({ exists: false });
-      const mockAdminDoc = vi.fn(() => ({ get: mockAdminGet }));
-      const mockAdminsCollection = { doc: mockAdminDoc };
-
-      const mockUserGet = vi.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({ valid: false }),
-      });
-      const mockUserDoc = vi.fn(() => ({ get: mockUserGet }));
-      const mockUsersCollection = { doc: mockUserDoc };
-
-      const mockManagersGet = vi.fn().mockResolvedValue({
-        exists: false,
-      });
-      const mockManagersDoc = vi.fn(() => ({ get: mockManagersGet }));
-      const mockGroupsCollection = { doc: mockManagersDoc };
-
-      const mockOrgDoc = vi.fn(() => ({
-        collection: vi.fn((name: string) => {
-          if (name === "users") return mockUsersCollection;
-          if (name === "groups") return mockGroupsCollection;
-          return undefined;
-        }),
-      }));
-
-      const mockOrgsGet = vi.fn().mockResolvedValue({
-        docs: [{ id: "org456" }],
-      });
-      const mockOrgsCollection = {
-        get: mockOrgsGet,
-        doc: mockOrgDoc,
-      };
-
-      mockFirestore.collection = vi
-        .fn()
-        .mockImplementation((collectionName: string) => {
-          if (collectionName === "admins") return mockAdminsCollection;
-          if (collectionName === "orgs") return mockOrgsCollection;
-          return undefined;
-        });
-
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
-
-      await updateCustomUserClaims(mockAuth, mockFirestore, uid);
-
-      expect(mockAuth.setCustomUserClaims).toHaveBeenNthCalledWith(2, uid, {
-        org456: false,
-      });
-      expect(mockAuth.setCustomUserClaims).toHaveBeenNthCalledWith(3, uid, {
-        "org456.manager": false,
-      });
-    });
-
-    it("should set manager claim to false when user not in managers group", async () => {
-      const uid = "user111";
-      mockAuth.getUser = vi.fn().mockResolvedValue({ uid });
-
-      const mockAdminGet = vi.fn().mockResolvedValue({ exists: false });
-      const mockAdminDoc = vi.fn(() => ({ get: mockAdminGet }));
-      const mockAdminsCollection = { doc: mockAdminDoc };
-
-      const mockUserGet = vi.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({ valid: true }),
-      });
-      const mockUserDoc = vi.fn(() => ({ get: mockUserGet }));
-      const mockUsersCollection = { doc: mockUserDoc };
-
-      const mockManagersGet = vi.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({ members: ["other-user"] }),
-      });
-      const mockManagersDoc = vi.fn(() => ({ get: mockManagersGet }));
-      const mockGroupsCollection = { doc: mockManagersDoc };
-
-      const mockOrgDoc = vi.fn(() => ({
-        collection: vi.fn((name: string) => {
-          if (name === "users") return mockUsersCollection;
-          if (name === "groups") return mockGroupsCollection;
-          return undefined;
-        }),
-      }));
-
-      const mockOrgsGet = vi.fn().mockResolvedValue({
-        docs: [{ id: "org789" }],
-      });
-      const mockOrgsCollection = {
-        get: mockOrgsGet,
-        doc: mockOrgDoc,
-      };
-
-      mockFirestore.collection = vi
-        .fn()
-        .mockImplementation((collectionName: string) => {
-          if (collectionName === "admins") return mockAdminsCollection;
-          if (collectionName === "orgs") return mockOrgsCollection;
-          return undefined;
-        });
-
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
-
-      await updateCustomUserClaims(mockAuth, mockFirestore, uid);
-
-      expect(mockAuth.setCustomUserClaims).toHaveBeenNthCalledWith(3, uid, {
-        "org789.manager": false,
-      });
-    });
-
-    it("should handle multiple orgs correctly", async () => {
-      const uid = "multiUser";
-      mockAuth.getUser = vi.fn().mockResolvedValue({ uid });
-      const mockAdminGet = vi.fn().mockResolvedValue({ exists: false });
-      const mockAdminDoc = vi.fn(() => ({ get: mockAdminGet }));
-      const mockAdminsCollection = { doc: mockAdminDoc };
-
-      const mockOrgsDoc = vi.fn((orgId: string) => {
-        const isOrg1 = orgId === "org1";
-
-        return {
-          collection: vi.fn((collectionName: string) => {
-            if (collectionName === "users") {
-              return {
-                doc: vi.fn(() => ({
-                  get: vi.fn().mockResolvedValue({
-                    exists: true,
-                    data: () => ({ valid: isOrg1 }), // org1: valid=true, org2: valid=false
-                  }),
-                })),
-              };
-            }
-            if (collectionName === "groups") {
-              return {
-                doc: vi.fn(() => ({
-                  get: vi.fn().mockResolvedValue({
-                    exists: isOrg1,
-                    data: () => ({ members: isOrg1 ? [uid] : [] }), // org1 has user in members
-                  }),
-                })),
-              };
-            }
-            return undefined;
-          }),
-        };
-      });
-
+      // Mock orgs collection
       const mockOrgsGet = vi.fn().mockResolvedValue({
         docs: [{ id: "org1" }, { id: "org2" }],
       });
-      const mockOrgsCollection = {
+      const mockOrgsWhere = vi.fn().mockReturnValue({
         get: mockOrgsGet,
-        doc: mockOrgsDoc,
-      };
-
-      mockFirestore.collection = vi
-        .fn()
-        .mockImplementation((collectionName: string) => {
-          if (collectionName === "admins") return mockAdminsCollection;
-          if (collectionName === "orgs") return mockOrgsCollection;
-          return undefined;
-        });
-
-      mockAuth.setCustomUserClaims = vi.fn().mockResolvedValue(undefined);
-
-      await updateCustomUserClaims(mockAuth, mockFirestore, uid);
-
-      expect(mockAuth.setCustomUserClaims).toHaveBeenCalledTimes(5);
-      // First call is always admin claim
-      expect(mockAuth.setCustomUserClaims).toHaveBeenNthCalledWith(1, uid, {
-        admin: false,
       });
 
-      // Verify all expected calls were made (order may vary due to Promise.all)
-      const allCalls = (mockAuth.setCustomUserClaims as any).mock.calls;
-      const callArgs = allCalls.map((call: any) => call[1]);
-
-      // Expect these claim objects to exist in the calls (excluding the first admin call)
-      expect(callArgs).toContainEqual({ org1: true });
-      expect(callArgs).toContainEqual({ org2: false });
-      expect(callArgs).toContainEqual({ "org2.manager": false });
-      // org1.manager should be true based on our mock setup
-      const org1ManagerCall = callArgs.find(
-        (arg: any) => "org1.manager" in arg
+      vi.mocked(mockContext.db.collection).mockImplementation(
+        (collectionName: string) => {
+          if (collectionName === "orgs") {
+            return { where: mockOrgsWhere } as any;
+          }
+          return undefined as any;
+        }
       );
-      expect(org1ManagerCall).toEqual({ "org1.manager": true });
+
+      // Mock the helper functions
+      vi.mocked(firebase.isOrganizationMember)
+        .mockResolvedValueOnce(E.right(true)) // org1 member
+        .mockResolvedValueOnce(E.right(false)); // org2 not member
+      vi.mocked(firebase.isGroupMember)
+        .mockResolvedValueOnce(E.right(true)) // org1 manager
+        .mockResolvedValueOnce(E.right(false)) // org1 not admin
+        .mockResolvedValueOnce(E.right(false)) // org2 not manager
+        .mockResolvedValueOnce(E.right(false)); // org2 not admin
+
+      const result = await getUserPrivileges(mockContext, {
+        data: { uid },
+      } as any);
+
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toEqual({
+          org1: {
+            manager: true,
+            admin: false,
+          },
+        });
+      }
+    });
+
+    it("should return empty privileges when user is not a member of any organization", async () => {
+      const uid = "newUser123";
+
+      const mockOrgsGet = vi.fn().mockResolvedValue({ docs: [] });
+      const mockOrgsWhere = vi.fn().mockReturnValue({
+        get: mockOrgsGet,
+      });
+
+      vi.mocked(mockContext.db.collection).mockImplementation(
+        (collectionName: string) => {
+          if (collectionName === "orgs") {
+            return { where: mockOrgsWhere } as any;
+          }
+          return undefined as any;
+        }
+      );
+
+      const result = await getUserPrivileges(mockContext, {
+        data: { uid },
+      } as any);
+
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toEqual({});
+      }
+    });
+
+    it("should handle errors gracefully", async () => {
+      const uid = "user123";
+      const mockError = new Error("Firestore error");
+
+      vi.mocked(mockContext.db.collection).mockImplementation(() => {
+        throw mockError;
+      });
+
+      const result = await getUserPrivileges(mockContext, {
+        data: { uid },
+      } as any);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe(mockError);
+      }
+    });
+
+    it("should include multiple organizations with different privileges", async () => {
+      const uid = "user456";
+
+      const mockOrgsGet = vi.fn().mockResolvedValue({
+        docs: [{ id: "org1" }, { id: "org2" }, { id: "org3" }],
+      });
+      const mockOrgsWhere = vi.fn().mockReturnValue({
+        get: mockOrgsGet,
+      });
+
+      vi.mocked(mockContext.db.collection).mockImplementation(
+        (collectionName: string) => {
+          if (collectionName === "orgs") {
+            return { where: mockOrgsWhere } as any;
+          }
+          return undefined as any;
+        }
+      );
+
+      // Use mockImplementation for more control
+      vi.mocked(firebase.isOrganizationMember).mockImplementation(
+        async (context, { oid }) => {
+          if (oid === "org1") return E.right(true);
+          if (oid === "org2") return E.right(true);
+          if (oid === "org3") return E.right(false);
+          return E.left(new Error("Unknown org"));
+        }
+      );
+
+      vi.mocked(firebase.isGroupMember).mockImplementation(
+        async (context, { oid, gid }) => {
+          if (oid === "org1" && gid === "managers") return E.right(false);
+          if (oid === "org1" && gid === "admins") return E.right(true);
+          if (oid === "org2" && gid === "managers") return E.right(true);
+          if (oid === "org2" && gid === "admins") return E.right(false);
+          if (oid === "org3" && gid === "managers") return E.right(false);
+          if (oid === "org3" && gid === "admins") return E.right(false);
+          return E.left(new Error("Unknown org/group"));
+        }
+      );
+
+      const result = await getUserPrivileges(mockContext, {
+        data: { uid },
+      } as any);
+
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toEqual({
+          org1: {
+            manager: false,
+            admin: true,
+          },
+          org2: {
+            manager: true,
+            admin: false,
+          },
+        });
+      }
     });
   });
 });

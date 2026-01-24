@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     globals: false,
     environment: "node",
-    include: ["app/**/*.{test,spec}.{ts,tsx}"],
+    include: ["app/**/*.{test,spec}.{ts,tsx}", "src/**/*.{test,spec}.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
@@ -14,8 +14,13 @@ export default defineConfig({
         "app/_lib/**/*.ts",
         "app/_server/**/*.ts",
         "app/_types/**/*.ts",
+        "src/**/*.ts",
       ],
-      exclude: ["app/**/*.{test,spec}.{ts,tsx}", "app/**/firebase.ts"],
+      exclude: [
+        "app/**/*.{test,spec}.{ts,tsx}",
+        "app/**/firebase.ts",
+        "src/**/*.{test,spec}.ts",
+      ],
     },
   },
   resolve: {
