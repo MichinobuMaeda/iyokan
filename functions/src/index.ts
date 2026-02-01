@@ -20,13 +20,11 @@ const context: Context = { auth, db, logger };
 setGlobalOptions({ region: "asia-northeast1", maxInstances: 10 });
 
 export const createOrg = onCall({ timeoutSeconds: 60 }, async (request) =>
-  guardManager(context, request).then(async (res) =>
+  guardSystemAdmin(context, request).then(async (res) =>
     E.isLeft(res)
-      ? logger.error("Error creating org:", res.left)
+      ? logger.error("Error in system admin guard:", res.left)
       : createOrgAndGroups(context, request.data).then((res) =>
-          E.isLeft(res)
-            ? logger.error("Error creating org:", res.left)
-            : res.right
+          E.isLeft(res) ? logger.error("Error:", res.left) : res.right
         )
   )
 );
@@ -44,13 +42,11 @@ export const createOrg = onCall({ timeoutSeconds: 60 }, async (request) =>
  * @returns User ID (uid) if successful, undefined if failed
  */
 export const createUser = onCall({ timeoutSeconds: 60 }, async (request) =>
-  guardSystemAdmin(context, request).then(async (res) =>
+  guardManager(context, request).then(async (res) =>
     E.isLeft(res)
-      ? logger.error("Error creating user:", res.left)
+      ? logger.error("Error in manager guard:", res.left)
       : createOrgUser(context, request.data).then((res) =>
-          E.isLeft(res)
-            ? logger.error("Error creating user:", res.left)
-            : res.right
+          E.isLeft(res) ? logger.error("Error:", res.left) : res.right
         )
   )
 );
@@ -69,9 +65,7 @@ export const getUserPrivs = onCall({ timeoutSeconds: 60 }, async (request) =>
     E.isLeft(res)
       ? logger.error("Error in auth guard:", res.left)
       : getUserPrivileges(context, request).then((res) =>
-          E.isLeft(res)
-            ? logger.error("Error getting user privileges:", res.left)
-            : res.right
+          E.isLeft(res) ? logger.error("Error:", res.left) : res.right
         )
   )
 );

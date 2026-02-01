@@ -3,83 +3,29 @@ import {
   sendPasswordResetEmail,
   signOut,
   type UserCredential,
-  type User,
   EmailAuthProvider,
   reauthenticateWithCredential,
   updateEmail,
   updatePassword,
   onAuthStateChanged,
 } from "firebase/auth";
-import { httpsCallable } from "firebase/functions";
 import { getDefaultStore } from "jotai";
 import * as E from "fp-ts/Either";
 
-import type { UserPrivileges } from "../../functions/src/common";
-import { auth, functions } from "./firebase";
-import {
-  authUserAtom,
-  oidAtom,
-  userPrivilegesAtom,
-  authStateAtom,
-} from "./store";
-import type { UserState } from "../types/UserState";
-
-const getUserPrivs = httpsCallable(functions, "getUserPrivs");
-
-export function setValidOrganization(
-  store: ReturnType<typeof getDefaultStore>,
-  privs: UserPrivileges | null | undefined
-): void {
-  const current = store.get(oidAtom);
-  console.log("Current oid", current);
-  const privilegedOids = Object.keys(privs || {});
-
-  if (privilegedOids.length > 0 && !privilegedOids.includes(current || "")) {
-    const oid = privilegedOids[0];
-    console.log("oid", oid);
-    store.set(oidAtom, oid);
-  }
-}
-
-export async function setAuthenticatedUserStatus(
-  store: ReturnType<typeof getDefaultStore>,
-  user: User | null
-): Promise<void> {
-  try {
-    if (!user?.uid) {
-      store.set(userPrivilegesAtom, null);
-    } else {
-      const result = await getUserPrivs({ uid: user?.uid });
-      const privs = result.data as UserPrivileges;
-      console.log("Privileges", privs);
-
-      if (!privs || Object.keys(privs).length === 0) {
-        store.set(userPrivilegesAtom, null);
-      } else {
-        setValidOrganization(store, privs);
-        store.set(userPrivilegesAtom, privs);
-      }
-    }
-
-    console.log("authState", store.get(authStateAtom));
-  } catch (error) {
-    console.error("setAuthenticatedUserStatus error:", error);
-  }
-}
+import { auth } from "./firebase";
+import { authUserAtom } from "./store";
+import { setAppState } from "./app";
 
 export function listenAuthState() {
-  console.log("Start listenAuthState()");
+  console.info("Start listenAuthState()");
   onAuthStateChanged(auth, (user) => {
-    console.log("uid", user?.uid);
+    console.info("listenAuthState() uid:", user?.uid);
     const store = getDefaultStore();
     const prevUser = store.get(authUserAtom);
     store.set(authUserAtom, user);
 
     if (prevUser?.uid !== user?.uid) {
-      setAuthenticatedUserStatus(store, user);
-      if (!user) {
-        window.location.reload();
-      }
+      setAppState(store, user);
     }
   });
 }
@@ -107,7 +53,6 @@ export async function login({
       password
     );
     const uid = cred.user.uid;
-    console.log("uid:", uid);
 
     return E.right(uid);
   } catch (error) {
@@ -143,9 +88,8 @@ export async function resetPassword({
  */
 export async function logout(): Promise<E.Either<"errorLogout", void>> {
   try {
+    console.info("logout()");
     await signOut(auth);
-    // Clear the auth cookie
-    document.cookie = "__session=; path=/; max-age=0";
     return E.right(undefined);
   } catch (error) {
     console.error("logout error:", error);
@@ -181,31 +125,31 @@ export async function reauthenticate(
 }
 
 export interface ChangeEmailData {
-  currentPassword: string;
+  password: string;
   newEmail: string;
-  confirmEmail: string;
+  confirmation: string;
 }
 
 /**
  * Changes the user's email address after re-authentication
- * @param currentPassword - User's current password for re-authentication
+ * @param password - User's current password for re-authentication
  * @param newEmail - New email address
  * @returns Promise that resolves to Either containing an i18n key or void
  */
 export async function changeEmail({
-  currentPassword,
+  password,
   newEmail,
-  confirmEmail,
+  confirmation,
 }: ChangeEmailData): Promise<
   E.Either<"errorNoUser" | "errorReauthenticate" | "errorChangeEmail", void>
 > {
-  if (newEmail !== confirmEmail) {
+  if (newEmail !== confirmation) {
     return E.left("errorChangeEmail");
   }
 
   try {
     // Re-authenticate first
-    const reauthResult = await reauthenticate(currentPassword);
+    const reauthResult = await reauthenticate(password);
     if (E.isLeft(reauthResult)) {
       return reauthResult;
     }
@@ -224,30 +168,30 @@ export async function changeEmail({
 }
 
 export interface ChangePasswordData {
-  currentPassword: string;
+  password: string;
   newPassword: string;
-  confirmPassword: string;
+  confirmation: string;
 }
 
 /**
  * Changes the user's password after re-authentication
- * @param currentPassword - User's current password for re-authentication
+ * @param password - User's current password for re-authentication
  * @param newPassword - New password
  * @returns Promise that resolves to Either containing an i18n key or void
  */
 export async function changePassword({
-  currentPassword,
+  password,
   newPassword,
-  confirmPassword,
+  confirmation,
 }: ChangePasswordData): Promise<
   E.Either<"errorNoUser" | "errorReauthenticate" | "errorChangePassword", void>
 > {
-  if (newPassword !== confirmPassword) {
+  if (newPassword !== confirmation) {
     return E.left("errorChangePassword");
   }
   try {
     // Re-authenticate first
-    const reauthResult = await reauthenticate(currentPassword);
+    const reauthResult = await reauthenticate(password);
     if (E.isLeft(reauthResult)) {
       return reauthResult;
     }
@@ -262,44 +206,5 @@ export async function changePassword({
   } catch (error) {
     console.error("changePassword error:", error);
     return E.left("errorChangePassword");
-  }
-}
-
-export function guard(
-  pathname: string,
-  userState: UserState | null | undefined
-): string | undefined {
-  const pathList = pathname.replace(/^\//, "").replace(/\/$/, "").split("/");
-
-  if (["", "/"].includes(pathname)) {
-    // Nothing to do
-  } else if (["login", "reset-password"].includes(pathList[0])) {
-    if (userState) {
-      return `/o/${userState.oid}`;
-    }
-  } else if (pathList[0] === "o") {
-    if (!userState) {
-      return "/";
-    }
-    if (pathList[1] === "new") {
-      if (!userState.sys) {
-        return `/o/${userState.oid}`;
-      }
-    } else if (pathList[1] !== userState.oid && !userState.sys) {
-      return `/o/${userState.oid}`;
-    } else if (
-      pathList[2] === "edit" &&
-      !userState.sys &&
-      !userState.manager &&
-      !userState.admin
-    ) {
-      return `/o/${userState.oid}`;
-    }
-  } else {
-    if (!userState) {
-      return "/";
-    } else {
-      return `/o/${userState.oid}`;
-    }
   }
 }

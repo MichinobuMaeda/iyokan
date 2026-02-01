@@ -44,6 +44,7 @@ describe("org", () => {
         oid: "org-123",
         name: "Test Organization",
         desc: "Test Description",
+        valid: true,
       });
 
       expect(E.isRight(result)).toBe(true);
@@ -101,6 +102,8 @@ describe("org", () => {
       const result = await createOrgAndGroups(mockContext, {
         oid: "org-456",
         name: "Minimal Org",
+        desc: undefined,
+        valid: true,
       });
 
       expect(E.isRight(result)).toBe(true);
@@ -123,6 +126,7 @@ describe("org", () => {
         oid: "",
         name: "Test Org",
         desc: "Description",
+        valid: true,
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -143,6 +147,7 @@ describe("org", () => {
         oid: "org-789",
         name: "",
         desc: "Description",
+        valid: true,
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -166,6 +171,7 @@ describe("org", () => {
         oid: "org-fail",
         name: "Failing Org",
         desc: "Will fail",
+        valid: true,
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -186,6 +192,8 @@ describe("org", () => {
       const result = await createOrgAndGroups(mockContext, {
         oid: "org-group-fail",
         name: "Group Fail Org",
+        desc: undefined,
+        valid: true,
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -208,6 +216,8 @@ describe("org", () => {
       const result = await createOrgAndGroups(mockContext, {
         oid: "org-admin-fail",
         name: "Admin Fail Org",
+        desc: undefined,
+        valid: true,
       });
 
       expect(E.isLeft(result)).toBe(true);

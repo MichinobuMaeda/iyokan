@@ -6,6 +6,20 @@ export type UserPrivileges = {
   [oid: string]: { manager: boolean; admin: boolean };
 };
 
+export type CreateOrgData = {
+  oid: string;
+  name: string;
+  desc?: string;
+  valid: boolean;
+};
+
+export type CreateUserData = {
+  oid: string;
+  email: string;
+  name: string;
+  valid: boolean;
+};
+
 export interface ProviderParamDef {
   key: string;
   type: string;

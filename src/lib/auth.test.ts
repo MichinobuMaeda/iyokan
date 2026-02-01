@@ -73,6 +73,9 @@ describe("client auth", () => {
     vi.clearAllMocks();
     // Reset document.cookie
     global.document.cookie = "";
+    // Suppress console.error and console.info during tests
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "info").mockImplementation(() => {});
   });
 
   describe("login", () => {
@@ -277,9 +280,9 @@ describe("client auth", () => {
       vi.mocked(updateEmail).mockResolvedValue(undefined);
 
       const result = await changeEmail({
-        currentPassword: "password123",
+        password: "password123",
         newEmail: "new@example.com",
-        confirmEmail: "new@example.com",
+        confirmation: "new@example.com",
       });
 
       expect(E.isRight(result)).toBe(true);
@@ -289,9 +292,9 @@ describe("client auth", () => {
       const { changeEmail } = await import("./auth");
 
       const result = await changeEmail({
-        currentPassword: "password123",
+        password: "password123",
         newEmail: "new@example.com",
-        confirmEmail: "different@example.com",
+        confirmation: "different@example.com",
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -319,9 +322,9 @@ describe("client auth", () => {
       );
 
       const result = await changeEmail({
-        currentPassword: "wrongPassword",
+        password: "wrongPassword",
         newEmail: "new@example.com",
-        confirmEmail: "new@example.com",
+        confirmation: "new@example.com",
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -360,9 +363,9 @@ describe("client auth", () => {
       });
 
       const result = await changeEmail({
-        currentPassword: "password123",
+        password: "password123",
         newEmail: "new@example.com",
-        confirmEmail: "new@example.com",
+        confirmation: "new@example.com",
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -391,9 +394,9 @@ describe("client auth", () => {
       vi.mocked(updateEmail).mockRejectedValue(new Error("Update error"));
 
       const result = await changeEmail({
-        currentPassword: "password123",
+        password: "password123",
         newEmail: "new@example.com",
-        confirmEmail: "new@example.com",
+        confirmation: "new@example.com",
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -427,9 +430,9 @@ describe("client auth", () => {
       vi.mocked(updatePassword).mockResolvedValue(undefined);
 
       const result = await changePassword({
-        currentPassword: "oldPassword123",
+        password: "oldPassword123",
         newPassword: "newPassword456",
-        confirmPassword: "newPassword456",
+        confirmation: "newPassword456",
       });
 
       expect(E.isRight(result)).toBe(true);
@@ -439,9 +442,9 @@ describe("client auth", () => {
       const { changePassword } = await import("./auth");
 
       const result = await changePassword({
-        currentPassword: "oldPassword123",
+        password: "oldPassword123",
         newPassword: "newPassword456",
-        confirmPassword: "differentPassword789",
+        confirmation: "differentPassword789",
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -469,9 +472,9 @@ describe("client auth", () => {
       );
 
       const result = await changePassword({
-        currentPassword: "wrongPassword",
+        password: "wrongPassword",
         newPassword: "newPassword456",
-        confirmPassword: "newPassword456",
+        confirmation: "newPassword456",
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -507,9 +510,9 @@ describe("client auth", () => {
       });
 
       const result = await changePassword({
-        currentPassword: "password123",
+        password: "password123",
         newPassword: "newPassword456",
-        confirmPassword: "newPassword456",
+        confirmation: "newPassword456",
       });
 
       expect(E.isLeft(result)).toBe(true);
@@ -541,9 +544,9 @@ describe("client auth", () => {
       vi.mocked(updatePassword).mockRejectedValue(new Error("Update error"));
 
       const result = await changePassword({
-        currentPassword: "oldPassword123",
+        password: "oldPassword123",
         newPassword: "newPassword456",
-        confirmPassword: "newPassword456",
+        confirmation: "newPassword456",
       });
 
       expect(E.isLeft(result)).toBe(true);

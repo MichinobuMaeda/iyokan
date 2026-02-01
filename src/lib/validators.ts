@@ -151,7 +151,7 @@ export function validatePassword(
  *
  * @param oid - Organization ID to validate
  * @returns Either containing an Error with i18n key or the validated oid
- * @returns Left: "errorOidRequired" - When oid is empty or whitespace
+ * @returns Left: "required" - When oid is empty or whitespace
  * @returns Left: "errorOidInvalidFormat" - When oid contains invalid characters
  * @returns Left: "errorOrgIdReserved" - When oid is a reserved word
  * @returns Right: The validated oid
@@ -160,7 +160,7 @@ export function validateOid(oid: string): E.Either<TranslationKey, string> {
   return pipe(
     oid,
     validateRequiredString,
-    E.mapLeft(() => "errorOidRequired" as TranslationKey),
+    E.mapLeft(() => "required" as TranslationKey),
     E.flatMap(validateOidFormat),
     E.flatMap(validateReservedOids)
   );

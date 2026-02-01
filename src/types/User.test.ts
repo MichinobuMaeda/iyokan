@@ -18,7 +18,6 @@ describe("User types", () => {
     it("should create User from valid document", () => {
       const mockData = {
         name: "Test User",
-        email: "test@example.com",
         valid: true,
         createdAt: { toDate: () => new Date("2024-01-01") },
         updatedAt: { toDate: () => new Date("2024-01-02") },
@@ -34,7 +33,6 @@ describe("User types", () => {
       expect(result).toEqual({
         id: "user-123",
         name: "Test User",
-        email: "test@example.com",
         valid: true,
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
@@ -52,7 +50,6 @@ describe("User types", () => {
       expect(result).toEqual({
         id: "user-456",
         name: "",
-        email: "",
         valid: false,
         createdAt: undefined,
         updatedAt: undefined,

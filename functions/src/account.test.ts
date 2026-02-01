@@ -338,13 +338,11 @@ describe("account", () => {
       );
 
       const result = await createOrgUser(mockContext, {
-        data: {
-          oid: "org123",
-          email: "user@example.com",
-          name: "Test User",
-          valid: true,
-        },
-      } as any);
+        oid: "org123",
+        email: "user@example.com",
+        name: "Test User",
+        valid: true,
+      });
 
       expect(E.isRight(result)).toBe(true);
       if (E.isRight(result)) {
@@ -356,14 +354,13 @@ describe("account", () => {
       expect(mockDoc).toHaveBeenCalledWith("user123");
       expect(mockSet).toHaveBeenCalledWith({
         name: "Test User",
-        email: "user@example.com",
         valid: true,
         createdAt: expect.any(Object),
         updatedAt: expect.any(Object),
       });
       expect(mockContext.logger.info).toHaveBeenCalledWith(
         "User created in Firestore",
-        { oid: "org123", uid: "user123", email: "user@example.com" }
+        { oid: "org123", uid: "user123" }
       );
     });
 
@@ -384,13 +381,11 @@ describe("account", () => {
       );
 
       const result = await createOrgUser(mockContext, {
-        data: {
-          oid: "org456",
-          email: "user2@example.com",
-          name: "User Two",
-          valid: false,
-        },
-      } as any);
+        oid: "org456",
+        email: "user2@example.com",
+        name: "User Two",
+        valid: false,
+      });
 
       expect(E.isRight(result)).toBe(true);
       if (E.isRight(result)) {
@@ -402,14 +397,13 @@ describe("account", () => {
       expect(mockDoc).toHaveBeenCalledWith("user456");
       expect(mockSet).toHaveBeenCalledWith({
         name: "User Two",
-        email: "user2@example.com",
         valid: false,
         createdAt: expect.any(Object),
         updatedAt: expect.any(Object),
       });
       expect(mockContext.logger.info).toHaveBeenCalledWith(
         "User created in Firestore",
-        { oid: "org456", uid: "user456", email: "user2@example.com" }
+        { oid: "org456", uid: "user456" }
       );
     });
 
@@ -432,13 +426,11 @@ describe("account", () => {
       );
 
       const result = await createOrgUser(mockContext, {
-        data: {
-          oid: "org789",
-          email: "existing@example.com",
-          name: "Existing User",
-          valid: true,
-        },
-      } as any);
+        oid: "org789",
+        email: "existing@example.com",
+        name: "Existing User",
+        valid: true,
+      });
 
       expect(E.isRight(result)).toBe(true);
       if (E.isRight(result)) {
@@ -461,13 +453,11 @@ describe("account", () => {
       vi.mocked(mockContext.auth.createUser).mockRejectedValue(mockError);
 
       const result = await createOrgUser(mockContext, {
-        data: {
-          oid: "org123",
-          email: "user@example.com",
-          name: "Test User",
-          valid: true,
-        },
-      } as any);
+        oid: "org123",
+        email: "user@example.com",
+        name: "Test User",
+        valid: true,
+      });
 
       expect(E.isLeft(result)).toBe(true);
       if (E.isLeft(result)) {
@@ -481,11 +471,9 @@ describe("account", () => {
 
     it("should return Left when oid is missing", async () => {
       const result = await createOrgUser(mockContext, {
-        data: {
-          email: "user@example.com",
-          name: "Test User",
-          valid: true,
-        },
+        email: "user@example.com",
+        name: "Test User",
+        valid: true,
       } as any);
 
       expect(E.isLeft(result)).toBe(true);
@@ -494,17 +482,15 @@ describe("account", () => {
       }
       expect(mockContext.logger.error).toHaveBeenCalledWith(
         "Missing required user data",
-        { data: { email: "user@example.com", name: "Test User", valid: true } }
+        { email: "user@example.com", name: "Test User", valid: true }
       );
     });
 
     it("should return Left when email is missing", async () => {
       const result = await createOrgUser(mockContext, {
-        data: {
-          oid: "org123",
-          name: "Test User",
-          valid: true,
-        },
+        oid: "org123",
+        name: "Test User",
+        valid: true,
       } as any);
 
       expect(E.isLeft(result)).toBe(true);
@@ -513,17 +499,15 @@ describe("account", () => {
       }
       expect(mockContext.logger.error).toHaveBeenCalledWith(
         "Missing required user data",
-        { data: { oid: "org123", name: "Test User", valid: true } }
+        { oid: "org123", name: "Test User", valid: true }
       );
     });
 
     it("should return Left when name is missing", async () => {
       const result = await createOrgUser(mockContext, {
-        data: {
-          oid: "org123",
-          email: "user@example.com",
-          valid: true,
-        },
+        oid: "org123",
+        email: "user@example.com",
+        valid: true,
       } as any);
 
       expect(E.isLeft(result)).toBe(true);
@@ -532,7 +516,7 @@ describe("account", () => {
       }
       expect(mockContext.logger.error).toHaveBeenCalledWith(
         "Missing required user data",
-        { data: { oid: "org123", email: "user@example.com", valid: true } }
+        { oid: "org123", email: "user@example.com", valid: true }
       );
     });
 
@@ -555,13 +539,11 @@ describe("account", () => {
       );
 
       const result = await createOrgUser(mockContext, {
-        data: {
-          oid: "org123",
-          email: "user@example.com",
-          name: "Test User",
-          valid: true,
-        },
-      } as any);
+        oid: "org123",
+        email: "user@example.com",
+        name: "Test User",
+        valid: true,
+      });
 
       expect(E.isLeft(result)).toBe(true);
       if (E.isLeft(result)) {

@@ -2,6 +2,7 @@ export const en = {
   // Common
   cancel: "Cancel",
   save: "Save",
+  update: "Update",
   logout: "Logout",
   login: "Login",
 
@@ -11,6 +12,9 @@ export const en = {
   appTitle: "Iyokan",
   changeEmail: "Change Email",
   changePassword: "Change Password",
+  organizations: "Organizations",
+  home: "Home",
+  returnToHome: "Return to Home",
 
   // Login page
   loginTitle: "Login",
@@ -24,6 +28,8 @@ export const en = {
   sendResetEmail: "Send reset email",
   sending: "Sending...",
   passwordResetEmailSent: "Password reset email sent. Check your inbox.",
+  validPassword:
+    "Set a password with at least 10 characters, including uppercase, lowercase, numbers, and symbols.",
 
   // Change Email page
   changeEmailTitle: "Change Email",
@@ -33,6 +39,7 @@ export const en = {
   updating: "Updating...",
   changeEmailButton: "Change Email",
   emailMismatch: "Email addresses do not match",
+  enterValidEmail: "Enter a valid email address",
 
   // Change Password page
   changePasswordTitle: "Change Password",
@@ -75,22 +82,26 @@ export const en = {
   organization: "Organization",
   provider: "Provider",
   users: "Users",
+  groups: "Groups",
 
   // Home page
   selectOrganization: "Select organization",
+
+  // Groups page
+  members: "Members",
 
   // Organization page
   addOrganization: "Add organization",
   addAdmin: "Add admin",
   addProvider: "Add provider",
   addUser: "Add user",
+  editUser: "Edit User",
 
   // Validation errors
   errorEmailRequired: "Email is required",
   errorInvalidEmail: "Invalid email format",
   errorNameEmailRequired: "Name and email are required",
   errorOrgIdReserved: "Organization ID is reserved and cannot be used",
-  errorOidRequired: "Organization ID is required",
   errorOidInvalidFormat:
     "Organization ID must contain only lowercase letters and numbers",
   errorProviderTypeRequired: "Provider type is required",

@@ -1,22 +1,30 @@
 import { NavLink } from "react-router";
 import { useTranslation } from "react-i18next";
-import { getDefaultStore } from "jotai";
+import { useAtom } from "jotai";
 
-import { userStateAtom } from "../lib/store";
-import SvgLogin from "../icons/SvgLogin";
+import { dataStateAtom, orgsAtom } from "../lib/store";
+import SvgHome from "../icons/SvgHome";
 import SvgDomain from "../icons/SvgDomain";
+import SvgLogin from "../icons/SvgLogin";
 
 export default function InfoPage() {
   const { t } = useTranslation();
-  const store = getDefaultStore();
-  const userState = store.get(userStateAtom);
+  const [dataState] = useAtom(dataStateAtom);
+  const [orgs] = useAtom(orgsAtom);
 
   return (
     <main>
-      {userState ? (
-        <NavLink to="/o" className="button filled" style={{ width: "100%" }}>
-          <SvgDomain /> {t("selectOrganization")}
-        </NavLink>
+      {dataState ? (
+        <div className="row wrap">
+          {(orgs?.length ?? 0) > 1 && (
+            <NavLink to="/o" className="button outlined">
+              <SvgDomain /> {t("selectOrganization")}
+            </NavLink>
+          )}
+          <NavLink to={`/o/${dataState.oid}`} className="button outlined">
+            <SvgHome /> {t("returnToHome")}
+          </NavLink>
+        </div>
       ) : (
         <NavLink
           to="/login"

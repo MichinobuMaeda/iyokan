@@ -48,16 +48,15 @@ export const updateToVersion1 = async (
       oid: OID_SYSADMIN,
       name: "Sys Admin",
       desc: "System Administrator Organization",
+      valid: true,
     });
     logger.info("Organization created", { oid: OID_SYSADMIN });
 
     const uid = await createOrgUser(context, {
-      data: {
-        oid: OID_SYSADMIN,
-        email,
-        name,
-        valid: true,
-      },
+      oid: OID_SYSADMIN,
+      email,
+      name,
+      valid: true,
     } as any);
 
     if (E.isRight(uid)) {

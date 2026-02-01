@@ -6,7 +6,12 @@ import {
   isOrganizationMember,
   isGroupMember,
 } from "./firebase.js";
-import { GID_MANAGERS, GID_ADMINS, UserPrivileges } from "./common.js";
+import {
+  GID_MANAGERS,
+  GID_ADMINS,
+  UserPrivileges,
+  CreateUserData,
+} from "./common.js";
 
 /**
  * Generates a random password for user account creation.
@@ -127,15 +132,14 @@ export const createAuthUserIfNotExists = async (
  */
 export const createOrgUser = async (
   context: Context,
-  { data }: import("firebase-functions/v2/https").CallableRequest
+  data: CreateUserData
 ): Promise<E.Either<Error, string>> => {
   const { db, logger } = context;
+  const { oid, email, name, valid } = data;
 
   try {
-    const { oid, email, name, valid } = data;
-
     if (!oid || !email || !name) {
-      logger.error("Missing required user data", { data });
+      logger.error("Missing required user data", data);
       return E.left(new Error("Missing required user data"));
     }
 
@@ -158,7 +162,6 @@ export const createOrgUser = async (
       .doc(uid.right)
       .set({
         name,
-        email,
         valid,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -167,7 +170,6 @@ export const createOrgUser = async (
     logger.info("User created in Firestore", {
       oid,
       uid: uid.right,
-      email,
     });
 
     logger.info("User creation process completed", { uid: uid.right });
@@ -201,10 +203,8 @@ export const getUserPrivileges = async (
   }
 
   try {
-    const orgs = await context.db
-      .collection("orgs")
-      .where("valid", "==", true)
-      .get();
+    const { db, logger } = context;
+    const orgs = await db.collection("orgs").where("valid", "==", true).get();
     const privList: Array<UserPrivileges | undefined> = await Promise.all(
       orgs.docs.map(async (org) => {
         const isMember = await isOrganizationMember(context, {
@@ -240,6 +240,7 @@ export const getUserPrivileges = async (
       .filter((priv) => !!priv)
       .forEach((priv) => Object.assign(privs, priv!));
 
+    logger.info("User privileges retrieved", { uid, privileges: privs });
     return E.right(privs);
   } catch (error) {
     return E.left(error as Error);

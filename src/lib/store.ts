@@ -7,12 +7,12 @@ import {
   GID_MANAGERS,
   OID_SYSADMIN,
 } from "../../functions/src/common";
-import type { UserState } from "../types/UserState";
-import type { Conf } from "../types/Conf";
-import type { Org } from "../types/Org";
-import type { User } from "../types/User";
-import type { Group } from "../types/Group";
-import type { Provider } from "../types/Provider";
+import { type UserState } from "../types/UserState";
+import { type Conf } from "../types/Conf";
+import { type Org } from "../types/Org";
+import { type User } from "../types/User";
+import { type Group } from "../types/Group";
+import { type Provider } from "../types/Provider";
 
 export const localeAtom = atomWithStorage<string>("locale", "ja");
 
@@ -36,7 +36,7 @@ export const groupsAtom = atom<Group[] | undefined>(undefined);
 
 export const providersAtom = atom<Provider[] | undefined>(undefined);
 
-export const authStateAtom = atom<UserState | null | undefined>((get) =>
+export const appStateAtom = atom<UserState | null | undefined>((get) =>
   get(authUserAtom) === undefined || !get(confAtom)
     ? undefined
     : !get(authUserAtom) || !get(userPrivilegesAtom) || !get(oidAtom)
@@ -50,28 +50,28 @@ export const authStateAtom = atom<UserState | null | undefined>((get) =>
         } as UserState)
 );
 
-export const userStateAtom = atom<UserState | null | undefined>((get) => {
-  const authState = get(authStateAtom);
+export const dataStateAtom = atom<UserState | null | undefined>((get) => {
+  const appState = get(appStateAtom);
   const orgs = get(orgsAtom);
   const users = get(usersAtom);
   const groups = get(groupsAtom);
   const providers = get(providersAtom);
-  return !authState
-    ? authState
+  return !appState
+    ? appState
     : orgs !== undefined &&
         users !== undefined &&
         groups !== undefined &&
         providers !== undefined &&
-        orgs?.some((org) => org.id === authState.oid) &&
-        users?.some((user) => user.id === authState.uid) &&
+        orgs?.some((org) => org.id === appState.oid) &&
+        users?.some((user) => user.id === appState.uid) &&
         !!groups
           ?.filter((group) => group.id === GID_MANAGERS)
-          ?.some((group) => group.members.includes(authState.uid)) ===
-          authState.manager &&
+          ?.some((group) => group.members.includes(appState.uid)) ===
+          appState.manager &&
         !!groups
           ?.filter((group) => group.id === GID_ADMINS)
-          ?.some((group) => group.members.includes(authState.uid)) ===
-          authState.admin
-      ? authState
+          ?.some((group) => group.members.includes(appState.uid)) ===
+          appState.admin
+      ? appState
       : undefined;
 });

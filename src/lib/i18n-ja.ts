@@ -2,6 +2,7 @@ export const ja = {
   // Common
   cancel: "キャンセル",
   save: "保存",
+  update: "更新",
   logout: "ログアウト",
   login: "ログイン",
   required: "必須",
@@ -10,6 +11,9 @@ export const ja = {
   appTitle: "いよかん",
   changeEmail: "メールアドレス変更",
   changePassword: "パスワード変更",
+  organizations: "組織",
+  home: "ホーム",
+  returnToHome: "ホームに戻る",
 
   // Login page
   loginTitle: "ログイン",
@@ -24,6 +28,8 @@ export const ja = {
   sending: "送信中...",
   passwordResetEmailSent:
     "パスワードリセットメールを送信しました。受信トレイをご確認ください。",
+  validPassword:
+    "10文字以上の大文字・小文字・数字・記号を組み合わせたパスワードを設定してください。",
 
   // Change Email page
   changeEmailTitle: "メールアドレス変更",
@@ -33,6 +39,7 @@ export const ja = {
   updating: "更新中...",
   changeEmailButton: "メールアドレス変更",
   emailMismatch: "メールアドレスが一致しません",
+  enterValidEmail: "有効なメールアドレスを入力してください",
 
   // Change Password page
   changePasswordTitle: "パスワード変更",
@@ -74,22 +81,26 @@ export const ja = {
   organization: "組織",
   provider: "プロバイダー",
   users: "ユーザー",
+  groups: "グループ",
 
   // Home page
   selectOrganization: "組織を選択",
+
+  // Groups page
+  members: "メンバー",
 
   // Organization page
   addOrganization: "組織を追加",
   addAdmin: "管理者を追加",
   addProvider: "プロバイダーを追加",
   addUser: "ユーザーを追加",
+  editUser: "ユーザーを編集",
 
   // Validation errors
   errorEmailRequired: "メールアドレスは必須です",
   errorInvalidEmail: "メールアドレスの形式が無効です",
   errorNameEmailRequired: "名前とメールアドレスは必須です",
   errorOrgIdReserved: "この組織IDは予約されており使用できません",
-  errorOidRequired: "組織IDは必須です",
   errorOidInvalidFormat: "組織IDは小文字と数字のみ使用できます",
   errorProviderTypeRequired: "プロバイダータイプは必須です",
   errorPasswordRequired: "パスワードは必須です",

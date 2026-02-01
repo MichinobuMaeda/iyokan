@@ -288,19 +288,19 @@ describe("validators", () => {
     });
 
     describe("invalid inputs - empty", () => {
-      it("should return left with errorOidRequired for empty string", () => {
+      it("should return left with required for empty string", () => {
         const result = validateOid("");
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
-          expect(result.left).toBe("errorOidRequired");
+          expect(result.left).toBe("required");
         }
       });
 
-      it("should return left with errorOidRequired for whitespace only", () => {
+      it("should return left with required for whitespace only", () => {
         const result = validateOid("   ");
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
-          expect(result.left).toBe("errorOidRequired");
+          expect(result.left).toBe("required");
         }
       });
     });

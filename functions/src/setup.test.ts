@@ -97,12 +97,10 @@ describe("setup", () => {
       );
 
       expect(account.createOrgUser).toHaveBeenCalledWith(mockContext, {
-        data: {
-          oid: OID_SYSADMIN,
-          email: "test@example.com",
-          name: "Primary user",
-          valid: true,
-        },
+        oid: OID_SYSADMIN,
+        email: "test@example.com",
+        name: "Primary user",
+        valid: true,
       });
 
       expect(mockContext.logger.info).toHaveBeenCalledWith(
@@ -173,12 +171,10 @@ describe("setup", () => {
         { oid: OID_SYSADMIN }
       );
       expect(account.createOrgUser).toHaveBeenCalledWith(mockContext, {
-        data: {
-          oid: OID_SYSADMIN,
-          email: "test@example.com",
-          name: "Primary user",
-          valid: true,
-        },
+        oid: OID_SYSADMIN,
+        email: "test@example.com",
+        name: "Primary user",
+        valid: true,
       });
       expect(mockContext.logger.info).toHaveBeenCalledWith(
         "Admin user created",

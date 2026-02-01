@@ -340,7 +340,7 @@ describe("guard", () => {
       // Should check system admin first
       expect(firebase.isOrganizationMember).toHaveBeenCalledWith(mockContext, {
         uid: "admin123",
-        oid: "admin",
+        oid: "sys",
       });
       expect(firebase.isGroupMember).toHaveBeenCalledWith(mockContext, {
         uid: "admin123",
@@ -432,11 +432,11 @@ describe("guard", () => {
 
       const result = await guardAdmin(mockContext, mockRequest);
       expect(E.isRight(result)).toBe(true);
-      // guardAdmin calls guardSystemAdmin -> guardOrgGroupMember(oid="admin")
+      // guardAdmin calls guardSystemAdmin -> guardOrgGroupMember(oid="sys")
       // but guardOrgGroupMember -> guardOrgUsers uses request.data.oid
       expect(firebase.isOrganizationMember).toHaveBeenCalledWith(mockContext, {
         uid: "admin123",
-        oid: mockRequest.data.oid, // Uses request.data.oid, not the hardcoded "admin"
+        oid: "sys", // Uses OID_SYSADMIN constant
       });
       expect(firebase.isGroupMember).toHaveBeenCalledWith(mockContext, {
         uid: "admin123",

@@ -4,11 +4,12 @@ import { createHashRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 
 import "./lib/i18n";
+import { listenAppState } from "./lib/app";
 import { listenAuthState } from "./lib/auth";
-import { listenAuthStateChanged, subscribeConf } from "./lib/firestore";
+import { subscribeConf } from "./lib/firestore";
 import { route } from "./lib/router";
 
-listenAuthStateChanged();
+listenAppState();
 listenAuthState();
 subscribeConf();
 

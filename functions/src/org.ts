@@ -1,19 +1,15 @@
 import * as E from "fp-ts/lib/Either.js";
 import { FieldValue } from "firebase-admin/firestore";
 
-import { GID_ADMINS, GID_MANAGERS } from "./common.js";
+import { GID_ADMINS, GID_MANAGERS, CreateOrgData } from "./common.js";
 import { type Context } from "./firebase.js";
 
 export const createOrgAndGroups = async (
   context: Context,
-  {
-    oid,
-    name,
-    desc,
-    valid = true,
-  }: { oid: string; name: string; desc?: string; valid?: boolean }
+  data: CreateOrgData
 ): Promise<E.Either<Error, string>> => {
   const { db, logger } = context;
+  const { oid, name, desc, valid } = data;
 
   try {
     if (!oid || !name) {

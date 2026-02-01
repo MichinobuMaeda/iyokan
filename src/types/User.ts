@@ -3,14 +3,12 @@ import type { Meta } from "./Meta";
 
 export interface UserData {
   name: string;
-  email: string;
   valid: boolean;
 }
 
 export interface User extends Meta, UserData {
   id: string;
   name: string;
-  email: string;
   valid: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -31,7 +29,6 @@ export function userFromDoc(doc: DocumentSnapshot): User | null {
   return {
     id: doc.id,
     name: data?.name ?? "",
-    email: data?.email ?? "",
     valid: data?.valid ?? false,
     createdAt: data?.createdAt?.toDate(),
     updatedAt: data?.updatedAt?.toDate(),
