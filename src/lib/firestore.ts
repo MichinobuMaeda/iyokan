@@ -5,6 +5,7 @@ import {
   query,
   where,
   onSnapshot,
+  addDoc,
   updateDoc,
   serverTimestamp,
   type Unsubscribe,
@@ -17,6 +18,7 @@ import {
   GID_MANAGERS,
   OID_SYSADMIN,
 } from "../../functions/src/common";
+import type { TranslationKey } from "../i18n/i18n";
 import { db } from "./firebase";
 import {
   confAtom,
@@ -26,7 +28,7 @@ import {
   groupsAtom,
   providersAtom,
 } from "./store";
-import { confFromDoc } from "../types/Conf";
+import { confFromDoc, type ConfData } from "../types/Conf";
 import { type UserState } from "../types/UserState";
 import { orgFromDoc, type Org } from "../types/Org";
 import { userFromDoc, type UserData, type User } from "../types/User";
@@ -176,6 +178,23 @@ export function unsubscribeUserDataAll(appState: UserState | null | undefined) {
   });
 }
 
+export async function updateConf(
+  formData: ConfData
+): Promise<E.Either<TranslationKey, void>> {
+  try {
+    await updateDoc(doc(db, "service", "conf"), {
+      webUrl: formData.webUrl.trim(),
+      desc: formData.desc?.trim() ?? "",
+      hardBreak: Boolean(formData.hardBreak),
+      updatedAt: serverTimestamp(),
+    });
+    return E.right(undefined);
+  } catch (error) {
+    console.error("updateConf error:", error);
+    return E.left("defaultErrorMessage");
+  }
+}
+
 /**
  * Updates an org document with the provided data
  * @param formData - Org object containing the fields to update
@@ -183,7 +202,7 @@ export function unsubscribeUserDataAll(appState: UserState | null | undefined) {
  */
 export async function updateOrg(
   formData: Org
-): Promise<E.Either<"errorUpdateOrg", void>> {
+): Promise<E.Either<TranslationKey, void>> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, createdAt, updatedAt, ...data } = formData;
@@ -199,7 +218,7 @@ export async function updateOrg(
     return E.right(undefined);
   } catch (error) {
     console.error("updateOrg error:", error);
-    return E.left("errorUpdateOrg");
+    return E.left("defaultErrorMessage");
   }
 }
 
@@ -214,7 +233,7 @@ export async function updateOrgUser(
   oid: string,
   id: string,
   formData: UserData
-): Promise<E.Either<"errorUpdateUser", void>> {
+): Promise<E.Either<TranslationKey, void>> {
   try {
     const { ...data } = formData;
 
@@ -228,7 +247,7 @@ export async function updateOrgUser(
     return E.right(undefined);
   } catch (error) {
     console.error("updateOrgUser error:", error);
-    return E.left("errorUpdateUser");
+    return E.left("defaultErrorMessage");
   }
 }
 
@@ -243,7 +262,7 @@ export async function updateOrgGroup(
   oid: string,
   id: string,
   formData: GroupData
-): Promise<E.Either<"errorUpdateGroup", void>> {
+): Promise<E.Either<TranslationKey, void>> {
   try {
     const { ...data } = formData;
 
@@ -258,7 +277,29 @@ export async function updateOrgGroup(
     return E.right(undefined);
   } catch (error) {
     console.error("updateOrgGroup error:", error);
-    return E.left("errorUpdateGroup");
+    return E.left("defaultErrorMessage");
+  }
+}
+
+export async function createOrgProvider(
+  oid: string,
+  formData: ProviderData
+): Promise<E.Either<TranslationKey, void>> {
+  try {
+    const { type, name, valid, params } = formData;
+
+    await addDoc(collection(db, "orgs", oid, "providers"), {
+      type,
+      name: name.trim(),
+      ...params.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {}),
+      valid: !!valid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return E.right(undefined);
+  } catch (error) {
+    console.error("createOrgProvider error:", error);
+    return E.left("defaultErrorMessage");
   }
 }
 
@@ -269,24 +310,24 @@ export async function updateOrgGroup(
  * @param formData - Provider object containing the fields to update
  * @returns Promise that resolves to Either containing an i18n key or void
  */
-export async function updateProvider(
+export async function updateOrgProvider(
   oid: string,
   id: string,
   formData: ProviderData
-): Promise<E.Either<"errorUpdateProvider", void>> {
+): Promise<E.Either<TranslationKey, void>> {
   try {
-    const { ...data } = formData;
-
-    data.name = data.name.trim();
-    data.valid = Boolean(data.valid);
+    const { type, name, valid, params } = formData;
 
     await updateDoc(doc(db, "orgs", oid, "providers", id), {
-      ...data,
+      type,
+      name: name.trim(),
+      ...params.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {}),
+      valid: !!valid,
       updatedAt: serverTimestamp(),
     });
     return E.right(undefined);
   } catch (error) {
-    console.error("updateProvider error:", error);
-    return E.left("errorUpdateProvider");
+    console.error("updateOrgProvider error:", error);
+    return E.left("defaultErrorMessage");
   }
 }

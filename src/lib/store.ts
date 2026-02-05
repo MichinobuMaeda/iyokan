@@ -1,4 +1,4 @@
-import { atom } from "jotai";
+import { atom, type Getter } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
 import {
@@ -36,26 +36,34 @@ export const groupsAtom = atom<Group[] | undefined>(undefined);
 
 export const providersAtom = atom<Provider[] | undefined>(undefined);
 
-export const appStateAtom = atom<UserState | null | undefined>((get) =>
-  get(authUserAtom) === undefined || !get(confAtom)
+export const getAppState = (get: Getter): UserState | null | undefined => {
+  const authUser = get(authUserAtom);
+  const userPrivileges = get(userPrivilegesAtom);
+  const oid = get(oidAtom);
+  const conf = get(confAtom);
+
+  return authUser === undefined || !conf
     ? undefined
-    : !get(authUserAtom) || !get(userPrivilegesAtom) || !get(oidAtom)
+    : !authUser || !userPrivileges || !oid
       ? null
       : ({
-          oid: get(oidAtom),
-          uid: get(authUserAtom)!.uid!,
-          sys: !!get(userPrivilegesAtom)![OID_SYSADMIN]?.admin,
-          manager: !!get(userPrivilegesAtom)![get(oidAtom)!]?.manager,
-          admin: !!get(userPrivilegesAtom)![get(oidAtom)!]?.admin,
-        } as UserState)
-);
+          oid: oid,
+          uid: authUser!.uid!,
+          sys: !!userPrivileges![OID_SYSADMIN]?.admin,
+          manager: !!userPrivileges![oid!]?.manager,
+          admin: !!userPrivileges![oid!]?.admin,
+        } as UserState);
+};
 
-export const dataStateAtom = atom<UserState | null | undefined>((get) => {
+export const appStateAtom = atom<UserState | null | undefined>(getAppState);
+
+export const getDataState = (get: Getter): UserState | null | undefined => {
   const appState = get(appStateAtom);
   const orgs = get(orgsAtom);
   const users = get(usersAtom);
   const groups = get(groupsAtom);
   const providers = get(providersAtom);
+
   return !appState
     ? appState
     : orgs !== undefined &&
@@ -74,4 +82,6 @@ export const dataStateAtom = atom<UserState | null | undefined>((get) => {
           appState.admin
       ? appState
       : undefined;
-});
+};
+
+export const dataStateAtom = atom<UserState | null | undefined>(getDataState);

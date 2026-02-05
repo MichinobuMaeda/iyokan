@@ -10,6 +10,7 @@ export type CreateOrgData = {
   oid: string;
   name: string;
   desc?: string;
+  hardBreak: boolean;
   valid: boolean;
 };
 

@@ -35,46 +35,30 @@ export function providerFromDoc(doc: DocumentSnapshot): Provider | null {
     return null;
   }
 
-  const data = doc.data();
   const id = doc.id;
-  const name = data?.name ?? "";
-  const type = data?.type ?? "";
-  const valid = data?.valid ?? false;
-  const createdAt = data?.createdAt?.toDate();
-  const updatedAt = data?.updatedAt?.toDate();
-  const params = data?.params ?? [];
-
+  const { type, name, valid, createdAt, updatedAt, ...remaining } = doc.data()!;
   const providerType = providerTypes.find((pt) => pt.type === type);
+  const params =
+    providerType?.params.map(({ key }) => ({
+      key,
+      value:
+        remaining[key] ||
+        (providerType.params.find((p) => p.key === key)?.type === "number"
+          ? 0
+          : ""),
+    })) ?? ([] as ProviderParam[]);
 
   if (!providerType) {
     return null;
   }
 
-  providerType.params.forEach((paramDef) => {
-    if (!params.find((p: ProviderParam) => p.key === paramDef.key)) {
-      params.push({
-        key: paramDef.key,
-        value: paramDef.type === "number" ? 0 : "",
-      });
-    } else {
-      const existingParam = params.find(
-        (p: ProviderParam) => p.key === paramDef.key
-      );
-      if (paramDef.type === "number") {
-        existingParam.value = Number(existingParam.value || 0);
-      } else {
-        existingParam.value = String(existingParam.value || "");
-      }
-    }
-  });
-
   return {
     id,
-    name,
-    type,
+    type: type,
+    name: name || providerType.defaultName,
     params,
-    valid,
-    createdAt,
-    updatedAt,
+    valid: !!valid,
+    createdAt: createdAt?.toDate(),
+    updatedAt: updatedAt?.toDate(),
   };
 }

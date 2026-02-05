@@ -9,7 +9,7 @@ export const createOrgAndGroups = async (
   data: CreateOrgData
 ): Promise<E.Either<Error, string>> => {
   const { db, logger } = context;
-  const { oid, name, desc, valid } = data;
+  const { oid, name, desc, hardBreak, valid } = data;
 
   try {
     if (!oid || !name) {
@@ -23,6 +23,7 @@ export const createOrgAndGroups = async (
       oid,
       name,
       desc,
+      hardBreak: hardBreak,
       valid,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),

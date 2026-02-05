@@ -41,6 +41,10 @@ vi.mock("./firestore", () => ({
   unsubscribeUserData: vi.fn(),
 }));
 
+vi.mock("./app", () => ({
+  setAppState: vi.fn(),
+}));
+
 vi.mock("./store", () => ({
   authUserAtom: { toString: () => "authUserAtom" },
   oidAtom: { toString: () => "oidAtom" },
@@ -78,6 +82,118 @@ describe("client auth", () => {
     vi.spyOn(console, "info").mockImplementation(() => {});
   });
 
+  describe("listenAuthState", () => {
+    it("should set up auth state listener and update store on auth change", async () => {
+      const { onAuthStateChanged } = await import("firebase/auth");
+      const { getDefaultStore } = await import("jotai");
+      const { authUserAtom } = await import("./store");
+      const { setAppState } = await import("./app");
+      const { listenAuthState } = await import("./auth");
+
+      const mockUser = { uid: "test-uid-123", email: "test@example.com" };
+      const mockStore = {
+        get: vi.fn(() => null), // No previous user
+        set: vi.fn(),
+      };
+
+      vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(onAuthStateChanged).mockImplementation(
+        (_auth, callback: (user: unknown) => void) => {
+          callback(mockUser);
+          return vi.fn();
+        }
+      );
+
+      listenAuthState();
+
+      expect(onAuthStateChanged).toHaveBeenCalled();
+      expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, mockUser);
+      expect(setAppState).toHaveBeenCalledWith(mockStore, mockUser);
+    });
+
+    it("should call setAppState when uid changes", async () => {
+      const { onAuthStateChanged } = await import("firebase/auth");
+      const { getDefaultStore } = await import("jotai");
+      const { authUserAtom } = await import("./store");
+      const { setAppState } = await import("./app");
+      const { listenAuthState } = await import("./auth");
+
+      const prevUser = { uid: "old-uid", email: "old@example.com" };
+      const newUser = { uid: "new-uid", email: "new@example.com" };
+      const mockStore = {
+        get: vi.fn(() => prevUser),
+        set: vi.fn(),
+      };
+
+      vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(onAuthStateChanged).mockImplementation(
+        (_auth, callback: (user: unknown) => void) => {
+          callback(newUser);
+          return vi.fn();
+        }
+      );
+
+      listenAuthState();
+
+      expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, newUser);
+      expect(setAppState).toHaveBeenCalledWith(mockStore, newUser);
+    });
+
+    it("should not call setAppState when uid remains the same", async () => {
+      const { onAuthStateChanged } = await import("firebase/auth");
+      const { getDefaultStore } = await import("jotai");
+      const { authUserAtom } = await import("./store");
+      const { setAppState } = await import("./app");
+      const { listenAuthState } = await import("./auth");
+
+      const sameUser = { uid: "same-uid", email: "test@example.com" };
+      const mockStore = {
+        get: vi.fn(() => sameUser),
+        set: vi.fn(),
+      };
+
+      vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(onAuthStateChanged).mockImplementation(
+        (_auth, callback: (user: unknown) => void) => {
+          callback(sameUser);
+          return vi.fn();
+        }
+      );
+
+      listenAuthState();
+
+      expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, sameUser);
+      expect(setAppState).not.toHaveBeenCalled();
+    });
+
+    it("should handle user logout (null user)", async () => {
+      const { onAuthStateChanged } = await import("firebase/auth");
+      const { getDefaultStore } = await import("jotai");
+      const { authUserAtom } = await import("./store");
+      const { setAppState } = await import("./app");
+      const { listenAuthState } = await import("./auth");
+
+      const prevUser = { uid: "test-uid", email: "test@example.com" };
+      const mockStore = {
+        get: vi.fn(() => prevUser),
+        set: vi.fn(),
+      };
+
+      vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(onAuthStateChanged).mockImplementation(
+        (_auth, callback: (user: unknown) => void) => {
+          callback(null);
+          return vi.fn();
+        }
+      );
+
+      listenAuthState();
+
+      expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, null);
+      expect(setAppState).toHaveBeenCalledWith(mockStore, null);
+    });
+  });
+
   describe("login", () => {
     it("should return right with uid and idToken on successful admin login", async () => {
       const { signInWithEmailAndPassword } = await import("firebase/auth");
@@ -106,7 +222,7 @@ describe("client auth", () => {
 
       expect(E.isRight(result)).toBe(true);
       if (E.isRight(result)) {
-        expect(result.right).toBe("test-uid-123");
+        expect(result.right).toBe(undefined);
       }
     });
 

@@ -1,14 +1,47 @@
 import { describe, it, expect } from "vitest";
 import * as E from "fp-ts/Either";
 import {
+  isEmptyOrWhitespace,
   validateRequiredString,
   validateOptionalEmail,
   validateRequiredEmail,
+  validateOptionalUrl,
+  validateRequiredUrl,
   validatePassword,
   validateOid,
 } from "./validators";
 
 describe("validators", () => {
+  describe("isEmptyOrWhitespace", () => {
+    describe("returns true", () => {
+      it("should return true for undefined", () => {
+        expect(isEmptyOrWhitespace(undefined)).toBe(true);
+      });
+
+      it("should return true for empty string", () => {
+        expect(isEmptyOrWhitespace("")).toBe(true);
+      });
+
+      it("should return true for whitespace only", () => {
+        expect(isEmptyOrWhitespace("   ")).toBe(true);
+      });
+
+      it("should return true for tabs and newlines", () => {
+        expect(isEmptyOrWhitespace("\t\n")).toBe(true);
+      });
+    });
+
+    describe("returns false", () => {
+      it("should return false for non-empty string", () => {
+        expect(isEmptyOrWhitespace("test")).toBe(false);
+      });
+
+      it("should return false for string with content and whitespace", () => {
+        expect(isEmptyOrWhitespace("  hello  ")).toBe(false);
+      });
+    });
+  });
+
   describe("validateRequiredString", () => {
     describe("valid inputs", () => {
       it("should return right for non-empty string", () => {
@@ -29,6 +62,14 @@ describe("validators", () => {
     });
 
     describe("invalid inputs", () => {
+      it("should return left with required for undefined", () => {
+        const result = validateRequiredString(undefined);
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("required");
+        }
+      });
+
       it("should return left with required for empty string", () => {
         const result = validateRequiredString("");
         expect(E.isLeft(result)).toBe(true);
@@ -80,6 +121,14 @@ describe("validators", () => {
           expect(result.right).toBe("   ");
         }
       });
+
+      it("should return right for undefined (optional)", () => {
+        const result = validateOptionalEmail(undefined);
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe(undefined);
+        }
+      });
     });
 
     describe("invalid inputs - format", () => {
@@ -120,6 +169,14 @@ describe("validators", () => {
     });
 
     describe("invalid inputs - empty", () => {
+      it("should return left with errorEmailRequired for undefined", () => {
+        const result = validateRequiredEmail(undefined);
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorEmailRequired");
+        }
+      });
+
       it("should return left with errorEmailRequired for empty string", () => {
         const result = validateRequiredEmail("");
         expect(E.isLeft(result)).toBe(true);
@@ -163,6 +220,181 @@ describe("validators", () => {
       });
     });
   });
+
+  describe("validateOptionalUrl", () => {
+    describe("valid inputs", () => {
+      it("should return right for valid http URL", () => {
+        const result = validateOptionalUrl("http://example.com");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("http://example.com");
+        }
+      });
+
+      it("should return right for valid https URL", () => {
+        const result = validateOptionalUrl("https://example.com");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("https://example.com");
+        }
+      });
+
+      it("should return right for URL without protocol", () => {
+        const result = validateOptionalUrl("example.com");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("example.com");
+        }
+      });
+
+      it("should return right for URL with subdomain", () => {
+        const result = validateOptionalUrl("https://www.example.com");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("https://www.example.com");
+        }
+      });
+
+      it("should return right for URL with port", () => {
+        const result = validateOptionalUrl("http://example.com:8080");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("http://example.com:8080");
+        }
+      });
+
+      it("should return right for URL with path", () => {
+        const result = validateOptionalUrl("https://example.com/path/to/page");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("https://example.com/path/to/page");
+        }
+      });
+
+      it("should return right for empty string (optional)", () => {
+        const result = validateOptionalUrl("");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("");
+        }
+      });
+
+      it("should return right for whitespace only (optional)", () => {
+        const result = validateOptionalUrl("   ");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("   ");
+        }
+      });
+
+      it("should return right for undefined (optional)", () => {
+        const result = validateOptionalUrl(undefined);
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe(undefined);
+        }
+      });
+    });
+
+    describe("invalid inputs - format", () => {
+      it("should return left with errorInvalidUrl for invalid format", () => {
+        const result = validateOptionalUrl("not-a-url");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidUrl");
+        }
+      });
+
+      it("should return left with errorInvalidUrl for missing domain", () => {
+        const result = validateOptionalUrl("http://");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidUrl");
+        }
+      });
+
+      it("should return left with errorInvalidUrl for spaces", () => {
+        const result = validateOptionalUrl("http://exam ple.com");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidUrl");
+        }
+      });
+    });
+  });
+
+  describe("validateRequiredUrl", () => {
+    describe("valid inputs", () => {
+      it("should return right for valid http URL", () => {
+        const result = validateRequiredUrl("http://example.com");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("http://example.com");
+        }
+      });
+
+      it("should return right for valid https URL", () => {
+        const result = validateRequiredUrl("https://example.com");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("https://example.com");
+        }
+      });
+
+      it("should return right for URL with path", () => {
+        const result = validateRequiredUrl("https://example.com/api/v1");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe("https://example.com/api/v1");
+        }
+      });
+    });
+
+    describe("invalid inputs - empty", () => {
+      it("should return left with errorUrlRequired for empty string", () => {
+        const result = validateRequiredUrl("");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorUrlRequired");
+        }
+      });
+
+      it("should return left with errorUrlRequired for whitespace only", () => {
+        const result = validateRequiredUrl("   ");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorUrlRequired");
+        }
+      });
+
+      it("should return left with errorUrlRequired for undefined", () => {
+        const result = validateRequiredUrl(undefined);
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorUrlRequired");
+        }
+      });
+    });
+
+    describe("invalid inputs - format", () => {
+      it("should return left with errorInvalidUrl for invalid format", () => {
+        const result = validateRequiredUrl("not-a-url");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidUrl");
+        }
+      });
+
+      it("should return left with errorInvalidUrl for missing domain", () => {
+        const result = validateRequiredUrl("http://");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidUrl");
+        }
+      });
+    });
+  });
+
   describe("validatePassword", () => {
     describe("valid inputs", () => {
       it("should return right for valid password", () => {
@@ -255,7 +487,7 @@ describe("validators", () => {
   describe("validateOid", () => {
     describe("valid inputs", () => {
       it("should return right for valid oid with lowercase letters", () => {
-        const result = validateOid("myorg");
+        const result = validateOid("myorg", []);
         expect(E.isRight(result)).toBe(true);
         if (E.isRight(result)) {
           expect(result.right).toBe("myorg");
@@ -263,7 +495,7 @@ describe("validators", () => {
       });
 
       it("should return right for valid oid with numbers", () => {
-        const result = validateOid("org123");
+        const result = validateOid("org123", []);
         expect(E.isRight(result)).toBe(true);
         if (E.isRight(result)) {
           expect(result.right).toBe("org123");
@@ -271,7 +503,7 @@ describe("validators", () => {
       });
 
       it("should return right for valid oid with only numbers", () => {
-        const result = validateOid("123456");
+        const result = validateOid("123456", []);
         expect(E.isRight(result)).toBe(true);
         if (E.isRight(result)) {
           expect(result.right).toBe("123456");
@@ -279,7 +511,7 @@ describe("validators", () => {
       });
 
       it("should return right for valid oid with mixed lowercase and numbers", () => {
-        const result = validateOid("abc123def456");
+        const result = validateOid("abc123def456", []);
         expect(E.isRight(result)).toBe(true);
         if (E.isRight(result)) {
           expect(result.right).toBe("abc123def456");
@@ -289,7 +521,7 @@ describe("validators", () => {
 
     describe("invalid inputs - empty", () => {
       it("should return left with required for empty string", () => {
-        const result = validateOid("");
+        const result = validateOid("", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("required");
@@ -297,7 +529,7 @@ describe("validators", () => {
       });
 
       it("should return left with required for whitespace only", () => {
-        const result = validateOid("   ");
+        const result = validateOid("   ", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("required");
@@ -307,7 +539,7 @@ describe("validators", () => {
 
     describe("invalid inputs - format", () => {
       it("should return left with errorOidInvalidFormat for uppercase letters", () => {
-        const result = validateOid("MyOrg");
+        const result = validateOid("MyOrg", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOidInvalidFormat");
@@ -315,7 +547,7 @@ describe("validators", () => {
       });
 
       it("should return left with errorOidInvalidFormat for hyphens", () => {
-        const result = validateOid("my-org");
+        const result = validateOid("my-org", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOidInvalidFormat");
@@ -323,7 +555,7 @@ describe("validators", () => {
       });
 
       it("should return left with errorOidInvalidFormat for underscores", () => {
-        const result = validateOid("my_org");
+        const result = validateOid("my_org", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOidInvalidFormat");
@@ -331,7 +563,7 @@ describe("validators", () => {
       });
 
       it("should return left with errorOidInvalidFormat for spaces", () => {
-        const result = validateOid("my org");
+        const result = validateOid("my org", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOidInvalidFormat");
@@ -339,7 +571,7 @@ describe("validators", () => {
       });
 
       it("should return left with errorOidInvalidFormat for special characters", () => {
-        const result = validateOid("my@org");
+        const result = validateOid("my@org", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOidInvalidFormat");
@@ -347,7 +579,7 @@ describe("validators", () => {
       });
 
       it("should return left with errorOidInvalidFormat for dots", () => {
-        const result = validateOid("my.org");
+        const result = validateOid("my.org", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOidInvalidFormat");
@@ -357,7 +589,7 @@ describe("validators", () => {
 
     describe("invalid inputs - reserved", () => {
       it("should return left with errorOrgIdReserved for 'id'", () => {
-        const result = validateOid("id");
+        const result = validateOid("id", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOrgIdReserved");
@@ -365,7 +597,7 @@ describe("validators", () => {
       });
 
       it("should return left with errorOrgIdReserved for 'oid'", () => {
-        const result = validateOid("oid");
+        const result = validateOid("oid", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOrgIdReserved");
@@ -373,7 +605,7 @@ describe("validators", () => {
       });
 
       it("should return left with errorOrgIdReserved for 'admin'", () => {
-        const result = validateOid("admin");
+        const result = validateOid("admin", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOrgIdReserved");
@@ -381,10 +613,24 @@ describe("validators", () => {
       });
 
       it("should return left with errorOrgIdReserved for 'admins'", () => {
-        const result = validateOid("admins");
+        const result = validateOid("admins", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOrgIdReserved");
+        }
+      });
+    });
+
+    describe("invalid inputs - registered", () => {
+      it("should return left with errorOrgIdUsed for existing org id", () => {
+        const existingOrgs = [
+          { id: "existingorg" },
+          { id: "anotherorg" },
+        ] as never[];
+        const result = validateOid("existingorg", existingOrgs);
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorOrgIdUsed");
         }
       });
     });

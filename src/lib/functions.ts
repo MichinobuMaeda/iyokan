@@ -1,10 +1,13 @@
 import { httpsCallable } from "firebase/functions";
 import * as E from "fp-ts/Either";
 
-import type { UserPrivileges } from "../../functions/src/common";
-import type { CreateOrgData } from "../../functions/src/common";
+import type {
+  CreateUserData,
+  CreateOrgData,
+  UserPrivileges,
+} from "../../functions/src/common";
+import type { TranslationKey } from "../i18n/i18n";
 import { functions } from "./firebase";
-import type { CreateUserData } from "../../functions/src/common";
 
 const getUserPrivsFunction = httpsCallable(functions, "getUserPrivs");
 const createOrgFunction = httpsCallable(functions, "createOrg");
@@ -12,7 +15,7 @@ const createUserFunction = httpsCallable(functions, "createUser");
 
 export async function getUserPrivs(
   uid?: string
-): Promise<E.Either<"errorGetUserPrivs", UserPrivileges>> {
+): Promise<E.Either<TranslationKey, UserPrivileges>> {
   if (!uid) {
     console.info("getUserPrivs uid:", uid);
     return E.left("errorGetUserPrivs");
@@ -32,13 +35,13 @@ export async function getUserPrivs(
 
 export async function createOrg(
   formData: CreateOrgData
-): Promise<E.Either<"errorCreateOrg", void>> {
+): Promise<E.Either<TranslationKey, void>> {
   try {
     await createOrgFunction(formData);
     return E.right(undefined);
   } catch (error) {
     console.error("createOrg error:", error);
-    return E.left("errorCreateOrg");
+    return E.left("defaultErrorMessage");
   }
 }
 
@@ -49,12 +52,12 @@ export async function createOrg(
  */
 export async function createUser(
   data: CreateUserData
-): Promise<E.Either<"errorCreateUser", void>> {
+): Promise<E.Either<TranslationKey, void>> {
   try {
     await createUserFunction(data);
     return E.right(undefined);
   } catch (error) {
     console.error("createUser error:", error);
-    return E.left("errorCreateUser");
+    return E.left("defaultErrorMessage");
   }
 }

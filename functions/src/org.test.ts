@@ -44,6 +44,7 @@ describe("org", () => {
         oid: "org-123",
         name: "Test Organization",
         desc: "Test Description",
+        hardBreak: true,
         valid: true,
       });
 
@@ -58,6 +59,7 @@ describe("org", () => {
         oid: "org-123",
         name: "Test Organization",
         desc: "Test Description",
+        hardBreak: true,
         valid: true,
         createdAt: expect.anything(),
         updatedAt: expect.anything(),
@@ -103,6 +105,7 @@ describe("org", () => {
         oid: "org-456",
         name: "Minimal Org",
         desc: undefined,
+        hardBreak: false,
         valid: true,
       });
 
@@ -115,6 +118,7 @@ describe("org", () => {
         oid: "org-456",
         name: "Minimal Org",
         desc: undefined,
+        hardBreak: false,
         valid: true,
         createdAt: expect.anything(),
         updatedAt: expect.anything(),
@@ -126,6 +130,7 @@ describe("org", () => {
         oid: "",
         name: "Test Org",
         desc: "Description",
+        hardBreak: false,
         valid: true,
       });
 
@@ -147,6 +152,7 @@ describe("org", () => {
         oid: "org-789",
         name: "",
         desc: "Description",
+        hardBreak: false,
         valid: true,
       });
 
@@ -171,6 +177,7 @@ describe("org", () => {
         oid: "org-fail",
         name: "Failing Org",
         desc: "Will fail",
+        hardBreak: false,
         valid: true,
       });
 
@@ -193,6 +200,7 @@ describe("org", () => {
         oid: "org-group-fail",
         name: "Group Fail Org",
         desc: undefined,
+        hardBreak: false,
         valid: true,
       });
 
@@ -217,6 +225,7 @@ describe("org", () => {
         oid: "org-admin-fail",
         name: "Admin Fail Org",
         desc: undefined,
+        hardBreak: false,
         valid: true,
       });
 
@@ -240,6 +249,7 @@ describe("org", () => {
       const result = await createOrgAndGroups(mockContext, {
         oid: "org-invalid",
         name: "Invalid Org",
+        hardBreak: false,
         valid: false,
       });
 
@@ -249,6 +259,7 @@ describe("org", () => {
         oid: "org-invalid",
         name: "Invalid Org",
         desc: undefined,
+        hardBreak: false,
         valid: false,
         createdAt: expect.anything(),
         updatedAt: expect.anything(),

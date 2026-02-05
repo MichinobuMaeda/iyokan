@@ -36,7 +36,7 @@ export const updateToVersion1 = async (
       .collection("service")
       .doc("conf")
       .set({
-        web_url: process.env.WEB_URL || "",
+        webUrl: process.env.WEB_URL || "",
         desc: "",
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -48,6 +48,7 @@ export const updateToVersion1 = async (
       oid: OID_SYSADMIN,
       name: "Sys Admin",
       desc: "System Administrator Organization",
+      hardBreak: true,
       valid: true,
     });
     logger.info("Organization created", { oid: OID_SYSADMIN });

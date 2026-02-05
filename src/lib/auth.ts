@@ -2,7 +2,6 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   signOut,
-  type UserCredential,
   EmailAuthProvider,
   reauthenticateWithCredential,
   updateEmail,
@@ -12,6 +11,7 @@ import {
 import { getDefaultStore } from "jotai";
 import * as E from "fp-ts/Either";
 
+import type { TranslationKey } from "../i18n/i18n";
 import { auth } from "./firebase";
 import { authUserAtom } from "./store";
 import { setAppState } from "./app";
@@ -44,17 +44,11 @@ export interface LoginData {
 export async function login({
   email,
   password,
-}: LoginData): Promise<E.Either<"errorLogin", string>> {
+}: LoginData): Promise<E.Either<TranslationKey, void>> {
   try {
-    // Sign in with Firebase Auth
-    const cred: UserCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    const uid = cred.user.uid;
+    await signInWithEmailAndPassword(auth, email, password);
 
-    return E.right(uid);
+    return E.right(undefined);
   } catch (error) {
     console.error("login error:", error);
     return E.left("errorLogin");
@@ -72,7 +66,7 @@ export interface ResetPasswordData {
  */
 export async function resetPassword({
   email,
-}: ResetPasswordData): Promise<E.Either<"errorResetPassword", void>> {
+}: ResetPasswordData): Promise<E.Either<TranslationKey, void>> {
   try {
     await sendPasswordResetEmail(auth, email);
     return E.right(undefined);
@@ -86,7 +80,7 @@ export async function resetPassword({
  * Signs out the current user and clears the auth cookie
  * @returns Promise that resolves to Either containing an i18n key or void
  */
-export async function logout(): Promise<E.Either<"errorLogout", void>> {
+export async function logout(): Promise<E.Either<TranslationKey, void>> {
   try {
     console.info("logout()");
     await signOut(auth);
@@ -105,7 +99,7 @@ export async function logout(): Promise<E.Either<"errorLogout", void>> {
  */
 export async function reauthenticate(
   currentPassword: string
-): Promise<E.Either<"errorNoUser" | "errorReauthenticate", void>> {
+): Promise<E.Either<TranslationKey, void>> {
   try {
     const user = auth.currentUser;
     if (!user || !user.email) {
@@ -140,9 +134,7 @@ export async function changeEmail({
   password,
   newEmail,
   confirmation,
-}: ChangeEmailData): Promise<
-  E.Either<"errorNoUser" | "errorReauthenticate" | "errorChangeEmail", void>
-> {
+}: ChangeEmailData): Promise<E.Either<TranslationKey, void>> {
   if (newEmail !== confirmation) {
     return E.left("errorChangeEmail");
   }
@@ -183,9 +175,7 @@ export async function changePassword({
   password,
   newPassword,
   confirmation,
-}: ChangePasswordData): Promise<
-  E.Either<"errorNoUser" | "errorReauthenticate" | "errorChangePassword", void>
-> {
+}: ChangePasswordData): Promise<E.Either<TranslationKey, void>> {
   if (newPassword !== confirmation) {
     return E.left("errorChangePassword");
   }

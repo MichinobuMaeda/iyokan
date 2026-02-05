@@ -54,7 +54,12 @@ export function listenAppState() {
       subscribeUserDataAll(appState);
     } else {
       unsubscribeUserDataAll(appState);
-      logout();
+      if (appState === null) {
+        const userPrivileges = store.get(userPrivilegesAtom);
+        if (userPrivileges === null) {
+          logout();
+        }
+      }
     }
   });
 }

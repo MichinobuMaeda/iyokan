@@ -35,6 +35,7 @@ describe("client functions", () => {
         oid: "org123",
         name: "Test Org",
         desc: "A test organization",
+        hardBreak: false,
         valid: true,
       };
       const result = await createOrg(formData);
@@ -44,7 +45,7 @@ describe("client functions", () => {
       expect(mockCallable).toHaveBeenCalledWith(formData);
     });
 
-    it("should return errorCreateOrg on failure", async () => {
+    it("should return defaultErrorMessage on failure", async () => {
       const { httpsCallable } = await import("firebase/functions");
 
       const mockCallable = vi
@@ -58,13 +59,14 @@ describe("client functions", () => {
         oid: "org123",
         name: "Test Org",
         desc: "A test organization",
+        hardBreak: false,
         valid: true,
       };
       const result = await createOrg(formData);
 
       expect(E.isLeft(result)).toBe(true);
       if (E.isLeft(result)) {
-        expect(result.left).toBe("errorCreateOrg");
+        expect(result.left).toBe("defaultErrorMessage");
       }
     });
   });
@@ -91,7 +93,7 @@ describe("client functions", () => {
       expect(mockCallable).toHaveBeenCalledWith(formData);
     });
 
-    it("should return errorCreateUser on failure", async () => {
+    it("should return defaultErrorMessage on failure", async () => {
       const { httpsCallable } = await import("firebase/functions");
 
       const mockCallable = vi
@@ -111,7 +113,75 @@ describe("client functions", () => {
 
       expect(E.isLeft(result)).toBe(true);
       if (E.isLeft(result)) {
-        expect(result.left).toBe("errorCreateUser");
+        expect(result.left).toBe("defaultErrorMessage");
+      }
+    });
+  });
+
+  describe("getUserPrivs", () => {
+    it("should return right with user privileges on success", async () => {
+      const { httpsCallable } = await import("firebase/functions");
+
+      const mockPrivs = {
+        org123: { admin: true, groups: [] },
+      };
+      const mockCallable = vi.fn().mockResolvedValue({ data: mockPrivs });
+      vi.mocked(httpsCallable).mockReturnValue(mockCallable as never);
+
+      const { getUserPrivs } = await import("./functions");
+
+      const result = await getUserPrivs("user-uid-123");
+
+      expect(E.isRight(result)).toBe(true);
+      if (E.isRight(result)) {
+        expect(result.right).toEqual(mockPrivs);
+      }
+      expect(httpsCallable).toHaveBeenCalledWith({}, "getUserPrivs");
+      expect(mockCallable).toHaveBeenCalledWith({ uid: "user-uid-123" });
+    });
+
+    it("should return errorGetUserPrivs when uid is undefined", async () => {
+      const { getUserPrivs } = await import("./functions");
+
+      const result = await getUserPrivs(undefined);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("errorGetUserPrivs");
+      }
+    });
+
+    it("should return errorGetUserPrivs when privileges are empty", async () => {
+      const { httpsCallable } = await import("firebase/functions");
+
+      const mockCallable = vi.fn().mockResolvedValue({ data: {} });
+      vi.mocked(httpsCallable).mockReturnValue(mockCallable as never);
+
+      const { getUserPrivs } = await import("./functions");
+
+      const result = await getUserPrivs("user-uid-123");
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("errorGetUserPrivs");
+      }
+    });
+
+    it("should return errorGetUserPrivs on function error", async () => {
+      const { httpsCallable } = await import("firebase/functions");
+
+      const mockCallable = vi
+        .fn()
+        .mockRejectedValue(new Error("Function error"));
+      vi.mocked(httpsCallable).mockReturnValue(mockCallable as never);
+
+      const { getUserPrivs } = await import("./functions");
+
+      const result = await getUserPrivs("user-uid-123");
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("errorGetUserPrivs");
       }
     });
   });

@@ -17,8 +17,9 @@ describe("Conf types", () => {
 
     it("should create Conf from valid document", () => {
       const mockData = {
-        web_url: "https://example.com",
-        desc: ["Line 1", "Line 2", "Line 3"],
+        webUrl: "https://example.com",
+        desc: "Description text",
+        hardBreak: true,
         createdAt: { toDate: () => new Date("2024-01-01") },
         updatedAt: { toDate: () => new Date("2024-01-02") },
       };
@@ -33,7 +34,8 @@ describe("Conf types", () => {
       expect(result).toEqual({
         id: "conf",
         webUrl: "https://example.com",
-        desc: ["Line 1", "Line 2", "Line 3"],
+        desc: "Description text",
+        hardBreak: true,
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
       });
@@ -50,7 +52,8 @@ describe("Conf types", () => {
       expect(result).toEqual({
         id: "conf-123",
         webUrl: "",
-        desc: [],
+        desc: undefined,
+        hardBreak: false,
         createdAt: undefined,
         updatedAt: undefined,
       });
@@ -58,7 +61,7 @@ describe("Conf types", () => {
 
     it("should handle partial data with some fields missing", () => {
       const mockData = {
-        web_url: "https://test.com",
+        webUrl: "https://test.com",
       };
 
       const mockDoc = {
@@ -71,16 +74,17 @@ describe("Conf types", () => {
       expect(result).toEqual({
         id: "conf-456",
         webUrl: "https://test.com",
-        desc: [],
+        desc: undefined,
+        hardBreak: false,
         createdAt: undefined,
         updatedAt: undefined,
       });
     });
 
-    it("should handle empty desc array", () => {
+    it("should handle string desc", () => {
       const mockData = {
-        web_url: "https://site.com",
-        desc: [],
+        webUrl: "https://site.com",
+        desc: "Some description",
       };
 
       const mockDoc = {
@@ -93,7 +97,31 @@ describe("Conf types", () => {
       expect(result).toEqual({
         id: "conf-789",
         webUrl: "https://site.com",
-        desc: [],
+        desc: "Some description",
+        hardBreak: false,
+        createdAt: undefined,
+        updatedAt: undefined,
+      });
+    });
+
+    it("should handle hardBreak field", () => {
+      const mockData = {
+        webUrl: "https://example.com",
+        hardBreak: true,
+      };
+
+      const mockDoc = {
+        exists: () => true,
+        id: "conf-with-break",
+        data: () => mockData,
+      } as unknown as DocumentSnapshot;
+
+      const result = confFromDoc(mockDoc);
+      expect(result).toEqual({
+        id: "conf-with-break",
+        webUrl: "https://example.com",
+        desc: undefined,
+        hardBreak: true,
         createdAt: undefined,
         updatedAt: undefined,
       });

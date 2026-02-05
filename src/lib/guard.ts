@@ -7,6 +7,7 @@ import {
 } from "react-router";
 import { useAtom, getDefaultStore } from "jotai";
 
+import { OID_SYSADMIN } from "../../functions/src/common";
 import { dataStateAtom } from "./store";
 import type { UserState } from "../types/UserState";
 
@@ -25,6 +26,14 @@ export function guard(
   } else if (["login", "reset-password"].includes(pathList[0])) {
     if (dataState) {
       return `/o/${dataState.oid}`;
+    }
+  } else if (pathList[0] === "conf") {
+    if (
+      dataState?.oid !== OID_SYSADMIN ||
+      !dataState.manager ||
+      !dataState.admin
+    ) {
+      return "/";
     }
   } else if (pathList[0] === "o") {
     if (!dataState) {

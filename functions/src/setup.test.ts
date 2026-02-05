@@ -85,7 +85,7 @@ describe("setup", () => {
       expect(mockContext.db.collection).toHaveBeenCalledWith("service");
       expect(mockConfDoc).toHaveBeenCalledWith("conf");
       expect(mockConfSet).toHaveBeenCalledWith({
-        web_url: expect.any(String),
+        webUrl: expect.any(String),
         desc: "",
         createdAt: expect.anything(),
         updatedAt: expect.anything(),

@@ -9,18 +9,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
-      include: [
-        "app/_client/**/*.ts",
-        "app/_lib/**/*.ts",
-        "app/_server/**/*.ts",
-        "app/_types/**/*.ts",
-        "src/**/*.ts",
-      ],
-      exclude: [
-        "app/**/*.{test,spec}.{ts,tsx}",
-        "app/**/firebase.ts",
-        "src/**/*.{test,spec}.ts",
-      ],
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/*.{test,spec}.ts", "src/i18n/*.ts"],
     },
   },
   resolve: {

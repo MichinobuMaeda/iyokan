@@ -1,9 +1,11 @@
 import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/function";
 
-import type { TranslationKey } from "./i18n";
+import type { TranslationKey } from "../i18n/i18n";
+import type { Org } from "../types/Org";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const urlRegex = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)(:[0-9]{1,5})?(\/\S*)?$/i;
 const passwordMinLength = 10;
 const oidRegex = /^[a-z0-9]+$/;
 const reservedOids = [
@@ -60,6 +62,13 @@ const validateOidFormat = (oid: string): E.Either<TranslationKey, string> =>
 
 const validateReservedOids = (oid: string): E.Either<TranslationKey, string> =>
   reservedOids.includes(oid) ? E.left("errorOrgIdReserved") : E.right(oid);
+
+const validateUsedOids =
+  (orgs: Org[]) =>
+  (oid: string): E.Either<TranslationKey, string> =>
+    orgs.map((org) => org.id).includes(oid)
+      ? E.left("errorOrgIdUsed")
+      : E.right(oid);
 
 /**
  * Checks if a string is empty or contains only whitespace
@@ -118,6 +127,25 @@ export function validateRequiredEmail(
   ) as E.Either<TranslationKey, string>;
 }
 
+export function validateOptionalUrl(
+  url?: string
+): E.Either<TranslationKey, string | null | undefined> {
+  return isEmptyOrWhitespace(url) || urlRegex.test(url!)
+    ? E.right(url)
+    : E.left("errorInvalidUrl");
+}
+
+export function validateRequiredUrl(
+  url?: string
+): E.Either<TranslationKey, string> {
+  return pipe(
+    url,
+    validateRequiredString,
+    E.mapLeft(() => "errorUrlRequired" as TranslationKey),
+    E.flatMap(validateOptionalUrl)
+  ) as E.Either<TranslationKey, string>;
+}
+
 /**
  * Validates a password meets security requirements
  *
@@ -156,12 +184,16 @@ export function validatePassword(
  * @returns Left: "errorOrgIdReserved" - When oid is a reserved word
  * @returns Right: The validated oid
  */
-export function validateOid(oid: string): E.Either<TranslationKey, string> {
+export function validateOid(
+  oid: string,
+  orgs: Org[]
+): E.Either<TranslationKey, string> {
   return pipe(
     oid,
     validateRequiredString,
     E.mapLeft(() => "required" as TranslationKey),
     E.flatMap(validateOidFormat),
-    E.flatMap(validateReservedOids)
+    E.flatMap(validateReservedOids),
+    E.flatMap(validateUsedOids(orgs))
   );
 }

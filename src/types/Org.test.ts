@@ -19,6 +19,7 @@ describe("Org types", () => {
       const mockData = {
         name: "Test Organization",
         desc: "Test description",
+        hardBreak: true,
         valid: true,
         createdAt: { toDate: () => new Date("2024-01-01") },
         updatedAt: { toDate: () => new Date("2024-01-02") },
@@ -35,6 +36,7 @@ describe("Org types", () => {
         id: "org-123",
         name: "Test Organization",
         desc: "Test description",
+        hardBreak: true,
         valid: true,
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
@@ -53,7 +55,33 @@ describe("Org types", () => {
         id: "org-456",
         name: "",
         desc: undefined,
+        hardBreak: false,
         valid: false,
+        createdAt: undefined,
+        updatedAt: undefined,
+      });
+    });
+
+    it("should handle hardBreak field", () => {
+      const mockData = {
+        name: "Test Org",
+        hardBreak: true,
+        valid: true,
+      };
+
+      const mockDoc = {
+        exists: () => true,
+        id: "org-with-break",
+        data: () => mockData,
+      } as unknown as DocumentSnapshot;
+
+      const result = orgFromDoc(mockDoc);
+      expect(result).toEqual({
+        id: "org-with-break",
+        name: "Test Org",
+        desc: undefined,
+        hardBreak: true,
+        valid: true,
         createdAt: undefined,
         updatedAt: undefined,
       });
