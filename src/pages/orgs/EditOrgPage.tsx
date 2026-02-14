@@ -14,10 +14,10 @@ export default function EditOrgPage() {
   const { t } = useTranslation();
   const params = useParams();
   const [orgs] = useAtom(orgsAtom);
-  const org = orgs?.find((o) => o.id === params.orgId);
+  const org = orgs?.find((o) => o.id === params.oid);
 
   if (!org) {
-    throw redirect(`/o/${params.orgId}`);
+    throw redirect(`/o/${params.oid}`);
   }
 
   const [formData, setFormData] = useState<Org>({

@@ -11,8 +11,8 @@ import SvgEdit from "../../icons/SvgEdit";
 export default function ShowGroupPage() {
   const [groups] = useAtom(groupsAtom);
   const params = useParams();
-  const oid = params.orgId!;
-  const group = () => groups?.find((g) => g.id === params.groupId);
+  const oid = params.oid!;
+  const group = () => groups?.find((g) => g.id === params.gid);
   const [users] = useAtom(usersAtom) ?? [];
   const [dataState] = useAtom(dataStateAtom);
 

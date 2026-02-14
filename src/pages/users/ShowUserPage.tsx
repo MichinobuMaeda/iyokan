@@ -11,9 +11,9 @@ import MetaItems from "../../components/MetaItems";
 
 export default function ShowUserPage() {
   const params = useParams();
-  const oid = params.orgId!;
+  const oid = params.oid!;
   const [users] = useAtom(usersAtom);
-  const user = () => users?.find((u) => u.id === params.userId);
+  const user = () => users?.find((u) => u.id === params.uid);
   const [dataState] = useAtom(dataStateAtom);
 
   if (!user()) {

@@ -85,3 +85,7 @@ export const getDataState = (get: Getter): UserState | null | undefined => {
 };
 
 export const dataStateAtom = atom<UserState | null | undefined>(getDataState);
+
+export type Privilege = "guest" | "user" | "manager" | "admin" | "sys";
+
+export const privilegesAtom = atom<Privilege[]>(["guest"]);

@@ -16,10 +16,17 @@ export default function LoginPage() {
     password: "",
   });
 
+  const onSubmit = async () => {
+    const email = formData.email.trim();
+    const password = formData.password;
+    setFormData({ email: "", password: "" });
+    return await login({ email, password });
+  };
+
   return (
     <main>
       <Form
-        onSubmit={() => login(formData)}
+        onSubmit={onSubmit}
         returnPath="/"
         validated={!!formData.email && !!formData.password}
         submitLabel="send"

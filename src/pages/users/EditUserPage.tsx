@@ -14,9 +14,9 @@ import Form from "../../components/Form";
 export default function EditUserPage() {
   const { t } = useTranslation();
   const params = useParams();
-  const oid = params.orgId!;
+  const oid = params.oid!;
   const [users] = useAtom(usersAtom);
-  const user = users?.find((u) => u.id === params.userId);
+  const user = users?.find((u) => u.id === params.uid);
 
   if (!user) {
     throw redirect(`/o/${oid}/users`);

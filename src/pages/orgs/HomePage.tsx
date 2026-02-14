@@ -10,7 +10,7 @@ import SvgEdit from "../../icons/SvgEdit";
 export default function HomePage() {
   const [orgs] = useAtom(orgsAtom);
   const params = useParams();
-  const org = () => orgs?.find((o) => o.id === params.orgId);
+  const org = () => orgs?.find((o) => o.id === params.oid);
   const [dataState] = useAtom(dataStateAtom);
   if (!org()) {
     throw redirect("/");

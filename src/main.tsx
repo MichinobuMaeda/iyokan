@@ -8,7 +8,7 @@ import "./i18n/i18n";
 import { listenAppState } from "./lib/app";
 import { listenAuthState } from "./lib/auth";
 import { subscribeConf } from "./lib/firestore";
-import { guardRoute } from "./lib/guard.ts";
+import { setPrivileges } from "./lib/guard.ts";
 import Layout from "./pages/Layout.tsx";
 import InfoPage from "./pages/conf/InfoPage.tsx";
 import LoginPage from "./pages/account/LoginPage.tsx";
@@ -35,88 +35,161 @@ import ListProvidersPage from "./pages/providers/ListProvidersPage.tsx";
 const route: RouteObject[] = [
   {
     Component: Layout,
-    middleware: [guardRoute],
     children: [
-      { index: true, Component: InfoPage },
+      {
+        index: true,
+        middleware: [setPrivileges([])],
+        Component: InfoPage,
+      },
       {
         path: "login",
+        middleware: [setPrivileges(["guest"])],
         Component: LoginPage,
       },
       {
         path: "reset-password",
+        middleware: [setPrivileges(["guest"])],
         Component: ResetPasswordPage,
       },
       {
-        path: "me/email",
-        Component: ChangeEmailPage,
+        path: "me",
+        children: [
+          {
+            path: "email",
+            middleware: [setPrivileges(["user"])],
+            Component: ChangeEmailPage,
+          },
+          {
+            path: "password",
+            middleware: [setPrivileges(["user"])],
+            Component: ChangePasswordPage,
+          },
+        ],
       },
       {
-        path: "me/password",
-        Component: ChangePasswordPage,
-      },
-      {
-        path: "conf/edit",
-        Component: EditConfPage,
+        path: "conf",
+        children: [
+          {
+            path: "edit",
+            middleware: [setPrivileges(["sys"])],
+            Component: EditConfPage,
+          },
+        ],
       },
       {
         path: "o",
-        Component: ListOrgsPage,
-      },
-      {
-        path: "o/new",
-        Component: NewOrgPage,
-      },
-      {
-        path: "o/:orgId",
-        Component: HomePage,
-      },
-      {
-        path: "o/:orgId/edit",
-        Component: EditOrgPage,
-      },
-      {
-        path: "o/:orgId/users",
-        Component: ListUsersPage,
-      },
-      {
-        path: "o/:orgId/users/new",
-        Component: NewUserPage,
-      },
-      {
-        path: "o/:orgId/users/:userId",
-        Component: ShowUserPage,
-      },
-      {
-        path: "o/:orgId/users/:userId/edit",
-        Component: EditUserPage,
-      },
-      {
-        path: "o/:orgId/groups",
-        Component: ListGroupsPage,
-      },
-      {
-        path: "o/:orgId/groups/:groupId",
-        Component: ShowGroupPage,
-      },
-      {
-        path: "o/:orgId/groups/:groupId/edit",
-        Component: EditGroupPage,
-      },
-      {
-        path: "o/:orgId/providers",
-        Component: ListProvidersPage,
-      },
-      {
-        path: "o/:orgId/providers/new",
-        Component: NewProviderPage,
-      },
-      {
-        path: "o/:orgId/providers/:providerId",
-        Component: ShowProviderPage,
-      },
-      {
-        path: "o/:orgId/providers/:providerId/edit",
-        Component: EditProviderPage,
+        children: [
+          {
+            index: true,
+            middleware: [setPrivileges(["user"])],
+            Component: ListOrgsPage,
+          },
+          {
+            path: "new",
+            middleware: [setPrivileges(["sys"])],
+            Component: NewOrgPage,
+          },
+          {
+            path: ":oid",
+            children: [
+              {
+                index: true,
+                middleware: [setPrivileges(["user"])],
+                Component: HomePage,
+              },
+              {
+                path: "edit",
+                middleware: [setPrivileges(["manager", "sys"])],
+                Component: EditOrgPage,
+              },
+              {
+                path: "users",
+                children: [
+                  {
+                    index: true,
+                    middleware: [setPrivileges(["user"])],
+                    Component: ListUsersPage,
+                  },
+                  {
+                    path: "new",
+                    middleware: [setPrivileges(["manager", "sys"])],
+                    Component: NewUserPage,
+                  },
+                  {
+                    path: ":uid",
+                    children: [
+                      {
+                        index: true,
+                        middleware: [setPrivileges(["user"])],
+                        Component: ShowUserPage,
+                      },
+                      {
+                        path: "edit",
+                        middleware: [setPrivileges(["manager", "sys"])],
+                        Component: EditUserPage,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                path: "groups",
+                children: [
+                  {
+                    index: true,
+                    middleware: [setPrivileges(["user"])],
+                    Component: ListGroupsPage,
+                  },
+                  {
+                    path: ":gid",
+                    children: [
+                      {
+                        index: true,
+                        middleware: [setPrivileges(["user"])],
+                        Component: ShowGroupPage,
+                      },
+                      {
+                        path: "edit",
+                        middleware: [setPrivileges(["manager", "sys"])],
+                        Component: EditGroupPage,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                path: "providers",
+                children: [
+                  {
+                    index: true,
+                    middleware: [setPrivileges(["admin", "sys"])],
+                    Component: ListProvidersPage,
+                  },
+                  {
+                    path: "new",
+                    middleware: [setPrivileges(["admin", "sys"])],
+                    Component: NewProviderPage,
+                  },
+                  {
+                    path: ":providerId",
+                    children: [
+                      {
+                        index: true,
+                        middleware: [setPrivileges(["admin", "sys"])],
+                        Component: ShowProviderPage,
+                      },
+                      {
+                        path: "edit",
+                        middleware: [setPrivileges(["admin", "sys"])],
+                        Component: EditProviderPage,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
     ],
   },

@@ -5,34 +5,34 @@ service cloud.firestore {
     function isSystemAdmin() {
       return request.auth != null && exists(/databases/$(database)/documents/orgs/sys/users/$(request.auth.uid)) && get(/databases/$(database)/documents/orgs/sys/users/$(request.auth.uid)).data.valid == true && request.auth.uid in get(/databases/$(database)/documents/orgs/sys/groups/admins).data.members;
     }
-    function isUser(orgId) {
-      return request.auth != null && get(/databases/$(database)/documents/orgs/$(orgId)/users/$(request.auth.uid)).data.valid == true;
+    function isUser(oid) {
+      return request.auth != null && get(/databases/$(database)/documents/orgs/$(oid)/users/$(request.auth.uid)).data.valid == true;
     }
-    function isManager(orgId) {
-      return isUser(orgId) && request.auth.uid in get(/databases/$(database)/documents/orgs/$(orgId)/groups/managers).data.members;
+    function isManager(oid) {
+      return isUser(oid) && request.auth.uid in get(/databases/$(database)/documents/orgs/$(oid)/groups/managers).data.members;
     }
-    function isAdmin(orgId) {
-      return isUser(orgId) && request.auth.uid in get(/databases/$(database)/documents/orgs/$(orgId)/groups/admins).data.members;
+    function isAdmin(oid) {
+      return isUser(oid) && request.auth.uid in get(/databases/$(database)/documents/orgs/$(oid)/groups/admins).data.members;
     }
     match /service/conf {
       allow read: if true;
       allow read, update: if isSystemAdmin();
     }
-    match /orgs/{orgId} {
+    match /orgs/{oid} {
       allow read: if isUser(resource.data.oid);
       allow read, update: if isManager(resource.data.oid) || isAdmin(resource.data.oid);
       allow read, write: if isSystemAdmin();
     }
-    match /orgs/{orgId}/providers/{providerId} {
-      allow read, write: if isSystemAdmin() || isAdmin(orgId);
+    match /orgs/{oid}/providers/{providerId} {
+      allow read, write: if isSystemAdmin() || isAdmin(oid);
     }
-    match /orgs/{orgId}/users/{userId} {
-      allow read: if isUser(orgId);
-      allow read, write: if isSystemAdmin() || isManager(orgId);
+    match /orgs/{oid}/users/{uid} {
+      allow read: if isUser(oid);
+      allow read, write: if isSystemAdmin() || isManager(oid);
     }
-    match /orgs/{orgId}/groups/{groutId} {
-      allow read: if isUser(orgId);
-      allow read, write: if isSystemAdmin() || isManager(orgId);
+    match /orgs/{oid}/groups/{groutId} {
+      allow read: if isUser(oid);
+      allow read, write: if isSystemAdmin() || isManager(oid);
     }
     match /{document=**} {
       allow read, write: if false;

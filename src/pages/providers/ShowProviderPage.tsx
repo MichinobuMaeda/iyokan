@@ -10,7 +10,7 @@ import MetaItems from "../../components/MetaItems";
 
 export default function ShowProviderPage() {
   const params = useParams();
-  const oid = params.orgId!;
+  const oid = params.oid!;
   const [dataState] = useAtom(dataStateAtom);
   const [providers] = useAtom(providersAtom);
   const provider = () => providers?.find((p) => p.id === params.providerId);

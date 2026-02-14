@@ -1,690 +1,67 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { OID_SYSADMIN } from "../../functions/src/common";
+import type { Privilege } from "./store";
 import type { UserState } from "../types/UserState";
 
-// Mock store
-const mockStore = {
-  get: vi.fn(),
-};
-
-// Mock react-router
-const mockNavigate = vi.fn();
-const mockLocation = { pathname: "/" };
-const mockRedirect = vi.fn((path: string) => ({ type: "redirect", path }));
-
+// Mock react
 vi.mock("react", () => ({
   useEffect: vi.fn((cb) => cb()),
 }));
 
+// Mock react-router
 vi.mock("react-router", () => ({
-  useNavigate: () => mockNavigate,
-  useLocation: () => mockLocation,
-  redirect: mockRedirect,
+  useNavigate: vi.fn(),
+  useParams: vi.fn(),
+  redirect: vi.fn(),
 }));
 
+// Mock jotai
 vi.mock("jotai", async (importOriginal) => {
   const actual = await importOriginal<typeof import("jotai")>();
   return {
     ...actual,
-    getDefaultStore: vi.fn(() => mockStore),
-    useAtom: vi.fn(() => [mockStore.get(), vi.fn()]),
+    getDefaultStore: vi.fn(),
+    useAtom: vi.fn(),
   };
 });
 
 describe("guard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Suppress console.info and console.log during tests
     vi.spyOn(console, "info").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
   });
 
-  describe("guard function", () => {
-    it("should allow root path without restriction", async () => {
-      const { guard } = await import("./guard");
+  describe("getGuard", () => {
+    it("should allow access when no privileges required", async () => {
+      const { getGuard } = await import("./guard");
 
-      const result = guard("/", null);
+      const result = getGuard({}, [], null);
 
       expect(result).toBeUndefined();
     });
 
-    it("should allow empty path without restriction", async () => {
-      const { guard } = await import("./guard");
+    it("should allow access when guest privilege and not authenticated", async () => {
+      const { getGuard } = await import("./guard");
 
-      const result = guard("", undefined);
+      const privileges: Privilege[] = ["guest"];
+      const result = getGuard({}, privileges, null);
 
       expect(result).toBeUndefined();
     });
 
-    describe("/me paths", () => {
-      it("should redirect to root when not authenticated", async () => {
-        const { guard } = await import("./guard");
+    it("should redirect to root when not authenticated and guest privilege not included", async () => {
+      const { getGuard } = await import("./guard");
 
-        const result = guard("/me", null);
+      const privileges: Privilege[] = ["user"];
+      const result = getGuard({}, privileges, null);
 
-        expect(result).toBe("/");
-      });
-
-      it("should allow /me when authenticated", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: "org1",
-          uid: "user1",
-          sys: false,
-          manager: false,
-          admin: false,
-        };
-
-        const result = guard("/me", dataState);
-
-        expect(result).toBeUndefined();
-      });
-
-      it("should allow /me/change-email when authenticated", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: "org1",
-          uid: "user1",
-          sys: false,
-          manager: false,
-          admin: false,
-        };
-
-        const result = guard("/me/change-email", dataState);
-
-        expect(result).toBeUndefined();
-      });
+      expect(result).toBe("/");
     });
 
-    describe("/login and /reset-password paths", () => {
-      it("should redirect to org when already authenticated on /login", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: "org1",
-          uid: "user1",
-          sys: false,
-          manager: false,
-          admin: false,
-        };
-
-        const result = guard("/login", dataState);
-
-        expect(result).toBe("/o/org1");
-      });
-
-      it("should redirect to org when already authenticated on /reset-password", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: "org1",
-          uid: "user1",
-          sys: false,
-          manager: false,
-          admin: false,
-        };
-
-        const result = guard("/reset-password", dataState);
-
-        expect(result).toBe("/o/org1");
-      });
-
-      it("should allow /login when not authenticated", async () => {
-        const { guard } = await import("./guard");
-
-        const result = guard("/login", null);
-
-        expect(result).toBeUndefined();
-      });
-
-      it("should allow /reset-password when not authenticated", async () => {
-        const { guard } = await import("./guard");
-
-        const result = guard("/reset-password", null);
-
-        expect(result).toBeUndefined();
-      });
-    });
-
-    describe("/conf paths", () => {
-      it("should redirect to root when not sysadmin", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: "org1",
-          uid: "user1",
-          sys: false,
-          manager: true,
-          admin: true,
-        };
-
-        const result = guard("/conf", dataState);
-
-        expect(result).toBe("/");
-      });
-
-      it("should redirect to root when not manager", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: OID_SYSADMIN,
-          uid: "user1",
-          sys: true,
-          manager: false,
-          admin: true,
-        };
-
-        const result = guard("/conf", dataState);
-
-        expect(result).toBe("/");
-      });
-
-      it("should redirect to root when not admin", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: OID_SYSADMIN,
-          uid: "user1",
-          sys: true,
-          manager: true,
-          admin: false,
-        };
-
-        const result = guard("/conf", dataState);
-
-        expect(result).toBe("/");
-      });
-
-      it("should allow /conf for sysadmin manager admin", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: OID_SYSADMIN,
-          uid: "user1",
-          sys: true,
-          manager: true,
-          admin: true,
-        };
-
-        const result = guard("/conf", dataState);
-
-        expect(result).toBeUndefined();
-      });
-
-      it("should allow /conf/edit for sysadmin manager admin", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: OID_SYSADMIN,
-          uid: "user1",
-          sys: true,
-          manager: true,
-          admin: true,
-        };
-
-        const result = guard("/conf/edit", dataState);
-
-        expect(result).toBeUndefined();
-      });
-    });
-
-    describe("/o paths", () => {
-      it("should redirect to root when not authenticated", async () => {
-        const { guard } = await import("./guard");
-
-        const result = guard("/o/org1", null);
-
-        expect(result).toBe("/");
-      });
-
-      it("should allow /o/:oid for authenticated user", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: "org1",
-          uid: "user1",
-          sys: false,
-          manager: false,
-          admin: false,
-        };
-
-        const result = guard("/o/org1", dataState);
-
-        expect(result).toBeUndefined();
-      });
-
-      describe("/o/new", () => {
-        it("should redirect to user org when not sysadmin", async () => {
-          const { guard } = await import("./guard");
-
-          const dataState: UserState = {
-            oid: "org1",
-            uid: "user1",
-            sys: false,
-            manager: false,
-            admin: false,
-          };
-
-          const result = guard("/o/new", dataState);
-
-          expect(result).toBe("/o/org1");
-        });
-
-        it("should allow /o/new for sysadmin", async () => {
-          const { guard } = await import("./guard");
-
-          const dataState: UserState = {
-            oid: OID_SYSADMIN,
-            uid: "user1",
-            sys: true,
-            manager: false,
-            admin: false,
-          };
-
-          const result = guard("/o/new", dataState);
-
-          expect(result).toBeUndefined();
-        });
-      });
-
-      describe("accessing other org", () => {
-        it("should redirect to user org when accessing different org as non-sysadmin", async () => {
-          const { guard } = await import("./guard");
-
-          const dataState: UserState = {
-            oid: "org1",
-            uid: "user1",
-            sys: false,
-            manager: false,
-            admin: false,
-          };
-
-          const result = guard("/o/org2", dataState);
-
-          expect(result).toBe("/o/org1");
-        });
-
-        it("should allow accessing different org as sysadmin", async () => {
-          const { guard } = await import("./guard");
-
-          const dataState: UserState = {
-            oid: OID_SYSADMIN,
-            uid: "user1",
-            sys: true,
-            manager: false,
-            admin: false,
-          };
-
-          const result = guard("/o/org2", dataState);
-
-          expect(result).toBeUndefined();
-        });
-      });
-
-      describe("/o/:oid/edit", () => {
-        it("should redirect when not sys/manager/admin", async () => {
-          const { guard } = await import("./guard");
-
-          const dataState: UserState = {
-            oid: "org1",
-            uid: "user1",
-            sys: false,
-            manager: false,
-            admin: false,
-          };
-
-          const result = guard("/o/org1/edit", dataState);
-
-          expect(result).toBe("/o/org1");
-        });
-
-        it("should allow for manager", async () => {
-          const { guard } = await import("./guard");
-
-          const dataState: UserState = {
-            oid: "org1",
-            uid: "user1",
-            sys: false,
-            manager: true,
-            admin: false,
-          };
-
-          const result = guard("/o/org1/edit", dataState);
-
-          expect(result).toBeUndefined();
-        });
-
-        it("should allow for admin", async () => {
-          const { guard } = await import("./guard");
-
-          const dataState: UserState = {
-            oid: "org1",
-            uid: "user1",
-            sys: false,
-            manager: false,
-            admin: true,
-          };
-
-          const result = guard("/o/org1/edit", dataState);
-
-          expect(result).toBeUndefined();
-        });
-
-        it("should allow for sysadmin", async () => {
-          const { guard } = await import("./guard");
-
-          const dataState: UserState = {
-            oid: "org1",
-            uid: "user1",
-            sys: true,
-            manager: false,
-            admin: false,
-          };
-
-          const result = guard("/o/org1/edit", dataState);
-
-          expect(result).toBeUndefined();
-        });
-      });
-
-      describe("/o/:oid/users", () => {
-        it("should allow /o/:oid/users for all authenticated users", async () => {
-          const { guard } = await import("./guard");
-
-          const dataState: UserState = {
-            oid: "org1",
-            uid: "user1",
-            sys: false,
-            manager: false,
-            admin: false,
-          };
-
-          const result = guard("/o/org1/users", dataState);
-
-          expect(result).toBeUndefined();
-        });
-
-        describe("/o/:oid/users/new", () => {
-          it("should redirect when not sys/manager", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: false,
-              manager: false,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/users/new", dataState);
-
-            expect(result).toBe("/o/org1/users");
-          });
-
-          it("should allow for manager", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: false,
-              manager: true,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/users/new", dataState);
-
-            expect(result).toBeUndefined();
-          });
-
-          it("should allow for sysadmin", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: true,
-              manager: false,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/users/new", dataState);
-
-            expect(result).toBeUndefined();
-          });
-        });
-
-        describe("/o/:oid/users/:uid/edit", () => {
-          it("should redirect when not sys/manager", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: false,
-              manager: false,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/users/user2/edit", dataState);
-
-            expect(result).toBe("/o/org1/users/user2");
-          });
-
-          it("should allow for manager", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: false,
-              manager: true,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/users/user2/edit", dataState);
-
-            expect(result).toBeUndefined();
-          });
-
-          it("should allow for sysadmin", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: true,
-              manager: false,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/users/user2/edit", dataState);
-
-            expect(result).toBeUndefined();
-          });
-        });
-      });
-
-      describe("/o/:oid/groups", () => {
-        it("should allow /o/:oid/groups for all authenticated users", async () => {
-          const { guard } = await import("./guard");
-
-          const dataState: UserState = {
-            oid: "org1",
-            uid: "user1",
-            sys: false,
-            manager: false,
-            admin: false,
-          };
-
-          const result = guard("/o/org1/groups", dataState);
-
-          expect(result).toBeUndefined();
-        });
-
-        describe("/o/:oid/groups/new", () => {
-          it("should redirect to org for all users", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: false,
-              manager: false,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/groups/new", dataState);
-
-            expect(result).toBe("/o/org1");
-          });
-
-          it("should redirect even for manager", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: false,
-              manager: true,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/groups/new", dataState);
-
-            expect(result).toBe("/o/org1");
-          });
-
-          it("should redirect even for sysadmin", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: true,
-              manager: false,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/groups/new", dataState);
-
-            expect(result).toBe("/o/org1");
-          });
-        });
-
-        describe("/o/:oid/groups/:gid/edit", () => {
-          it("should redirect when not sys/manager", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: false,
-              manager: false,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/groups/group1/edit", dataState);
-
-            expect(result).toBe("/o/org1/groups/group1");
-          });
-
-          it("should allow for manager", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: false,
-              manager: true,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/groups/group1/edit", dataState);
-
-            expect(result).toBeUndefined();
-          });
-
-          it("should allow for sysadmin", async () => {
-            const { guard } = await import("./guard");
-
-            const dataState: UserState = {
-              oid: "org1",
-              uid: "user1",
-              sys: true,
-              manager: false,
-              admin: false,
-            };
-
-            const result = guard("/o/org1/groups/group1/edit", dataState);
-
-            expect(result).toBeUndefined();
-          });
-        });
-      });
-    });
-
-    describe("unknown paths", () => {
-      it("should redirect to root when not authenticated", async () => {
-        const { guard } = await import("./guard");
-
-        const result = guard("/unknown", null);
-
-        expect(result).toBe("/");
-      });
-
-      it("should redirect to user org when authenticated", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: "org1",
-          uid: "user1",
-          sys: false,
-          manager: false,
-          admin: false,
-        };
-
-        const result = guard("/unknown", dataState);
-
-        expect(result).toBe("/o/org1");
-      });
-    });
-
-    describe("trailing slashes", () => {
-      it("should handle paths with trailing slashes", async () => {
-        const { guard } = await import("./guard");
-
-        const dataState: UserState = {
-          oid: "org1",
-          uid: "user1",
-          sys: false,
-          manager: false,
-          admin: false,
-        };
-
-        const result = guard("/o/org1/", dataState);
-
-        expect(result).toBeUndefined();
-      });
-    });
-  });
-
-  describe("guardRoute middleware", () => {
-    it("should return redirect when guard fails", async () => {
-      const { guardRoute } = await import("./guard");
-
-      mockStore.get.mockReturnValue(null);
-
-      const request = new Request("http://localhost/me");
-      const result = guardRoute({ request, params: {}, context: {} });
-
-      expect(mockRedirect).toHaveBeenCalledWith("/");
-      expect(result).toEqual({ type: "redirect", path: "/" });
-    });
-
-    it("should return undefined when guard passes", async () => {
-      const { guardRoute } = await import("./guard");
+    it("should allow access when user privilege and authenticated", async () => {
+      const { getGuard } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -694,21 +71,337 @@ describe("guard", () => {
         admin: false,
       };
 
-      mockStore.get.mockReturnValue(dataState);
-
-      const request = new Request("http://localhost/o/org1");
-      const result = guardRoute({ request, params: {}, context: {} });
+      const privileges: Privilege[] = ["user"];
+      const result = getGuard({}, privileges, dataState);
 
       expect(result).toBeUndefined();
     });
+
+    it("should redirect to user org when sys privilege required but user is not sys", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const privileges: Privilege[] = ["sys"];
+      const result = getGuard({}, privileges, dataState);
+
+      expect(result).toBe("/o/org1");
+    });
+
+    it("should allow access when sys privilege required and user is sys", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "sysadmin",
+        uid: "user1",
+        sys: true,
+        manager: false,
+        admin: false,
+      };
+
+      const privileges: Privilege[] = ["sys"];
+      const result = getGuard({}, privileges, dataState);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should redirect to user org when manager privilege required but user is not manager", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const privileges: Privilege[] = ["manager"];
+      const result = getGuard({}, privileges, dataState);
+
+      expect(result).toBe("/o/org1");
+    });
+
+    it("should allow access when manager privilege required and user is manager", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: true,
+        admin: false,
+      };
+
+      const privileges: Privilege[] = ["manager"];
+      const result = getGuard({}, privileges, dataState);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should redirect to user org when admin privilege required but user is not admin", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const privileges: Privilege[] = ["admin"];
+      const result = getGuard({}, privileges, dataState);
+
+      expect(result).toBe("/o/org1");
+    });
+
+    it("should allow access when admin privilege required and user is admin", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: true,
+      };
+
+      const privileges: Privilege[] = ["admin"];
+      const result = getGuard({}, privileges, dataState);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should redirect to user org when accessing different org", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const privileges: Privilege[] = ["user"];
+      const params = { oid: "org2" };
+      const result = getGuard(params, privileges, dataState);
+
+      expect(result).toBe("/o/org1");
+    });
+
+    it("should allow accessing same org", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const privileges: Privilege[] = ["user"];
+      const params = { oid: "org1" };
+      const result = getGuard(params, privileges, dataState);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should allow accessing different org when no oid param", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const privileges: Privilege[] = ["user"];
+      const result = getGuard({}, privileges, dataState);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should allow access when user has one of multiple required privileges", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: true,
+        admin: false,
+      };
+
+      const privileges: Privilege[] = ["sys", "admin", "manager"];
+      const result = getGuard({}, privileges, dataState);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should redirect when user has none of multiple required privileges", async () => {
+      const { getGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const privileges: Privilege[] = ["sys", "admin", "manager"];
+      const result = getGuard({}, privileges, dataState);
+
+      expect(result).toBe("/o/org1");
+    });
   });
 
-  describe("useGuard hook", () => {
-    it("should navigate when guard fails", async () => {
+  describe("setPrivileges", () => {
+    it("should set privileges and allow access when guard passes", async () => {
+      const { getDefaultStore } = await import("jotai");
+      const { setPrivileges } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const mockStore = {
+        get: vi.fn(() => dataState),
+        set: vi.fn(),
+      };
+
+      vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+
+      const privileges: Privilege[] = ["user"];
+      const middleware = setPrivileges(privileges);
+      const next = vi.fn(() => Promise.resolve());
+
+      const result = await middleware(
+        {
+          params: {},
+          context: {} as never,
+          request: {} as never,
+          unstable_pattern: {} as never,
+        },
+        next
+      );
+
+      expect(mockStore.set).toHaveBeenCalled();
+      expect(next).toHaveBeenCalled();
+      expect(result).toBeUndefined();
+    });
+
+    it("should redirect when guard fails", async () => {
+      const { redirect } = await import("react-router");
+      const { getDefaultStore } = await import("jotai");
+      const { setPrivileges } = await import("./guard");
+
+      const mockStore = {
+        get: vi.fn(() => null),
+        set: vi.fn(),
+      };
+
+      vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(redirect).mockReturnValue({
+        type: "redirect",
+        path: "/",
+      } as never);
+
+      const privileges: Privilege[] = ["user"];
+      const middleware = setPrivileges(privileges);
+      const next = vi.fn();
+
+      const result = await middleware(
+        {
+          params: {},
+          context: {} as never,
+          request: {} as never,
+          unstable_pattern: {} as never,
+        },
+        next
+      );
+
+      expect(mockStore.set).toHaveBeenCalled();
+      expect(redirect).toHaveBeenCalledWith("/");
+      expect(next).not.toHaveBeenCalled();
+      expect(result).toEqual({ type: "redirect", path: "/" });
+    });
+
+    it("should redirect to user org when accessing wrong org", async () => {
+      const { redirect } = await import("react-router");
+      const { getDefaultStore } = await import("jotai");
+      const { setPrivileges } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const mockStore = {
+        get: vi.fn(() => dataState),
+        set: vi.fn(),
+      };
+
+      vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(redirect).mockReturnValue({
+        type: "redirect",
+        path: "/o/org1",
+      } as never);
+
+      const privileges: Privilege[] = ["user"];
+      const middleware = setPrivileges(privileges);
+      const next = vi.fn();
+
+      await middleware(
+        {
+          params: { oid: "org2" },
+          context: {} as never,
+          request: {} as never,
+          unstable_pattern: {} as never,
+        },
+        next
+      );
+
+      expect(redirect).toHaveBeenCalledWith("/o/org1");
+      expect(next).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("useGuard", () => {
+    it("should navigate when guard fails (not authenticated, user privilege required)", async () => {
+      const { useNavigate, useParams } = await import("react-router");
+      const { useAtom } = await import("jotai");
       const { useGuard } = await import("./guard");
 
-      mockStore.get.mockReturnValue(null);
-      mockLocation.pathname = "/me";
+      const mockNavigate = vi.fn();
+
+      vi.mocked(useNavigate).mockReturnValue(mockNavigate);
+      vi.mocked(useParams).mockReturnValue({});
+      vi.mocked(useAtom)
+        .mockReturnValueOnce([["user"], vi.fn()] as unknown as ReturnType<
+          typeof useAtom
+        >)
+        .mockReturnValueOnce([null, vi.fn()] as unknown as ReturnType<
+          typeof useAtom
+        >);
 
       useGuard();
 
@@ -716,6 +409,8 @@ describe("guard", () => {
     });
 
     it("should not navigate when guard passes", async () => {
+      const { useNavigate, useParams } = await import("react-router");
+      const { useAtom } = await import("jotai");
       const { useGuard } = await import("./guard");
 
       const dataState: UserState = {
@@ -726,8 +421,99 @@ describe("guard", () => {
         admin: false,
       };
 
-      mockStore.get.mockReturnValue(dataState);
-      mockLocation.pathname = "/o/org1";
+      const mockNavigate = vi.fn();
+
+      vi.mocked(useNavigate).mockReturnValue(mockNavigate);
+      vi.mocked(useParams).mockReturnValue({ oid: "org1" });
+      vi.mocked(useAtom)
+        .mockReturnValueOnce([["user"], vi.fn()] as unknown as ReturnType<
+          typeof useAtom
+        >)
+        .mockReturnValueOnce([dataState, vi.fn()] as unknown as ReturnType<
+          typeof useAtom
+        >);
+
+      useGuard();
+
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it("should navigate to user org when accessing wrong org", async () => {
+      const { useNavigate, useParams } = await import("react-router");
+      const { useAtom } = await import("jotai");
+      const { useGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const mockNavigate = vi.fn();
+
+      vi.mocked(useNavigate).mockReturnValue(mockNavigate);
+      vi.mocked(useParams).mockReturnValue({ oid: "org2" });
+      vi.mocked(useAtom)
+        .mockReturnValueOnce([["user"], vi.fn()] as unknown as ReturnType<
+          typeof useAtom
+        >)
+        .mockReturnValueOnce([dataState, vi.fn()] as unknown as ReturnType<
+          typeof useAtom
+        >);
+
+      useGuard();
+
+      expect(mockNavigate).toHaveBeenCalledWith("/o/org1");
+    });
+
+    it("should navigate to user org when privilege check fails", async () => {
+      const { useNavigate, useParams } = await import("react-router");
+      const { useAtom } = await import("jotai");
+      const { useGuard } = await import("./guard");
+
+      const dataState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const mockNavigate = vi.fn();
+
+      vi.mocked(useNavigate).mockReturnValue(mockNavigate);
+      vi.mocked(useParams).mockReturnValue({});
+      vi.mocked(useAtom)
+        .mockReturnValueOnce([["admin"], vi.fn()] as unknown as ReturnType<
+          typeof useAtom
+        >)
+        .mockReturnValueOnce([dataState, vi.fn()] as unknown as ReturnType<
+          typeof useAtom
+        >);
+
+      useGuard();
+
+      expect(mockNavigate).toHaveBeenCalledWith("/o/org1");
+    });
+
+    it("should not navigate when no privileges required", async () => {
+      const { useNavigate, useParams } = await import("react-router");
+      const { useAtom } = await import("jotai");
+      const { useGuard } = await import("./guard");
+
+      const mockNavigate = vi.fn();
+
+      vi.mocked(useNavigate).mockReturnValue(mockNavigate);
+      vi.mocked(useParams).mockReturnValue({});
+      vi.mocked(useAtom)
+        .mockReturnValueOnce([[], vi.fn()] as unknown as ReturnType<
+          typeof useAtom
+        >)
+        .mockReturnValueOnce([null, vi.fn()] as unknown as ReturnType<
+          typeof useAtom
+        >);
 
       useGuard();
 

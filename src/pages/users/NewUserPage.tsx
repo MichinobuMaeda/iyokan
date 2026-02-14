@@ -13,7 +13,7 @@ import Form from "../../components/Form";
 export default function NewUserPage() {
   const { t } = useTranslation();
   const params = useParams();
-  const oid = params.orgId!;
+  const oid = params.oid!;
   const [formData, setFormData] = useState<CreateUserData>({
     oid: oid,
     name: "",

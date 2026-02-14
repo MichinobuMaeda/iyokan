@@ -9,7 +9,7 @@
     "build:ui": "tsc -b && vite build",
     "build": "npm run build:functions && npm run build:ui",
     "test:data": "npx firebase firestore:delete service/version -f",
-    "start": "npm run build:functions && npx firebase emulators:exec --only auth,functions,firestore,storage,tasks --ui --import test/emulator 'npm run test:data && npm run dev'",
+    "start": "npm run build:functions && npx firebase emulators:exec --only auth,functions,firestore,storage,tasks --ui --import test/emulator \"npm run test:data && npm run dev\"",
     "lint": "eslint .",
     "preview": "vite preview",
     "test:app": "vitest run --coverage",

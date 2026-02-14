@@ -588,41 +588,41 @@ describe("validators", () => {
     });
 
     describe("invalid inputs - reserved", () => {
-      it("should return left with errorOrgIdReserved for 'id'", () => {
+      it("should return left with errorOidReserved for 'id'", () => {
         const result = validateOid("id", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
-          expect(result.left).toBe("errorOrgIdReserved");
+          expect(result.left).toBe("errorOidReserved");
         }
       });
 
-      it("should return left with errorOrgIdReserved for 'oid'", () => {
+      it("should return left with errorOidReserved for 'oid'", () => {
         const result = validateOid("oid", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
-          expect(result.left).toBe("errorOrgIdReserved");
+          expect(result.left).toBe("errorOidReserved");
         }
       });
 
-      it("should return left with errorOrgIdReserved for 'admin'", () => {
+      it("should return left with errorOidReserved for 'admin'", () => {
         const result = validateOid("admin", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
-          expect(result.left).toBe("errorOrgIdReserved");
+          expect(result.left).toBe("errorOidReserved");
         }
       });
 
-      it("should return left with errorOrgIdReserved for 'admins'", () => {
+      it("should return left with errorOidReserved for 'admins'", () => {
         const result = validateOid("admins", []);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
-          expect(result.left).toBe("errorOrgIdReserved");
+          expect(result.left).toBe("errorOidReserved");
         }
       });
     });
 
     describe("invalid inputs - registered", () => {
-      it("should return left with errorOrgIdUsed for existing org id", () => {
+      it("should return left with errorOidUsed for existing org id", () => {
         const existingOrgs = [
           { id: "existingorg" },
           { id: "anotherorg" },
@@ -630,7 +630,7 @@ describe("validators", () => {
         const result = validateOid("existingorg", existingOrgs);
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
-          expect(result.left).toBe("errorOrgIdUsed");
+          expect(result.left).toBe("errorOidUsed");
         }
       });
     });

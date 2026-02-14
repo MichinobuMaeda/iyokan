@@ -10,7 +10,7 @@ export default function ListGroupsPage() {
   const { t } = useTranslation();
   const [groups] = useAtom(groupsAtom);
   const params = useParams();
-  const oid = params.orgId!;
+  const oid = params.oid!;
 
   return (
     <main>

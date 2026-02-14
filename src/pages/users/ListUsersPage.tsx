@@ -12,7 +12,7 @@ export default function ListUsersPage() {
   const { t } = useTranslation();
   const [users] = useAtom(usersAtom);
   const params = useParams();
-  const oid = params.orgId!;
+  const oid = params.oid!;
   const [dataState] = useAtom(dataStateAtom);
 
   return (

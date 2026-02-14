@@ -61,13 +61,13 @@ const validateOidFormat = (oid: string): E.Either<TranslationKey, string> =>
   oidRegex.test(oid) ? E.right(oid) : E.left("errorOidInvalidFormat");
 
 const validateReservedOids = (oid: string): E.Either<TranslationKey, string> =>
-  reservedOids.includes(oid) ? E.left("errorOrgIdReserved") : E.right(oid);
+  reservedOids.includes(oid) ? E.left("errorOidReserved") : E.right(oid);
 
 const validateUsedOids =
   (orgs: Org[]) =>
   (oid: string): E.Either<TranslationKey, string> =>
     orgs.map((org) => org.id).includes(oid)
-      ? E.left("errorOrgIdUsed")
+      ? E.left("errorOidUsed")
       : E.right(oid);
 
 /**
@@ -181,7 +181,7 @@ export function validatePassword(
  * @returns Either containing an Error with i18n key or the validated oid
  * @returns Left: "required" - When oid is empty or whitespace
  * @returns Left: "errorOidInvalidFormat" - When oid contains invalid characters
- * @returns Left: "errorOrgIdReserved" - When oid is a reserved word
+ * @returns Left: "errorOidReserved" - When oid is a reserved word
  * @returns Right: The validated oid
  */
 export function validateOid(

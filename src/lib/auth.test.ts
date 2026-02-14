@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as E from "fp-ts/lib/Either.js";
+import type { User } from "firebase/auth";
 
 // Mock Firebase modules
 vi.mock("firebase/auth", () => ({
@@ -98,8 +99,10 @@ describe("client auth", () => {
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
       vi.mocked(onAuthStateChanged).mockImplementation(
-        (_auth, callback: (user: unknown) => void) => {
-          callback(mockUser);
+        (_auth, nextOrObserver) => {
+          if (typeof nextOrObserver === "function") {
+            nextOrObserver(mockUser as User);
+          }
           return vi.fn();
         }
       );
@@ -127,8 +130,10 @@ describe("client auth", () => {
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
       vi.mocked(onAuthStateChanged).mockImplementation(
-        (_auth, callback: (user: unknown) => void) => {
-          callback(newUser);
+        (_auth, nextOrObserver) => {
+          if (typeof nextOrObserver === "function") {
+            nextOrObserver(newUser as User);
+          }
           return vi.fn();
         }
       );
@@ -154,8 +159,10 @@ describe("client auth", () => {
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
       vi.mocked(onAuthStateChanged).mockImplementation(
-        (_auth, callback: (user: unknown) => void) => {
-          callback(sameUser);
+        (_auth, nextOrObserver) => {
+          if (typeof nextOrObserver === "function") {
+            nextOrObserver(sameUser as User);
+          }
           return vi.fn();
         }
       );
@@ -181,8 +188,10 @@ describe("client auth", () => {
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
       vi.mocked(onAuthStateChanged).mockImplementation(
-        (_auth, callback: (user: unknown) => void) => {
-          callback(null);
+        (_auth, nextOrObserver) => {
+          if (typeof nextOrObserver === "function") {
+            nextOrObserver(null);
+          }
           return vi.fn();
         }
       );

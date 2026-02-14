@@ -68,8 +68,8 @@ export const en = {
   errorInvalidEmail: "Invalid email format",
   errorUrlRequired: "URL is required",
   errorInvalidUrl: "Invalid URL format",
-  errorOrgIdReserved: "Organization ID is reserved and cannot be used",
-  errorOrgIdUsed: "Organization ID is already in use",
+  errorOidReserved: "Organization ID is reserved and cannot be used",
+  errorOidUsed: "Organization ID is already in use",
   errorOidInvalidFormat:
     "Organization ID must contain only lowercase letters and numbers",
   errorPasswordRequired: "Password is required",

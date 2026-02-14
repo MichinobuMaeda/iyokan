@@ -1,124 +1,101 @@
 import { useEffect } from "react";
 import {
   useNavigate,
-  useLocation,
+  useParams,
   redirect,
+  type Params,
   type MiddlewareFunction,
 } from "react-router";
 import { useAtom, getDefaultStore } from "jotai";
 
-import { OID_SYSADMIN } from "../../functions/src/common";
-import { dataStateAtom } from "./store";
+import { dataStateAtom, privilegesAtom, type Privilege } from "./store";
 import type { UserState } from "../types/UserState";
 
-export function guard(
-  pathname: string,
+/**
+ * Determines if a redirect is needed based on user privileges and state.
+ *
+ * @param params - Route parameters from react-router
+ * @param privileges - Array of required privileges for the current route
+ * @param dataState - Current user state or null/undefined if not authenticated
+ * @returns The path to redirect to, or undefined if access is allowed
+ *
+ * @remarks
+ * - Returns undefined if no privileges are required
+ * - Redirects to "/" if not authenticated and "guest" privilege is not included
+ * - Redirects to user's org if accessing wrong org (mismatched oid)
+ * - Checks for user, sys, admin, and manager privileges
+ */
+export const getGuard = (
+  params: Params<string>,
+  privileges: Privilege[],
   dataState: UserState | null | undefined
-): string | undefined {
-  const pathList = pathname.replace(/^\//, "").replace(/\/$/, "").split("/");
-
-  if (["", "/"].includes(pathname)) {
-    // Nothing to do
-  } else if (pathList[0] === "me") {
-    if (!dataState) {
-      return "/";
-    }
-  } else if (["login", "reset-password"].includes(pathList[0])) {
-    if (dataState) {
-      return `/o/${dataState.oid}`;
-    }
-  } else if (pathList[0] === "conf") {
-    if (
-      dataState?.oid !== OID_SYSADMIN ||
-      !dataState.manager ||
-      !dataState.admin
-    ) {
-      return "/";
-    }
-  } else if (pathList[0] === "o") {
-    if (!dataState) {
-      return "/";
-    }
-    if (pathList[1] === "new") {
-      if (!dataState.sys) {
-        return `/o/${dataState.oid}`;
-      }
-    } else if (pathList[1] !== dataState.oid && !dataState.sys) {
-      return `/o/${dataState.oid}`;
-    } else if (
-      pathList[2] === "edit" &&
-      !dataState.sys &&
-      !dataState.manager &&
-      !dataState.admin
-    ) {
-      return `/o/${dataState.oid}`;
-    } else if (pathList[2] === "users") {
-      if (pathList[3] === "new") {
-        if (!dataState.sys && !dataState.manager) {
-          return `/o/${dataState.oid}/users`;
-        }
-      } else if (
-        pathList[4] === "edit" &&
-        !dataState.sys &&
-        !dataState.manager
-      ) {
-        return `/o/${dataState.oid}/users/${pathList[3]}`;
-      }
-    } else if (pathList[2] === "groups") {
-      if (pathList[3] === "new") {
-        return `/o/${dataState.oid}`;
-      } else if (
-        pathList[4] === "edit" &&
-        !dataState.sys &&
-        !dataState.manager
-      ) {
-        return `/o/${dataState.oid}/groups/${pathList[3]}`;
-      }
-    }
-  } else {
-    if (!dataState) {
-      return "/";
-    } else {
-      return `/o/${dataState.oid}`;
-    }
-  }
-}
+): string | undefined =>
+  privileges.length === 0
+    ? undefined
+    : !dataState
+      ? privileges.includes("guest")
+        ? undefined
+        : "/"
+      : params.oid && params.oid !== dataState.oid
+        ? `/o/${dataState.oid}`
+        : privileges.includes("user") ||
+            (dataState.sys && privileges.includes("sys")) ||
+            (dataState.admin && privileges.includes("admin")) ||
+            (dataState.manager && privileges.includes("manager"))
+          ? undefined
+          : `/o/${dataState.oid}`;
 
 /**
- * Middleware function for react-router to guard routes based on user authentication and authorization
- * @param request - The request object containing the URL to be checked
- * @returns Redirect response if guard fails, otherwise undefined to allow navigation
+ * Creates a middleware function that sets privileges and handles route guarding.
+ *
+ * @param privileges - Array of privileges required for the route
+ * @returns A middleware function for react-router
+ *
+ * @remarks
+ * This middleware:
+ * - Sets the privileges in the global store
+ * - Checks if the current user has access based on privileges and state
+ * - Redirects to an appropriate route if access is denied
+ * - Logs privilege checks and redirects for debugging
  */
-export const guardRoute: MiddlewareFunction = ({ request }) => {
-  const pathname = new URL(request.url).pathname;
-  const dataState = getDefaultStore().get(dataStateAtom);
-  console.info("request.url.pathname", pathname, "dataState:", dataState);
-  const next = guard(pathname, dataState);
-  if (next) {
-    console.info("redirect", next);
-    return redirect(next);
-  }
+export const setPrivileges = (privileges: Privilege[]): MiddlewareFunction => {
+  return async ({ params }, next) => {
+    const dataState = getDefaultStore().get(dataStateAtom);
+    console.info("setPrivileges", { oid: params.oid, privileges, dataState });
+    getDefaultStore().set(privilegesAtom, privileges);
+    const redirectTo = getGuard(params, privileges, dataState);
+    if (redirectTo) {
+      console.info("redirect", redirectTo);
+      return redirect(redirectTo);
+    }
+    return next();
+  };
 };
 
 /**
- * Custom hook to handle navigation guards based on user state
+ * Custom hook to handle navigation guards based on user state.
+ *
+ * @remarks
+ * This hook:
+ * - Monitors changes to route params, privileges, and user state
+ * - Automatically navigates to an appropriate route if access is denied
+ * - Uses the guard logic to determine if redirection is needed
+ * - Logs navigation decisions for debugging
+ *
+ * Should be called in protected route components to enforce access control.
  */
 export function useGuard() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const params = useParams();
+  const [privileges] = useAtom(privilegesAtom);
   const [dataState] = useAtom(dataStateAtom);
 
   useEffect(() => {
-    console.info(
-      "location.pathname",
-      location.pathname,
-      "dataState:",
-      dataState
-    );
-    const next = guard(location.pathname, dataState);
-    if (next) {
-      console.info("navigate", next);
-      navigate(next);
+    console.log("useGuard", { oid: params.oid, privileges, dataState });
+    const redirectTo = getGuard(params, privileges, dataState);
+    if (redirectTo) {
+      console.info("navigate", redirectTo);
+      navigate(redirectTo);
     }
-  }, [dataState, location, navigate]);
+  }, [params, privileges, dataState, navigate]);
 }

@@ -14,7 +14,7 @@ import Form from "../../components/Form";
 export default function NewProviderPage() {
   const { t } = useTranslation();
   const params = useParams();
-  const oid = params.orgId!;
+  const oid = params.oid!;
   const [providers] = useAtom(providersAtom);
   const [pt, setPt] = useState(
     providerTypes.filter(

@@ -25,6 +25,12 @@ body {
   }
 }
 
+.nav-drawer {
+  button {
+    width: 100%;
+  }
+}
+
 .menu {
   display: block;
   width: 16rem;

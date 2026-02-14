@@ -14,9 +14,9 @@ import SvgGroup from "../../icons/SvgGroup";
 export default function EditGroupPage() {
   const { t } = useTranslation();
   const params = useParams();
-  const oid = params.orgId!;
+  const oid = params.oid!;
   const [groups] = useAtom(groupsAtom);
-  const group = groups?.find((g) => g.id === params.groupId);
+  const group = groups?.find((g) => g.id === params.gid);
   const [users] = useAtom(usersAtom) ?? [];
 
   if (!group) {

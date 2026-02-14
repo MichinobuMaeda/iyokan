@@ -11,7 +11,7 @@ export default function ListProvidersPage() {
   const { t } = useTranslation();
   const [providers] = useAtom(providersAtom);
   const params = useParams();
-  const oid = params.orgId!;
+  const oid = params.oid!;
   const [dataState] = useAtom(dataStateAtom);
 
   return (
