@@ -25,6 +25,7 @@ import SvgLogin from "../icons/SvgLogin";
 import SvgDomain from "../icons/SvgDomain";
 import SvgStickyNote from "../icons/SvgStickyNote ";
 import SvgCognition from "../icons/SvgCognition";
+import SvgArticle from "../icons/SvgArticle";
 import SvgPerson from "../icons/SvgPerson";
 import SvgGroup from "../icons/SvgGroup";
 import SvgAppRegistration from "../icons/SvgAppRegistration";
@@ -91,6 +92,12 @@ export default function Layout() {
               navigate(dataState ? `/o/${dataState.oid}` : "/");
             },
             active: locationIsHome(),
+          },
+          dataState && {
+            leadingIcon: <SvgArticle />,
+            label: t("posts"),
+            onClick: () => navigate(`/o/${dataState!.oid}/posts`),
+            active: locationIs("posts"),
           },
           dataState && {
             leadingIcon: <SvgStickyNote />,

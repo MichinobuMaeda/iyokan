@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { formatTimestamp, formatLong, formatShort } from "./formatter";
+import {
+  formatTimestamp,
+  formatLong,
+  formatShort,
+  formatPostId,
+} from "./formatter";
 
 describe("formatter", () => {
   describe("formatTimestamp", () => {
@@ -105,6 +110,59 @@ describe("formatter", () => {
     it("should return custom default value when date is undefined", () => {
       const result = formatShort(undefined, "—");
       expect(result).toBe("—");
+    });
+  });
+
+  describe("formatPostId", () => {
+    it("should format date as yyyyMMddHHmmssSSS in Asia/Tokyo timezone", () => {
+      // 2024-01-15 10:30:45.123 UTC -> 20240115193045123 JST (UTC+9)
+      const date = new Date("2024-01-15T10:30:45.123Z");
+      const result = formatPostId(date);
+      expect(result).toBe("20240115193045123");
+    });
+
+    it("should handle midnight correctly", () => {
+      // 2024-01-15 00:00:00.000 UTC -> 20240115090000000 JST
+      const date = new Date("2024-01-15T00:00:00.000Z");
+      const result = formatPostId(date);
+      expect(result).toBe("20240115090000000");
+    });
+
+    it("should handle date crossing midnight", () => {
+      // 2024-01-15 15:30:45.999 UTC -> 20240116003045999 JST
+      const date = new Date("2024-01-15T15:30:45.999Z");
+      const result = formatPostId(date);
+      expect(result).toBe("20240116003045999");
+    });
+
+    it("should include milliseconds in the format", () => {
+      // 2024-03-05 10:30:45.007 UTC -> 20240305193045007 JST
+      const date = new Date("2024-03-05T10:30:45.007Z");
+      const result = formatPostId(date);
+      expect(result).toBe("20240305193045007");
+    });
+
+    it("should pad milliseconds to 3 digits", () => {
+      // 2024-03-05 10:30:45.5 UTC -> 20240305193045500 JST
+      const date = new Date("2024-03-05T10:30:45.5Z");
+      const result = formatPostId(date);
+      expect(result).toBe("20240305193045500");
+    });
+
+    it("should return 17 character string", () => {
+      const date = new Date("2024-01-15T10:30:45.123Z");
+      const result = formatPostId(date);
+      expect(result).toHaveLength(17);
+    });
+
+    it("should create unique IDs for dates close in time", () => {
+      const date1 = new Date("2024-01-15T10:30:45.123Z");
+      const date2 = new Date("2024-01-15T10:30:45.124Z");
+      const result1 = formatPostId(date1);
+      const result2 = formatPostId(date2);
+      expect(result1).not.toBe(result2);
+      expect(result1).toBe("20240115193045123");
+      expect(result2).toBe("20240115193045124");
     });
   });
 });

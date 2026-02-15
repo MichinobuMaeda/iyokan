@@ -1,0 +1,55 @@
+import { DocumentSnapshot } from "firebase/firestore";
+
+import { type ProviderType } from "./Provider";
+import { type Meta } from "./Meta";
+
+export type PostStatus = "canceled" | "paused" | "scheduled" | "finished";
+
+export interface PostData {
+  schedule: Date;
+  title: string;
+  message: string;
+  link: string;
+  files: string[];
+  providers: ProviderType[];
+  status: PostStatus;
+}
+
+export interface Post extends Meta, PostData {
+  id: string;
+  schedule: Date;
+  title: string;
+  message: string;
+  link: string;
+  files: string[];
+  providers: ProviderType[];
+  status: PostStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+/**
+ * Creates a Post object from a Firebase document snapshot
+ * @param doc - Firebase document snapshot
+ * @returns Post object or null if document doesn't exist
+ */
+export function postFromDoc(doc: DocumentSnapshot): Post | null {
+  if (!doc.exists()) {
+    return null;
+  }
+
+  const data = doc.data();
+
+  return {
+    id: doc.id,
+    schedule: data?.schedule?.toDate() ?? new Date(),
+    title: data?.title ?? "",
+    message: data?.message ?? "",
+    link: data?.link ?? "",
+    files: data?.files ?? [],
+    providers: data?.providers ?? [],
+    status: data?.status ?? "paused",
+    createdAt: data?.createdAt?.toDate(),
+    updatedAt: data?.updatedAt?.toDate(),
+  };
+}

@@ -3,13 +3,15 @@ import { DocumentSnapshot } from "firebase/firestore";
 import { providerTypes } from "../../functions/src/common";
 import type { Meta } from "./Meta";
 
+export type ProviderType = (typeof providerTypes)[number]["type"];
+
 export interface ProviderParam {
   key: string;
   value: string | number;
 }
 
 export interface ProviderData {
-  type: string;
+  type: ProviderType;
   name: string;
   params: ProviderParam[];
   valid: boolean;
@@ -17,7 +19,7 @@ export interface ProviderData {
 
 export interface Provider extends Meta, ProviderData {
   id: string;
-  type: string;
+  type: ProviderType;
   name: string;
   params: ProviderParam[];
   valid: boolean;
@@ -54,7 +56,7 @@ export function providerFromDoc(doc: DocumentSnapshot): Provider | null {
 
   return {
     id,
-    type: type,
+    type: type as ProviderType,
     name: name || providerType.defaultName,
     params,
     valid: !!valid,

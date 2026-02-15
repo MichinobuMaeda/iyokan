@@ -9,6 +9,7 @@ const mockApp = {
 const mockAuth = { name: "auth" };
 const mockDb = { name: "firestore" };
 const mockFunctions = { name: "functions", region: "" };
+const mockStorage = { name: "storage" };
 
 vi.mock("firebase/app", () => ({
   initializeApp: vi.fn(() => mockApp),
@@ -30,6 +31,11 @@ vi.mock("firebase/functions", () => ({
   connectFunctionsEmulator: vi.fn(),
 }));
 
+vi.mock("firebase/storage", () => ({
+  getStorage: vi.fn(() => mockStorage),
+  connectStorageEmulator: vi.fn(),
+}));
+
 describe("firebase", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,6 +52,7 @@ describe("firebase", () => {
       const { getAuth } = await import("firebase/auth");
       const { getFirestore } = await import("firebase/firestore");
       const { getFunctions } = await import("firebase/functions");
+      const { getStorage } = await import("firebase/storage");
       const { firebaseConfig } = await import("./firebase-config");
 
       // Mock non-localhost hostname
@@ -65,9 +72,11 @@ describe("firebase", () => {
       expect(getAuth).toHaveBeenCalledWith(mockApp);
       expect(getFirestore).toHaveBeenCalledWith(mockApp);
       expect(getFunctions).toHaveBeenCalledWith(mockApp);
+      expect(getStorage).toHaveBeenCalledWith(mockApp);
       expect(result.auth).toBe(mockAuth);
       expect(result.db).toBe(mockDb);
       expect(result.functions).toBe(mockFunctions);
+      expect(result.storage).toBe(mockStorage);
       expect(result.functions.region).toBe("asia-northeast1");
     });
 
@@ -76,6 +85,7 @@ describe("firebase", () => {
       const { getAuth } = await import("firebase/auth");
       const { getFirestore } = await import("firebase/firestore");
       const { getFunctions } = await import("firebase/functions");
+      const { getStorage } = await import("firebase/storage");
 
       // Mock non-localhost hostname
       Object.defineProperty(global, "location", {
@@ -99,9 +109,11 @@ describe("firebase", () => {
       expect(getAuth).toHaveBeenCalledWith(existingApp);
       expect(getFirestore).toHaveBeenCalledWith(existingApp);
       expect(getFunctions).toHaveBeenCalledWith(existingApp);
+      expect(getStorage).toHaveBeenCalledWith(existingApp);
       expect(result.auth).toBe(mockAuth);
       expect(result.db).toBe(mockDb);
       expect(result.functions).toBe(mockFunctions);
+      expect(result.storage).toBe(mockStorage);
     });
 
     it("should connect to emulators on localhost", async () => {
@@ -109,6 +121,7 @@ describe("firebase", () => {
       const { connectAuthEmulator } = await import("firebase/auth");
       const { connectFirestoreEmulator } = await import("firebase/firestore");
       const { connectFunctionsEmulator } = await import("firebase/functions");
+      const { connectStorageEmulator } = await import("firebase/storage");
 
       // Mock localhost
       Object.defineProperty(global, "location", {
@@ -138,6 +151,11 @@ describe("firebase", () => {
         "127.0.0.1",
         5001
       );
+      expect(connectStorageEmulator).toHaveBeenCalledWith(
+        mockStorage,
+        "127.0.0.1",
+        9199
+      );
     });
 
     it("should connect to emulators on 127.0.0.1", async () => {
@@ -145,6 +163,7 @@ describe("firebase", () => {
       const { connectAuthEmulator } = await import("firebase/auth");
       const { connectFirestoreEmulator } = await import("firebase/firestore");
       const { connectFunctionsEmulator } = await import("firebase/functions");
+      const { connectStorageEmulator } = await import("firebase/storage");
 
       // Mock 127.0.0.1
       Object.defineProperty(global, "location", {
@@ -174,6 +193,11 @@ describe("firebase", () => {
         "127.0.0.1",
         5001
       );
+      expect(connectStorageEmulator).toHaveBeenCalledWith(
+        mockStorage,
+        "127.0.0.1",
+        9199
+      );
     });
 
     it("should not connect to emulators on production hostname", async () => {
@@ -181,6 +205,7 @@ describe("firebase", () => {
       const { connectAuthEmulator } = await import("firebase/auth");
       const { connectFirestoreEmulator } = await import("firebase/firestore");
       const { connectFunctionsEmulator } = await import("firebase/functions");
+      const { connectStorageEmulator } = await import("firebase/storage");
 
       // Mock production hostname
       Object.defineProperty(global, "location", {
@@ -198,11 +223,12 @@ describe("firebase", () => {
       expect(connectAuthEmulator).not.toHaveBeenCalled();
       expect(connectFirestoreEmulator).not.toHaveBeenCalled();
       expect(connectFunctionsEmulator).not.toHaveBeenCalled();
+      expect(connectStorageEmulator).not.toHaveBeenCalled();
     });
   });
 
   describe("module exports", () => {
-    it("should export auth, db, and functions instances", async () => {
+    it("should export auth, db, functions, and storage instances", async () => {
       const { getApps } = await import("firebase/app");
 
       // Mock non-localhost hostname
@@ -220,6 +246,7 @@ describe("firebase", () => {
       expect(module.auth).toBeDefined();
       expect(module.db).toBeDefined();
       expect(module.functions).toBeDefined();
+      expect(module.storage).toBeDefined();
     });
   });
 });

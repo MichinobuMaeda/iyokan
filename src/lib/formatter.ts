@@ -41,3 +41,13 @@ export function formatLong(date?: Date, defaultValue = ""): string {
 export function formatShort(date?: Date, defaultValue = ""): string {
   return date ? format(toDefaultTz(date), "yyyy/MM/dd") : defaultValue;
 }
+
+/**
+ * Formats a date as post ID: yyyyMMddHHmmssSSS
+ * Used to generate unique post identifiers based on timestamp
+ * @param date - Date to format
+ * @returns Formatted post ID string (17 digits)
+ */
+export function formatPostId(date: Date): string {
+  return format(toDefaultTz(date), "yyyyMMddHHmmssSSS");
+}

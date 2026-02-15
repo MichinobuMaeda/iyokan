@@ -14,8 +14,6 @@ import type { Org } from "../types/Org";
 import type { User } from "../types/User";
 import type { Group } from "../types/Group";
 import type { Provider } from "../types/Provider";
-import type { Template } from "../types/Template";
-import type { Generator } from "../types/Generator";
 import {
   authUserAtom,
   userPrivilegesAtom,
@@ -27,6 +25,7 @@ import {
   providersAtom,
   templatesAtom,
   generatorsAtom,
+  postsAtom,
   getAppState,
   appStateAtom,
   getDataState,
@@ -358,6 +357,29 @@ describe("store", () => {
       expect(result).toBe(undefined);
     });
 
+    it("should return undefined when posts is undefined", () => {
+      const store = createStore();
+      const mockUser = { uid: "user123" } as FirebaseUser;
+      const mockPrivs: UserPrivileges = {
+        org1: { admin: true, manager: false },
+      };
+      store.set(authUserAtom, mockUser);
+      store.set(userPrivilegesAtom, mockPrivs);
+      store.set(oidAtom, "org1");
+      store.set(confAtom, {} as Conf);
+      store.set(orgsAtom, []);
+      store.set(usersAtom, []);
+      store.set(groupsAtom, []);
+      store.set(providersAtom, []);
+      store.set(templatesAtom, []);
+      store.set(generatorsAtom, []);
+      store.set(postsAtom, undefined);
+
+      const result = getDataState(store.get);
+
+      expect(result).toBe(undefined);
+    });
+
     it("should return undefined when org not found in orgs", () => {
       const store = createStore();
       const mockUser = { uid: "user123" } as FirebaseUser;
@@ -376,6 +398,7 @@ describe("store", () => {
       store.set(providersAtom, []);
       store.set(templatesAtom, []);
       store.set(generatorsAtom, []);
+      store.set(postsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -401,6 +424,7 @@ describe("store", () => {
       store.set(providersAtom, []);
       store.set(templatesAtom, []);
       store.set(generatorsAtom, []);
+      store.set(postsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -469,6 +493,8 @@ describe("store", () => {
       store.set(providersAtom, []);
       store.set(templatesAtom, []);
       store.set(generatorsAtom, []);
+      store.set(postsAtom, []);
+      store.set(postsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -504,6 +530,7 @@ describe("store", () => {
       store.set(providersAtom, mockProviders);
       store.set(templatesAtom, []);
       store.set(generatorsAtom, []);
+      store.set(postsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -545,6 +572,7 @@ describe("store", () => {
       store.set(providersAtom, mockProviders);
       store.set(templatesAtom, []);
       store.set(generatorsAtom, []);
+      store.set(postsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -591,6 +619,7 @@ describe("store", () => {
       store.set(providersAtom, mockProviders);
       store.set(templatesAtom, []);
       store.set(generatorsAtom, []);
+      store.set(postsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -639,6 +668,7 @@ describe("store", () => {
       store.set(providersAtom, mockProviders);
       store.set(templatesAtom, []);
       store.set(generatorsAtom, []);
+      store.set(postsAtom, []);
 
       const result = store.get(dataStateAtom);
 

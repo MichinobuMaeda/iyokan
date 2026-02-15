@@ -274,3 +274,37 @@ h3 {
     );
   }
 }
+
+.post-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  width: 100%;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+    color: light-dark(var(--color-light-primary), var(--color-dark-primary));
+
+    svg {
+      height: 1rem;
+      width: 1rem;
+
+      &.disabled {
+        opacity: 0.25;
+      }
+    }
+  }
+}
+
+@media (max-width: 512px) {
+  main {
+    padding: 0.5rem;
+
+    h2 {
+      margin-bottom: 0.125rem;
+    }
+  }
+}

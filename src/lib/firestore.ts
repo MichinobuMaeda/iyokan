@@ -6,6 +6,7 @@ import {
   where,
   onSnapshot,
   addDoc,
+  setDoc,
   updateDoc,
   serverTimestamp,
   type Unsubscribe,
@@ -29,6 +30,7 @@ import {
   providersAtom,
   templatesAtom,
   generatorsAtom,
+  postsAtom,
 } from "./store";
 import { confFromDoc, type ConfData } from "../types/Conf";
 import { type UserState } from "../types/UserState";
@@ -50,6 +52,7 @@ import {
   type GeneratorData,
   type Generator,
 } from "../types/Generator";
+import { postFromDoc, type PostData, type Post } from "../types/Post";
 
 export function subscribeConf() {
   console.info("Start subscribeConf()");
@@ -145,6 +148,9 @@ export const sortTemplates = (a: Template, b: Template) =>
 export const sortGenerators = (a: Generator, b: Generator) =>
   a.name.localeCompare(b.name);
 
+export const sortPosts = (a: Post, b: Post) =>
+  b.schedule.getTime() - a.schedule.getTime();
+
 export const userDataItemsAtom = (
   appState: UserState | null | undefined
 ): UserDataItem[] => [
@@ -188,6 +194,13 @@ export const userDataItemsAtom = (
     atom: generatorsAtom,
     fromDoc: generatorFromDoc,
     sort: sortGenerators,
+    priv: !!appState,
+  },
+  {
+    collectionName: "posts",
+    atom: postsAtom,
+    fromDoc: postFromDoc,
+    sort: sortPosts,
     priv: !!appState,
   },
 ];
@@ -448,6 +461,53 @@ export async function updateOrgGenerator(
     return E.right(undefined);
   } catch (error) {
     console.error("updateOrgGenerator error:", error);
+    return E.left("defaultErrorMessage");
+  }
+}
+
+export async function createOrgPost(
+  oid: string,
+  id: string,
+  formData: PostData
+): Promise<E.Either<TranslationKey, void>> {
+  try {
+    await setDoc(doc(db, "orgs", oid, "posts", id), {
+      schedule: formData.schedule,
+      title: formData.title.trim(),
+      message: formData.message.trim(),
+      link: formData.link.trim(),
+      files: formData.files || [],
+      providers: formData.providers || [],
+      status: formData.status,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return E.right(undefined);
+  } catch (error) {
+    console.error("createOrgPost error:", error);
+    return E.left("defaultErrorMessage");
+  }
+}
+
+export async function updateOrgPost(
+  oid: string,
+  id: string,
+  formData: PostData
+): Promise<E.Either<TranslationKey, void>> {
+  try {
+    await updateDoc(doc(db, "orgs", oid, "posts", id), {
+      schedule: formData.schedule,
+      title: formData.title.trim(),
+      message: formData.message.trim(),
+      link: formData.link.trim(),
+      files: formData.files || [],
+      providers: formData.providers || [],
+      status: formData.status,
+      updatedAt: serverTimestamp(),
+    });
+    return E.right(undefined);
+  } catch (error) {
+    console.error("updateOrgPost error:", error);
     return E.left("defaultErrorMessage");
   }
 }

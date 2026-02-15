@@ -32,6 +32,10 @@ import ListGeneratorsPage from "./pages/generators/ListGeneratorsPage.tsx";
 import NewGeneratorPage from "./pages/generators/NewGeneratorPage.tsx";
 import ShowGeneratorPage from "./pages/generators/ShowGeneratorPage.tsx";
 import EditGeneratorPage from "./pages/generators/EditGeneratorPage.tsx";
+import ListPostsPage from "./pages/posts/ListPostsPage.tsx";
+import NewPostPage from "./pages/posts/NewPostPage.tsx";
+import ShowPostPage from "./pages/posts/ShowPostPage.tsx";
+import EditPostPage from "./pages/posts/EditPostPage.tsx";
 
 export const route: RouteObject[] = [
   {
@@ -158,6 +162,36 @@ export const route: RouteObject[] = [
                         path: "edit",
                         middleware: [guardRoute(["user"])],
                         Component: EditGeneratorPage,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                path: "posts",
+                children: [
+                  {
+                    index: true,
+                    middleware: [guardRoute(["user"])],
+                    Component: ListPostsPage,
+                  },
+                  {
+                    path: "new",
+                    middleware: [guardRoute(["user"])],
+                    Component: NewPostPage,
+                  },
+                  {
+                    path: ":postId",
+                    children: [
+                      {
+                        index: true,
+                        middleware: [guardRoute(["user"])],
+                        Component: ShowPostPage,
+                      },
+                      {
+                        path: "edit",
+                        middleware: [guardRoute(["user"])],
+                        Component: EditPostPage,
                       },
                     ],
                   },

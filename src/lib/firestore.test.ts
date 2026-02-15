@@ -13,11 +13,13 @@ import type { Group } from "../types/Group";
 import type { Provider } from "../types/Provider";
 import type { Template } from "../types/Template";
 import type { Generator } from "../types/Generator";
+import type { Post } from "../types/Post";
 
 // Mock Firestore
 const mockOnSnapshot = vi.fn();
 const mockAddDoc = vi.fn();
 const mockUpdateDoc = vi.fn();
+const mockSetDoc = vi.fn();
 const mockDoc = vi.fn();
 const mockCollection = vi.fn();
 const mockQuery = vi.fn();
@@ -32,6 +34,7 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: mockOnSnapshot,
   addDoc: mockAddDoc,
   updateDoc: mockUpdateDoc,
+  setDoc: mockSetDoc,
   serverTimestamp: mockServerTimestamp,
 }));
 
@@ -58,6 +61,7 @@ vi.mock("./store", () => ({
   providersAtom: { toString: () => "providersAtom" },
   templatesAtom: { toString: () => "templatesAtom" },
   generatorsAtom: { toString: () => "generatorsAtom" },
+  postsAtom: { toString: () => "postsAtom" },
 }));
 
 vi.mock("../types/Conf", () => ({
@@ -86,6 +90,10 @@ vi.mock("../types/Template", () => ({
 
 vi.mock("../types/Generator", () => ({
   generatorFromDoc: vi.fn((doc) => ({ id: doc.id })),
+}));
+
+vi.mock("../types/Post", () => ({
+  postFromDoc: vi.fn((doc) => ({ id: doc.id })),
 }));
 
 describe("firestore", () => {
@@ -228,6 +236,18 @@ describe("firestore", () => {
 
         expect(sortGenerators(generator1, generator2)).toBeGreaterThan(0);
         expect(sortGenerators(generator2, generator1)).toBeLessThan(0);
+      });
+    });
+
+    describe("sortPosts", () => {
+      it("should sort posts by schedule date descending", async () => {
+        const { sortPosts } = await import("./firestore");
+
+        const post1 = { schedule: new Date("2024-01-01") } as Post;
+        const post2 = { schedule: new Date("2024-12-31") } as Post;
+
+        expect(sortPosts(post1, post2)).toBeGreaterThan(0);
+        expect(sortPosts(post2, post1)).toBeLessThan(0);
       });
     });
   });
@@ -671,7 +691,7 @@ describe("firestore", () => {
 
       const formData = {
         name: "Test Group",
-        members: undefined,
+        members: undefined as unknown as string[],
         valid: true,
       };
 
@@ -1091,13 +1111,14 @@ describe("firestore", () => {
 
       const items = userDataItemsAtom(null);
 
-      expect(items).toHaveLength(6);
+      expect(items).toHaveLength(7);
       expect(items[0].collectionName).toBe("orgs");
       expect(items[1].collectionName).toBe("users");
       expect(items[2].collectionName).toBe("groups");
       expect(items[3].collectionName).toBe("providers");
       expect(items[4].collectionName).toBe("templates");
       expect(items[5].collectionName).toBe("generators");
+      expect(items[6].collectionName).toBe("posts");
     });
 
     it("should set provider priv to true for admin users", async () => {
@@ -1216,6 +1237,184 @@ describe("firestore", () => {
       );
       expect(templateItem?.priv).toBe(true);
       expect(generatorItem?.priv).toBe(true);
+    });
+  });
+
+  describe("createOrgPost", () => {
+    it("should create post document successfully", async () => {
+      const { createOrgPost } = await import("./firestore");
+
+      mockDoc.mockReturnValue("post-doc-ref");
+      mockSetDoc.mockResolvedValue(undefined);
+
+      const formData = {
+        schedule: new Date("2024-06-15T10:30:00.000Z"),
+        title: "Test Post  ",
+        message: "Test message  ",
+        link: "https://example.com  ",
+        files: ["1.jpg"],
+        providers: ["provider1", "provider2"],
+        status: "scheduled" as const,
+      };
+
+      const result = await createOrgPost("org1", "20240615103000000", formData);
+
+      expect(E.isRight(result)).toBe(true);
+      expect(mockSetDoc).toHaveBeenCalledWith("post-doc-ref", {
+        schedule: new Date("2024-06-15T10:30:00.000Z"),
+        title: "Test Post",
+        message: "Test message",
+        link: "https://example.com",
+        files: ["1.jpg"],
+        providers: ["provider1", "provider2"],
+        status: "scheduled",
+        createdAt: new Date("2024-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      });
+    });
+
+    it("should return error on failure", async () => {
+      const { createOrgPost } = await import("./firestore");
+
+      mockDoc.mockReturnValue("post-doc-ref");
+      mockSetDoc.mockRejectedValue(new Error("Create error"));
+
+      const formData = {
+        schedule: new Date("2024-06-15T10:30:00.000Z"),
+        title: "Test Post",
+        message: "Test message",
+        link: "https://example.com",
+        files: [],
+        providers: [],
+        status: "paused" as const,
+      };
+
+      const result = await createOrgPost("org1", "20240615103000000", formData);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("defaultErrorMessage");
+      }
+    });
+
+    it("should handle undefined files and providers", async () => {
+      const { createOrgPost } = await import("./firestore");
+
+      mockDoc.mockReturnValue("post-doc-ref");
+      mockSetDoc.mockResolvedValue(undefined);
+
+      const formData = {
+        schedule: new Date("2024-06-15T10:30:00.000Z"),
+        title: "Test Post",
+        message: "Test message",
+        link: "https://example.com",
+        files: undefined as any,
+        providers: undefined as any,
+        status: "published" as const,
+      };
+
+      const result = await createOrgPost("org1", "20240615103000000", formData);
+
+      expect(E.isRight(result)).toBe(true);
+      expect(mockSetDoc).toHaveBeenCalledWith("post-doc-ref", {
+        schedule: new Date("2024-06-15T10:30:00.000Z"),
+        title: "Test Post",
+        message: "Test message",
+        link: "https://example.com",
+        files: [],
+        providers: [],
+        status: "published",
+        createdAt: new Date("2024-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      });
+    });
+  });
+
+  describe("updateOrgPost", () => {
+    it("should update post document successfully", async () => {
+      const { updateOrgPost } = await import("./firestore");
+
+      mockDoc.mockReturnValue("post-doc-ref");
+      mockUpdateDoc.mockResolvedValue(undefined);
+
+      const formData = {
+        schedule: new Date("2024-06-15T10:30:00.000Z"),
+        title: "Updated Post  ",
+        message: "Updated message  ",
+        link: "https://example.com/updated  ",
+        files: ["1.png"],
+        providers: ["provider1"],
+        status: "failed" as const,
+      };
+
+      const result = await updateOrgPost("org1", "20240615103000000", formData);
+
+      expect(E.isRight(result)).toBe(true);
+      expect(mockUpdateDoc).toHaveBeenCalledWith("post-doc-ref", {
+        schedule: new Date("2024-06-15T10:30:00.000Z"),
+        title: "Updated Post",
+        message: "Updated message",
+        link: "https://example.com/updated",
+        files: ["1.png"],
+        providers: ["provider1"],
+        status: "failed",
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      });
+    });
+
+    it("should return error on failure", async () => {
+      const { updateOrgPost } = await import("./firestore");
+
+      mockDoc.mockReturnValue("post-doc-ref");
+      mockUpdateDoc.mockRejectedValue(new Error("Update error"));
+
+      const formData = {
+        schedule: new Date("2024-06-15T10:30:00.000Z"),
+        title: "Test Post",
+        message: "Test message",
+        link: "https://example.com",
+        files: [],
+        providers: [],
+        status: "paused" as const,
+      };
+
+      const result = await updateOrgPost("org1", "20240615103000000", formData);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("defaultErrorMessage");
+      }
+    });
+
+    it("should handle undefined files and providers", async () => {
+      const { updateOrgPost } = await import("./firestore");
+
+      mockDoc.mockReturnValue("post-doc-ref");
+      mockUpdateDoc.mockResolvedValue(undefined);
+
+      const formData = {
+        schedule: new Date("2024-06-15T10:30:00.000Z"),
+        title: "Test Post",
+        message: "Test message",
+        link: "https://example.com",
+        files: undefined as any,
+        providers: undefined as any,
+        status: "scheduled" as const,
+      };
+
+      const result = await updateOrgPost("org1", "20240615103000000", formData);
+
+      expect(E.isRight(result)).toBe(true);
+      expect(mockUpdateDoc).toHaveBeenCalledWith("post-doc-ref", {
+        schedule: new Date("2024-06-15T10:30:00.000Z"),
+        title: "Test Post",
+        message: "Test message",
+        link: "https://example.com",
+        files: [],
+        providers: [],
+        status: "scheduled",
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      });
     });
   });
 });
