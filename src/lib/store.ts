@@ -13,6 +13,8 @@ import { type Org } from "../types/Org";
 import { type User } from "../types/User";
 import { type Group } from "../types/Group";
 import { type Provider } from "../types/Provider";
+import { type Template } from "../types/Template";
+import { type Generator } from "../types/Generator";
 
 export const localeAtom = atomWithStorage<string>("locale", "ja");
 
@@ -35,6 +37,10 @@ export const usersAtom = atom<User[] | undefined>(undefined);
 export const groupsAtom = atom<Group[] | undefined>(undefined);
 
 export const providersAtom = atom<Provider[] | undefined>(undefined);
+
+export const templatesAtom = atom<Template[] | undefined>(undefined);
+
+export const generatorsAtom = atom<Generator[] | undefined>(undefined);
 
 export const getAppState = (get: Getter): UserState | null | undefined => {
   const authUser = get(authUserAtom);
@@ -63,6 +69,8 @@ export const getDataState = (get: Getter): UserState | null | undefined => {
   const users = get(usersAtom);
   const groups = get(groupsAtom);
   const providers = get(providersAtom);
+  const templates = get(templatesAtom);
+  const generators = get(generatorsAtom);
 
   return !appState
     ? appState
@@ -70,6 +78,8 @@ export const getDataState = (get: Getter): UserState | null | undefined => {
         users !== undefined &&
         groups !== undefined &&
         providers !== undefined &&
+        templates !== undefined &&
+        generators !== undefined &&
         orgs?.some((org) => org.id === appState.oid) &&
         users?.some((user) => user.id === appState.uid) &&
         !!groups

@@ -25,7 +25,7 @@ import type { UserState } from "../types/UserState";
  * - Redirects to user's org if accessing wrong org (mismatched oid)
  * - Checks for user, sys, admin, and manager privileges
  */
-export const getGuard = (
+export const checkAccess = (
   params: Params<string>,
   privileges: Privilege[],
   dataState: UserState | null | undefined
@@ -58,12 +58,12 @@ export const getGuard = (
  * - Redirects to an appropriate route if access is denied
  * - Logs privilege checks and redirects for debugging
  */
-export const setPrivileges = (privileges: Privilege[]): MiddlewareFunction => {
+export const guardRoute = (privileges: Privilege[]): MiddlewareFunction => {
   return async ({ params }, next) => {
     const dataState = getDefaultStore().get(dataStateAtom);
     console.info("setPrivileges", { oid: params.oid, privileges, dataState });
     getDefaultStore().set(privilegesAtom, privileges);
-    const redirectTo = getGuard(params, privileges, dataState);
+    const redirectTo = checkAccess(params, privileges, dataState);
     if (redirectTo) {
       console.info("redirect", redirectTo);
       return redirect(redirectTo);
@@ -92,7 +92,7 @@ export function useGuard() {
 
   useEffect(() => {
     console.log("useGuard", { oid: params.oid, privileges, dataState });
-    const redirectTo = getGuard(params, privileges, dataState);
+    const redirectTo = checkAccess(params, privileges, dataState);
     if (redirectTo) {
       console.info("navigate", redirectTo);
       navigate(redirectTo);

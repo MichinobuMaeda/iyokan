@@ -23,6 +23,8 @@ import SvgInfo from "../icons/SvgInfo";
 import SvgAccountCircle from "../icons/SvgAccountCircle";
 import SvgLogin from "../icons/SvgLogin";
 import SvgDomain from "../icons/SvgDomain";
+import SvgStickyNote from "../icons/SvgStickyNote ";
+import SvgCognition from "../icons/SvgCognition";
 import SvgPerson from "../icons/SvgPerson";
 import SvgGroup from "../icons/SvgGroup";
 import SvgAppRegistration from "../icons/SvgAppRegistration";
@@ -51,24 +53,16 @@ export default function Layout() {
   const locationIsLogin = () => location.pathname === "/login";
   const locationIsChangeEmail = () => location.pathname === "/me/email";
   const locationIsChangePassword = () => location.pathname === "/me/password";
-  const locationIsHome = () =>
-    dataState ? location.pathname === `/o/${dataState?.oid}` : false;
-  const locationIsUsers = () =>
-    dataState
-      ? location.pathname.startsWith(`/o/${dataState?.oid}/users`)
-      : false;
-  const locationIsGroups = () =>
-    dataState
-      ? location.pathname.startsWith(`/o/${dataState?.oid}/groups`)
-      : false;
   const locationIsOrgs = () =>
     dataState
       ? location.pathname.startsWith("/o") &&
         !location.pathname.startsWith(`/o/${dataState?.oid}`)
       : false;
-  const locationIsProviders = () =>
+  const locationIsHome = () =>
+    dataState ? location.pathname === `/o/${dataState?.oid}` : false;
+  const locationIs = (subPath: string) =>
     dataState
-      ? location.pathname.startsWith(`/o/${dataState?.oid}/providers`)
+      ? location.pathname.startsWith(`/o/${dataState?.oid}/${subPath}`)
       : false;
 
   useEffect(() => {
@@ -99,22 +93,34 @@ export default function Layout() {
             active: locationIsHome(),
           },
           dataState && {
+            leadingIcon: <SvgStickyNote />,
+            label: t("templates"),
+            onClick: () => navigate(`/o/${dataState!.oid}/templates`),
+            active: locationIs("templates"),
+          },
+          dataState && {
+            leadingIcon: <SvgCognition />,
+            label: t("generators"),
+            onClick: () => navigate(`/o/${dataState!.oid}/generators`),
+            active: locationIs("generators"),
+          },
+          dataState && {
             leadingIcon: <SvgPerson />,
             label: t("users"),
             onClick: () => navigate(`/o/${dataState!.oid}/users`),
-            active: locationIsUsers(),
+            active: locationIs("users"),
           },
           dataState && {
             leadingIcon: <SvgGroup />,
             label: t("groups"),
             onClick: () => navigate(`/o/${dataState!.oid}/groups`),
-            active: locationIsGroups(),
+            active: locationIs("groups"),
           },
           (dataState?.sys || dataState?.admin) && {
             leadingIcon: <SvgAppRegistration />,
             label: t("providers"),
             onClick: () => navigate(`/o/${dataState!.oid}/providers`),
-            active: locationIsProviders(),
+            active: locationIs("providers"),
           },
           dataState?.sys && {
             leadingIcon: <SvgDomain />,

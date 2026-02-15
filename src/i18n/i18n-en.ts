@@ -14,6 +14,8 @@ export const en = {
   home: "Home",
   returnToHome: "Return to Home",
   organizations: "Organizations",
+  templates: "Templates",
+  generators: "AI Generators",
   providers: "Providers",
   users: "Users",
   groups: "Groups",
@@ -23,6 +25,13 @@ export const en = {
 
   // Common form fields
   name: "Name",
+  title: "Title",
+  message: "Message",
+  link: "Link",
+  feed: "Feed",
+  category: "Category",
+  source: "Source",
+  prompt: "Prompt",
   email: "Email",
   password: "Password",
   newEmail: "New Email",
@@ -60,6 +69,8 @@ export const en = {
 
   // Actions
   addOrganization: "Add organization",
+  addTemplate: "Add template",
+  addGenerator: "Add AI generator",
   addProvider: "Add provider",
   addUser: "Add user",
   editUser: "Edit User",

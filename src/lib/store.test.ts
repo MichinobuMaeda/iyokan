@@ -14,6 +14,8 @@ import type { Org } from "../types/Org";
 import type { User } from "../types/User";
 import type { Group } from "../types/Group";
 import type { Provider } from "../types/Provider";
+import type { Template } from "../types/Template";
+import type { Generator } from "../types/Generator";
 import {
   authUserAtom,
   userPrivilegesAtom,
@@ -23,6 +25,8 @@ import {
   usersAtom,
   groupsAtom,
   providersAtom,
+  templatesAtom,
+  generatorsAtom,
   getAppState,
   appStateAtom,
   getDataState,
@@ -311,6 +315,49 @@ describe("store", () => {
       expect(result).toBe(undefined);
     });
 
+    it("should return undefined when templates is undefined", () => {
+      const store = createStore();
+      const mockUser = { uid: "user123" } as FirebaseUser;
+      const mockPrivs: UserPrivileges = {
+        org1: { admin: true, manager: false },
+      };
+      store.set(authUserAtom, mockUser);
+      store.set(userPrivilegesAtom, mockPrivs);
+      store.set(oidAtom, "org1");
+      store.set(confAtom, {} as Conf);
+      store.set(orgsAtom, []);
+      store.set(usersAtom, []);
+      store.set(groupsAtom, []);
+      store.set(providersAtom, []);
+      store.set(templatesAtom, undefined);
+
+      const result = getDataState(store.get);
+
+      expect(result).toBe(undefined);
+    });
+
+    it("should return undefined when generators is undefined", () => {
+      const store = createStore();
+      const mockUser = { uid: "user123" } as FirebaseUser;
+      const mockPrivs: UserPrivileges = {
+        org1: { admin: true, manager: false },
+      };
+      store.set(authUserAtom, mockUser);
+      store.set(userPrivilegesAtom, mockPrivs);
+      store.set(oidAtom, "org1");
+      store.set(confAtom, {} as Conf);
+      store.set(orgsAtom, []);
+      store.set(usersAtom, []);
+      store.set(groupsAtom, []);
+      store.set(providersAtom, []);
+      store.set(templatesAtom, []);
+      store.set(generatorsAtom, undefined);
+
+      const result = getDataState(store.get);
+
+      expect(result).toBe(undefined);
+    });
+
     it("should return undefined when org not found in orgs", () => {
       const store = createStore();
       const mockUser = { uid: "user123" } as FirebaseUser;
@@ -327,6 +374,8 @@ describe("store", () => {
       store.set(usersAtom, []);
       store.set(groupsAtom, []);
       store.set(providersAtom, []);
+      store.set(templatesAtom, []);
+      store.set(generatorsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -350,6 +399,8 @@ describe("store", () => {
       store.set(usersAtom, mockUsers);
       store.set(groupsAtom, []);
       store.set(providersAtom, []);
+      store.set(templatesAtom, []);
+      store.set(generatorsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -382,6 +433,8 @@ describe("store", () => {
       store.set(usersAtom, mockUsers);
       store.set(groupsAtom, mockGroups);
       store.set(providersAtom, []);
+      store.set(templatesAtom, []);
+      store.set(generatorsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -414,6 +467,8 @@ describe("store", () => {
       store.set(usersAtom, mockUsers);
       store.set(groupsAtom, mockGroups);
       store.set(providersAtom, []);
+      store.set(templatesAtom, []);
+      store.set(generatorsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -447,6 +502,8 @@ describe("store", () => {
       store.set(usersAtom, mockUsers);
       store.set(groupsAtom, mockGroups);
       store.set(providersAtom, mockProviders);
+      store.set(templatesAtom, []);
+      store.set(generatorsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -486,6 +543,8 @@ describe("store", () => {
       store.set(usersAtom, mockUsers);
       store.set(groupsAtom, mockGroups);
       store.set(providersAtom, mockProviders);
+      store.set(templatesAtom, []);
+      store.set(generatorsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -530,6 +589,8 @@ describe("store", () => {
       store.set(usersAtom, mockUsers);
       store.set(groupsAtom, mockGroups);
       store.set(providersAtom, mockProviders);
+      store.set(templatesAtom, []);
+      store.set(generatorsAtom, []);
 
       const result = getDataState(store.get);
 
@@ -576,6 +637,8 @@ describe("store", () => {
       store.set(usersAtom, mockUsers);
       store.set(groupsAtom, mockGroups);
       store.set(providersAtom, mockProviders);
+      store.set(templatesAtom, []);
+      store.set(generatorsAtom, []);
 
       const result = store.get(dataStateAtom);
 

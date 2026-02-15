@@ -23,9 +23,6 @@ service cloud.firestore {
       allow read, update: if isManager(resource.data.oid) || isAdmin(resource.data.oid);
       allow read, write: if isSystemAdmin();
     }
-    match /orgs/{oid}/providers/{providerId} {
-      allow read, write: if isSystemAdmin() || isAdmin(oid);
-    }
     match /orgs/{oid}/users/{uid} {
       allow read: if isUser(oid);
       allow read, write: if isSystemAdmin() || isManager(oid);
@@ -33,6 +30,18 @@ service cloud.firestore {
     match /orgs/{oid}/groups/{groutId} {
       allow read: if isUser(oid);
       allow read, write: if isSystemAdmin() || isManager(oid);
+    }
+    match /orgs/{oid}/posts/{postId} {
+      allow read, write: if isUser(oid);
+    }
+    match /orgs/{oid}/templates/{templateId} {
+      allow read, write: if isUser(oid);
+    }
+    match /orgs/{oid}/generators/{generatorId} {
+      allow read, write: if isUser(oid);
+    }
+    match /orgs/{oid}/providers/{providerId} {
+      allow read, write: if isSystemAdmin() || isAdmin(oid);
     }
     match /{document=**} {
       allow read, write: if false;

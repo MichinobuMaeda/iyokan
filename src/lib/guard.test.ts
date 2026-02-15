@@ -33,35 +33,35 @@ describe("guard", () => {
     vi.spyOn(console, "log").mockImplementation(() => {});
   });
 
-  describe("getGuard", () => {
+  describe("checkAccess", () => {
     it("should allow access when no privileges required", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
-      const result = getGuard({}, [], null);
+      const result = checkAccess({}, [], null);
 
       expect(result).toBeUndefined();
     });
 
     it("should allow access when guest privilege and not authenticated", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const privileges: Privilege[] = ["guest"];
-      const result = getGuard({}, privileges, null);
+      const result = checkAccess({}, privileges, null);
 
       expect(result).toBeUndefined();
     });
 
     it("should redirect to root when not authenticated and guest privilege not included", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const privileges: Privilege[] = ["user"];
-      const result = getGuard({}, privileges, null);
+      const result = checkAccess({}, privileges, null);
 
       expect(result).toBe("/");
     });
 
     it("should allow access when user privilege and authenticated", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -72,13 +72,13 @@ describe("guard", () => {
       };
 
       const privileges: Privilege[] = ["user"];
-      const result = getGuard({}, privileges, dataState);
+      const result = checkAccess({}, privileges, dataState);
 
       expect(result).toBeUndefined();
     });
 
     it("should redirect to user org when sys privilege required but user is not sys", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -89,13 +89,13 @@ describe("guard", () => {
       };
 
       const privileges: Privilege[] = ["sys"];
-      const result = getGuard({}, privileges, dataState);
+      const result = checkAccess({}, privileges, dataState);
 
       expect(result).toBe("/o/org1");
     });
 
     it("should allow access when sys privilege required and user is sys", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "sysadmin",
@@ -106,13 +106,13 @@ describe("guard", () => {
       };
 
       const privileges: Privilege[] = ["sys"];
-      const result = getGuard({}, privileges, dataState);
+      const result = checkAccess({}, privileges, dataState);
 
       expect(result).toBeUndefined();
     });
 
     it("should redirect to user org when manager privilege required but user is not manager", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -123,13 +123,13 @@ describe("guard", () => {
       };
 
       const privileges: Privilege[] = ["manager"];
-      const result = getGuard({}, privileges, dataState);
+      const result = checkAccess({}, privileges, dataState);
 
       expect(result).toBe("/o/org1");
     });
 
     it("should allow access when manager privilege required and user is manager", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -140,13 +140,13 @@ describe("guard", () => {
       };
 
       const privileges: Privilege[] = ["manager"];
-      const result = getGuard({}, privileges, dataState);
+      const result = checkAccess({}, privileges, dataState);
 
       expect(result).toBeUndefined();
     });
 
     it("should redirect to user org when admin privilege required but user is not admin", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -157,13 +157,13 @@ describe("guard", () => {
       };
 
       const privileges: Privilege[] = ["admin"];
-      const result = getGuard({}, privileges, dataState);
+      const result = checkAccess({}, privileges, dataState);
 
       expect(result).toBe("/o/org1");
     });
 
     it("should allow access when admin privilege required and user is admin", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -174,13 +174,13 @@ describe("guard", () => {
       };
 
       const privileges: Privilege[] = ["admin"];
-      const result = getGuard({}, privileges, dataState);
+      const result = checkAccess({}, privileges, dataState);
 
       expect(result).toBeUndefined();
     });
 
     it("should redirect to user org when accessing different org", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -192,13 +192,13 @@ describe("guard", () => {
 
       const privileges: Privilege[] = ["user"];
       const params = { oid: "org2" };
-      const result = getGuard(params, privileges, dataState);
+      const result = checkAccess(params, privileges, dataState);
 
       expect(result).toBe("/o/org1");
     });
 
     it("should allow accessing same org", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -210,13 +210,13 @@ describe("guard", () => {
 
       const privileges: Privilege[] = ["user"];
       const params = { oid: "org1" };
-      const result = getGuard(params, privileges, dataState);
+      const result = checkAccess(params, privileges, dataState);
 
       expect(result).toBeUndefined();
     });
 
     it("should allow accessing different org when no oid param", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -227,13 +227,13 @@ describe("guard", () => {
       };
 
       const privileges: Privilege[] = ["user"];
-      const result = getGuard({}, privileges, dataState);
+      const result = checkAccess({}, privileges, dataState);
 
       expect(result).toBeUndefined();
     });
 
     it("should allow access when user has one of multiple required privileges", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -244,13 +244,13 @@ describe("guard", () => {
       };
 
       const privileges: Privilege[] = ["sys", "admin", "manager"];
-      const result = getGuard({}, privileges, dataState);
+      const result = checkAccess({}, privileges, dataState);
 
       expect(result).toBeUndefined();
     });
 
     it("should redirect when user has none of multiple required privileges", async () => {
-      const { getGuard } = await import("./guard");
+      const { checkAccess } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -261,7 +261,7 @@ describe("guard", () => {
       };
 
       const privileges: Privilege[] = ["sys", "admin", "manager"];
-      const result = getGuard({}, privileges, dataState);
+      const result = checkAccess({}, privileges, dataState);
 
       expect(result).toBe("/o/org1");
     });
@@ -270,7 +270,7 @@ describe("guard", () => {
   describe("setPrivileges", () => {
     it("should set privileges and allow access when guard passes", async () => {
       const { getDefaultStore } = await import("jotai");
-      const { setPrivileges } = await import("./guard");
+      const { guardRoute: setPrivileges } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",
@@ -309,7 +309,7 @@ describe("guard", () => {
     it("should redirect when guard fails", async () => {
       const { redirect } = await import("react-router");
       const { getDefaultStore } = await import("jotai");
-      const { setPrivileges } = await import("./guard");
+      const { guardRoute: setPrivileges } = await import("./guard");
 
       const mockStore = {
         get: vi.fn(() => null),
@@ -345,7 +345,7 @@ describe("guard", () => {
     it("should redirect to user org when accessing wrong org", async () => {
       const { redirect } = await import("react-router");
       const { getDefaultStore } = await import("jotai");
-      const { setPrivileges } = await import("./guard");
+      const { guardRoute: setPrivileges } = await import("./guard");
 
       const dataState: UserState = {
         oid: "org1",

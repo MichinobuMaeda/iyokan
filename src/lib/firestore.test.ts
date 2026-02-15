@@ -11,6 +11,8 @@ import type { Org } from "../types/Org";
 import type { User } from "../types/User";
 import type { Group } from "../types/Group";
 import type { Provider } from "../types/Provider";
+import type { Template } from "../types/Template";
+import type { Generator } from "../types/Generator";
 
 // Mock Firestore
 const mockOnSnapshot = vi.fn();
@@ -54,6 +56,8 @@ vi.mock("./store", () => ({
   usersAtom: { toString: () => "usersAtom" },
   groupsAtom: { toString: () => "groupsAtom" },
   providersAtom: { toString: () => "providersAtom" },
+  templatesAtom: { toString: () => "templatesAtom" },
+  generatorsAtom: { toString: () => "generatorsAtom" },
 }));
 
 vi.mock("../types/Conf", () => ({
@@ -74,6 +78,14 @@ vi.mock("../types/Group", () => ({
 
 vi.mock("../types/Provider", () => ({
   providerFromDoc: vi.fn((doc) => ({ id: doc.id })),
+}));
+
+vi.mock("../types/Template", () => ({
+  templateFromDoc: vi.fn((doc) => ({ id: doc.id })),
+}));
+
+vi.mock("../types/Generator", () => ({
+  generatorFromDoc: vi.fn((doc) => ({ id: doc.id })),
 }));
 
 describe("firestore", () => {
@@ -192,6 +204,30 @@ describe("firestore", () => {
 
         expect(sortProviders(provider1, provider2)).toBeGreaterThan(0);
         expect(sortProviders(provider2, provider1)).toBeLessThan(0);
+      });
+    });
+
+    describe("sortTemplates", () => {
+      it("should sort templates alphabetically by name", async () => {
+        const { sortTemplates } = await import("./firestore");
+
+        const template1 = { name: "Zebra" } as Template;
+        const template2 = { name: "Apple" } as Template;
+
+        expect(sortTemplates(template1, template2)).toBeGreaterThan(0);
+        expect(sortTemplates(template2, template1)).toBeLessThan(0);
+      });
+    });
+
+    describe("sortGenerators", () => {
+      it("should sort generators alphabetically by name", async () => {
+        const { sortGenerators } = await import("./firestore");
+
+        const generator1 = { name: "Zebra" } as Generator;
+        const generator2 = { name: "Apple" } as Generator;
+
+        expect(sortGenerators(generator1, generator2)).toBeGreaterThan(0);
+        expect(sortGenerators(generator2, generator1)).toBeLessThan(0);
       });
     });
   });
@@ -776,17 +812,292 @@ describe("firestore", () => {
     });
   });
 
+  describe("createOrgTemplate", () => {
+    it("should create template document successfully", async () => {
+      const { createOrgTemplate } = await import("./firestore");
+
+      mockCollection.mockReturnValue("templates-collection");
+      mockAddDoc.mockResolvedValue({ id: "template1" });
+
+      const formData = {
+        name: "Test Template  ",
+        title: "Template Title  ",
+        message: "Test message  ",
+        link: "https://example.com  ",
+        feed: "feed1  ",
+        category: "cat1  ",
+        valid: true,
+      };
+
+      const result = await createOrgTemplate("org1", formData);
+
+      expect(E.isRight(result)).toBe(true);
+      expect(mockAddDoc).toHaveBeenCalledWith("templates-collection", {
+        name: "Test Template",
+        title: "Template Title",
+        message: "Test message",
+        link: "https://example.com",
+        feed: "feed1",
+        category: "cat1",
+        valid: true,
+        createdAt: new Date("2024-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      });
+    });
+
+    it("should return error on failure", async () => {
+      const { createOrgTemplate } = await import("./firestore");
+
+      mockCollection.mockReturnValue("templates-collection");
+      mockAddDoc.mockRejectedValue(new Error("Create error"));
+
+      const formData = {
+        name: "Test Template",
+        title: "Template Title",
+        message: "Test message",
+        link: "https://example.com",
+        feed: "feed1",
+        category: "cat1",
+        valid: true,
+      };
+
+      const result = await createOrgTemplate("org1", formData);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("defaultErrorMessage");
+      }
+    });
+  });
+
+  describe("updateOrgTemplate", () => {
+    it("should update template document successfully", async () => {
+      const { updateOrgTemplate } = await import("./firestore");
+
+      mockDoc.mockReturnValue("template-doc-ref");
+      mockUpdateDoc.mockResolvedValue(undefined);
+
+      const formData = {
+        name: "Test Template  ",
+        title: "Template Title  ",
+        message: "Test message  ",
+        link: "https://example.com  ",
+        feed: "feed1  ",
+        category: "cat1  ",
+        valid: true,
+      };
+
+      const result = await updateOrgTemplate("org1", "template1", formData);
+
+      expect(E.isRight(result)).toBe(true);
+      expect(mockUpdateDoc).toHaveBeenCalledWith("template-doc-ref", {
+        name: "Test Template",
+        title: "Template Title",
+        message: "Test message",
+        link: "https://example.com",
+        feed: "feed1",
+        category: "cat1",
+        valid: true,
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      });
+    });
+
+    it("should return error on failure", async () => {
+      const { updateOrgTemplate } = await import("./firestore");
+
+      mockDoc.mockReturnValue("template-doc-ref");
+      mockUpdateDoc.mockRejectedValue(new Error("Update error"));
+
+      const formData = {
+        name: "Test Template",
+        title: "Template Title",
+        message: "Test message",
+        link: "https://example.com",
+        feed: "feed1",
+        category: "cat1",
+        valid: true,
+      };
+
+      const result = await updateOrgTemplate("org1", "template1", formData);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("defaultErrorMessage");
+      }
+    });
+  });
+
+  describe("createOrgGenerator", () => {
+    it("should create generator document successfully", async () => {
+      const { createOrgGenerator } = await import("./firestore");
+
+      mockCollection.mockReturnValue("generators-collection");
+      mockAddDoc.mockResolvedValue({ id: "generator1" });
+
+      const formData = {
+        name: "Test Generator  ",
+        source: "source1  ",
+        prompt: "Test prompt  ",
+        providers: ["provider1", "provider2"],
+        valid: true,
+      };
+
+      const result = await createOrgGenerator("org1", formData);
+
+      expect(E.isRight(result)).toBe(true);
+      expect(mockAddDoc).toHaveBeenCalledWith("generators-collection", {
+        name: "Test Generator",
+        source: "source1",
+        prompt: "Test prompt",
+        providers: ["provider1", "provider2"],
+        valid: true,
+        createdAt: new Date("2024-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      });
+    });
+
+    it("should return error on failure", async () => {
+      const { createOrgGenerator } = await import("./firestore");
+
+      mockCollection.mockReturnValue("generators-collection");
+      mockAddDoc.mockRejectedValue(new Error("Create error"));
+
+      const formData = {
+        name: "Test Generator",
+        source: "source1",
+        prompt: "Test prompt",
+        providers: [],
+        valid: true,
+      };
+
+      const result = await createOrgGenerator("org1", formData);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("defaultErrorMessage");
+      }
+    });
+
+    it("should handle undefined providers", async () => {
+      const { createOrgGenerator } = await import("./firestore");
+
+      mockCollection.mockReturnValue("generators-collection");
+      mockAddDoc.mockResolvedValue({ id: "generator1" });
+
+      const formData = {
+        name: "Test Generator",
+        source: "source1",
+        prompt: "Test prompt",
+        providers: undefined as any,
+        valid: true,
+      };
+
+      const result = await createOrgGenerator("org1", formData);
+
+      expect(E.isRight(result)).toBe(true);
+      expect(mockAddDoc).toHaveBeenCalledWith("generators-collection", {
+        name: "Test Generator",
+        source: "source1",
+        prompt: "Test prompt",
+        providers: [],
+        valid: true,
+        createdAt: new Date("2024-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      });
+    });
+  });
+
+  describe("updateOrgGenerator", () => {
+    it("should update generator document successfully", async () => {
+      const { updateOrgGenerator } = await import("./firestore");
+
+      mockDoc.mockReturnValue("generator-doc-ref");
+      mockUpdateDoc.mockResolvedValue(undefined);
+
+      const formData = {
+        name: "Test Generator  ",
+        source: "source1  ",
+        prompt: "Test prompt  ",
+        providers: ["provider1", "provider2"],
+        valid: true,
+      };
+
+      const result = await updateOrgGenerator("org1", "generator1", formData);
+
+      expect(E.isRight(result)).toBe(true);
+      expect(mockUpdateDoc).toHaveBeenCalledWith("generator-doc-ref", {
+        name: "Test Generator",
+        source: "source1",
+        prompt: "Test prompt",
+        providers: ["provider1", "provider2"],
+        valid: true,
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      });
+    });
+
+    it("should return error on failure", async () => {
+      const { updateOrgGenerator } = await import("./firestore");
+
+      mockDoc.mockReturnValue("generator-doc-ref");
+      mockUpdateDoc.mockRejectedValue(new Error("Update error"));
+
+      const formData = {
+        name: "Test Generator",
+        source: "source1",
+        prompt: "Test prompt",
+        providers: [],
+        valid: true,
+      };
+
+      const result = await updateOrgGenerator("org1", "generator1", formData);
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("defaultErrorMessage");
+      }
+    });
+
+    it("should handle undefined providers", async () => {
+      const { updateOrgGenerator } = await import("./firestore");
+
+      mockDoc.mockReturnValue("generator-doc-ref");
+      mockUpdateDoc.mockResolvedValue(undefined);
+
+      const formData = {
+        name: "Test Generator",
+        source: "source1",
+        prompt: "Test prompt",
+        providers: undefined as any,
+        valid: true,
+      };
+
+      const result = await updateOrgGenerator("org1", "generator1", formData);
+
+      expect(E.isRight(result)).toBe(true);
+      expect(mockUpdateDoc).toHaveBeenCalledWith("generator-doc-ref", {
+        name: "Test Generator",
+        source: "source1",
+        prompt: "Test prompt",
+        providers: [],
+        valid: true,
+        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+      });
+    });
+  });
+
   describe("userDataItemsAtom", () => {
     it("should return all data items when appState is null", async () => {
       const { userDataItemsAtom } = await import("./firestore");
 
       const items = userDataItemsAtom(null);
 
-      expect(items).toHaveLength(4);
+      expect(items).toHaveLength(6);
       expect(items[0].collectionName).toBe("orgs");
       expect(items[1].collectionName).toBe("users");
       expect(items[2].collectionName).toBe("groups");
       expect(items[3].collectionName).toBe("providers");
+      expect(items[4].collectionName).toBe("templates");
+      expect(items[5].collectionName).toBe("generators");
     });
 
     it("should set provider priv to true for admin users", async () => {
@@ -844,6 +1155,67 @@ describe("firestore", () => {
         (item) => item.collectionName === "providers"
       );
       expect(providerItem?.priv).toBe(false);
+    });
+
+    it("should set templates priv to true for managers", async () => {
+      const { userDataItemsAtom } = await import("./firestore");
+
+      const appState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: true,
+        admin: false,
+      };
+
+      const items = userDataItemsAtom(appState);
+
+      const templateItem = items.find(
+        (item) => item.collectionName === "templates"
+      );
+      expect(templateItem?.priv).toBe(true);
+    });
+
+    it("should set generators priv to true for admins", async () => {
+      const { userDataItemsAtom } = await import("./firestore");
+
+      const appState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: true,
+      };
+
+      const items = userDataItemsAtom(appState);
+
+      const generatorItem = items.find(
+        (item) => item.collectionName === "generators"
+      );
+      expect(generatorItem?.priv).toBe(true);
+    });
+
+    it("should set templates and generators priv to true for all authenticated users", async () => {
+      const { userDataItemsAtom } = await import("./firestore");
+
+      const appState: UserState = {
+        oid: "org1",
+        uid: "user1",
+        sys: false,
+        manager: false,
+        admin: false,
+      };
+
+      const items = userDataItemsAtom(appState);
+
+      const templateItem = items.find(
+        (item) => item.collectionName === "templates"
+      );
+      const generatorItem = items.find(
+        (item) => item.collectionName === "generators"
+      );
+      expect(templateItem?.priv).toBe(true);
+      expect(generatorItem?.priv).toBe(true);
     });
   });
 });

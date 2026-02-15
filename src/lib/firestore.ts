@@ -27,6 +27,8 @@ import {
   usersAtom,
   groupsAtom,
   providersAtom,
+  templatesAtom,
+  generatorsAtom,
 } from "./store";
 import { confFromDoc, type ConfData } from "../types/Conf";
 import { type UserState } from "../types/UserState";
@@ -38,6 +40,16 @@ import {
   type ProviderData,
   type Provider,
 } from "../types/Provider";
+import {
+  templateFromDoc,
+  type TemplateData,
+  type Template,
+} from "../types/Template";
+import {
+  generatorFromDoc,
+  type GeneratorData,
+  type Generator,
+} from "../types/Generator";
 
 export function subscribeConf() {
   console.info("Start subscribeConf()");
@@ -127,6 +139,12 @@ export const sortGroups = (a: Group, b: Group) =>
 export const sortProviders = (a: Provider, b: Provider) =>
   a.type.localeCompare(b.type) || a.name.localeCompare(b.name);
 
+export const sortTemplates = (a: Template, b: Template) =>
+  a.name.localeCompare(b.name);
+
+export const sortGenerators = (a: Generator, b: Generator) =>
+  a.name.localeCompare(b.name);
+
 export const userDataItemsAtom = (
   appState: UserState | null | undefined
 ): UserDataItem[] => [
@@ -157,6 +175,20 @@ export const userDataItemsAtom = (
     fromDoc: providerFromDoc,
     sort: sortProviders,
     priv: (appState?.sys || appState?.admin) ?? false,
+  },
+  {
+    collectionName: "templates",
+    atom: templatesAtom,
+    fromDoc: templateFromDoc,
+    sort: sortTemplates,
+    priv: !!appState,
+  },
+  {
+    collectionName: "generators",
+    atom: generatorsAtom,
+    fromDoc: generatorFromDoc,
+    sort: sortGenerators,
+    priv: !!appState,
   },
 ];
 
@@ -328,6 +360,94 @@ export async function updateOrgProvider(
     return E.right(undefined);
   } catch (error) {
     console.error("updateOrgProvider error:", error);
+    return E.left("defaultErrorMessage");
+  }
+}
+
+export async function createOrgTemplate(
+  oid: string,
+  formData: TemplateData
+): Promise<E.Either<TranslationKey, void>> {
+  try {
+    await addDoc(collection(db, "orgs", oid, "templates"), {
+      name: formData.name.trim(),
+      title: formData.title.trim(),
+      message: formData.message.trim(),
+      link: formData.link.trim(),
+      feed: formData.feed.trim(),
+      category: formData.category.trim(),
+      valid: !!formData.valid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return E.right(undefined);
+  } catch (error) {
+    console.error("createOrgTemplate error:", error);
+    return E.left("defaultErrorMessage");
+  }
+}
+
+export async function updateOrgTemplate(
+  oid: string,
+  id: string,
+  formData: TemplateData
+): Promise<E.Either<TranslationKey, void>> {
+  try {
+    await updateDoc(doc(db, "orgs", oid, "templates", id), {
+      name: formData.name.trim(),
+      title: formData.title.trim(),
+      message: formData.message.trim(),
+      link: formData.link.trim(),
+      feed: formData.feed.trim(),
+      category: formData.category.trim(),
+      valid: !!formData.valid,
+      updatedAt: serverTimestamp(),
+    });
+    return E.right(undefined);
+  } catch (error) {
+    console.error("updateOrgTemplate error:", error);
+    return E.left("defaultErrorMessage");
+  }
+}
+
+export async function createOrgGenerator(
+  oid: string,
+  formData: GeneratorData
+): Promise<E.Either<TranslationKey, void>> {
+  try {
+    await addDoc(collection(db, "orgs", oid, "generators"), {
+      name: formData.name.trim(),
+      source: formData.source.trim(),
+      prompt: formData.prompt.trim(),
+      providers: formData.providers || [],
+      valid: !!formData.valid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return E.right(undefined);
+  } catch (error) {
+    console.error("createOrgGenerator error:", error);
+    return E.left("defaultErrorMessage");
+  }
+}
+
+export async function updateOrgGenerator(
+  oid: string,
+  id: string,
+  formData: GeneratorData
+): Promise<E.Either<TranslationKey, void>> {
+  try {
+    await updateDoc(doc(db, "orgs", oid, "generators", id), {
+      name: formData.name.trim(),
+      source: formData.source.trim(),
+      prompt: formData.prompt.trim(),
+      providers: formData.providers || [],
+      valid: !!formData.valid,
+      updatedAt: serverTimestamp(),
+    });
+    return E.right(undefined);
+  } catch (error) {
+    console.error("updateOrgGenerator error:", error);
     return E.left("defaultErrorMessage");
   }
 }

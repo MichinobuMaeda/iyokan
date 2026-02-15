@@ -10,10 +10,12 @@ export const ja = {
   defaultErrorMessage: "変更の保存に失敗しました",
 
   // App header and navigation
-  appTitle: "いよかん",
+  appTitle: "いよ管",
   home: "ホーム",
   returnToHome: "ホームに戻る",
   organizations: "組織",
+  templates: "テンプレート",
+  generators: "AI生成",
   providers: "プロバイダー",
   users: "ユーザー",
   groups: "グループ",
@@ -23,6 +25,13 @@ export const ja = {
 
   // Common form fields
   name: "名前",
+  title: "タイトル",
+  message: "メッセージ",
+  link: "リンク",
+  feed: "フィード",
+  category: "カテゴリ",
+  source: "ソース",
+  prompt: "プロンプト",
   email: "メールアドレス",
   password: "パスワード",
   newEmail: "新しいメールアドレス",
@@ -61,6 +70,8 @@ export const ja = {
 
   // Actions
   addOrganization: "組織を追加",
+  addTemplate: "テンプレートを追加",
+  addGenerator: "AI生成を追加",
   addProvider: "プロバイダーを追加",
   addUser: "ユーザーを追加",
   editUser: "ユーザーを編集",
