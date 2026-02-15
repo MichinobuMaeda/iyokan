@@ -8,7 +8,7 @@ import { providerTypes } from "../../../functions/src/common";
 import { providersAtom } from "../../lib/store";
 import { updateOrgProvider } from "../../lib/firestore";
 import { type ProviderData } from "../../types/Provider";
-import SvgAppRegistration from "../../icons/SvgAppRegistration";
+import SvgProvider from "../../components/SvgProvider";
 import MetaItems from "../../components/MetaItems";
 import Form from "../../components/Form";
 
@@ -41,7 +41,7 @@ export default function EditProviderPage() {
         validated={!errorName()}
       >
         <h2>
-          <SvgAppRegistration /> {t("editProvider")}
+          <SvgProvider type={formData.type} /> {t("editProvider")}
         </h2>
         <MetaItems meta={provider()!} />
         <div className="row">

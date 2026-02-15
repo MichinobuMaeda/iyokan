@@ -6,7 +6,7 @@ import { generatorsAtom, dataStateAtom, providersAtom } from "../../lib/store";
 import SvgCognition from "../../icons/SvgCognition";
 import SvgBlock from "../../icons/SvgBlock";
 import SvgEdit from "../../icons/SvgEdit";
-import SvgCheck from "../../icons/SvgCheck";
+import SvgProvider from "../../components/SvgProvider";
 import MetaItems from "../../components/MetaItems";
 
 export default function ShowGeneratorPage() {
@@ -54,7 +54,7 @@ export default function ShowGeneratorPage() {
           )
           .map((pid) => (
             <div key={pid} className="chip selected">
-              <SvgCheck />
+              <SvgProvider type={providers?.find((p) => p.id === pid)?.type} />
               {providers?.find((p) => p.id === pid)?.name || pid}
             </div>
           ))}

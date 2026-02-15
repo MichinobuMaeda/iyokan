@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 import { useAtom } from "jotai";
 
 import { providersAtom, dataStateAtom } from "../../lib/store";
+import SvgProvider from "../../components/SvgProvider";
 import SvgAdd from "../../icons/SvgAdd";
-import SvgAppRegistration from "../../icons/SvgAppRegistration";
 import SvgBlock from "../../icons/SvgBlock";
 
 export default function ListProvidersPage() {
@@ -17,7 +17,7 @@ export default function ListProvidersPage() {
   return (
     <main>
       <h2>
-        <SvgAppRegistration /> {t("providers")}
+        <SvgProvider type={null} /> {t("providers")}
       </h2>
       {(dataState?.manager || dataState?.sys) && (
         <NavLink
@@ -37,7 +37,11 @@ export default function ListProvidersPage() {
             className="button outlined"
             style={{ width: "100%" }}
           >
-            {provider.valid ? <SvgAppRegistration /> : <SvgBlock />}
+            {provider.valid ? (
+              <SvgProvider type={provider.type} />
+            ) : (
+              <SvgBlock />
+            )}
             {provider.name}
           </NavLink>
         ))}

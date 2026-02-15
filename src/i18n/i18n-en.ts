@@ -10,7 +10,7 @@ export const en = {
   defaultErrorMessage: "Failed to save changes",
 
   // App header and navigation
-  appTitle: "Iyokan",
+  appTitle: "IyoKAN",
   home: "Home",
   returnToHome: "Return to Home",
   organizations: "Organizations",

@@ -9,6 +9,7 @@ import { createOrgGenerator } from "../../lib/firestore";
 import { providersAtom } from "../../lib/store";
 import SvgCognition from "../../icons/SvgCognition";
 import Form from "../../components/Form";
+import SvgProvider from "../../components/SvgProvider";
 
 export default function NewGeneratorPage() {
   const { t } = useTranslation();
@@ -91,6 +92,7 @@ export default function NewGeneratorPage() {
                 key={provider.id}
                 type="select"
                 label={provider.name}
+                icon={<SvgProvider type={provider.type} />}
                 checked={formData.providers.includes(provider.id)}
                 size="sm"
                 onClick={() => toggleProvider(provider.id)}

@@ -8,7 +8,7 @@ import { providerTypes } from "../../../functions/src/common";
 import { providersAtom } from "../../lib/store";
 import { type ProviderData, type ProviderParam } from "../../types/Provider";
 import { createOrgProvider } from "../../lib/firestore";
-import SvgAppRegistration from "../../icons/SvgAppRegistration";
+import SvgProvider from "../../components/SvgProvider";
 import Form from "../../components/Form";
 
 export default function NewProviderPage() {
@@ -61,7 +61,7 @@ export default function NewProviderPage() {
         validated={!errorName()}
       >
         <h2>
-          <SvgAppRegistration /> {t("addProvider")}
+          <SvgProvider type={null} /> {t("addProvider")}
         </h2>
         <div className="button-group">
           {providerTypes.map((pt) => (
@@ -69,6 +69,7 @@ export default function NewProviderPage() {
               key={pt.type}
               type="select"
               label={pt.defaultName}
+              icon={<SvgProvider type={pt.type} />}
               checked={formData.type === pt.type}
               size="sm"
               onClick={() => onSelectType(pt.type)}

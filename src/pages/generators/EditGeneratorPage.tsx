@@ -10,6 +10,7 @@ import { type GeneratorData } from "../../types/Generator";
 import SvgCognition from "../../icons/SvgCognition";
 import MetaItems from "../../components/MetaItems";
 import Form from "../../components/Form";
+import SvgProvider from "../../components/SvgProvider";
 
 export default function EditGeneratorPage() {
   const { t } = useTranslation();
@@ -100,6 +101,7 @@ export default function EditGeneratorPage() {
                 key={provider.id}
                 type="select"
                 label={provider.name}
+                icon={<SvgProvider type={provider.type} />}
                 checked={formData.providers.includes(provider.id)}
                 size="sm"
                 onClick={() => toggleProvider(provider.id)}
