@@ -75,6 +75,7 @@ export default function Layout() {
       id="nav-drawer-layout"
       onClick={() => {
         setMenuOpen(null);
+        setDrawerOpen(false);
       }}
     >
       <NavDrawer
@@ -87,10 +88,7 @@ export default function Layout() {
           {
             leadingIcon: <SvgHome />,
             label: t("home"),
-            onClick: () => {
-              setDrawerOpen(false);
-              navigate(dataState ? `/o/${dataState.oid}` : "/");
-            },
+            onClick: () => navigate(dataState ? `/o/${dataState.oid}` : "/"),
             active: locationIsHome(),
           },
           dataState && {
@@ -137,6 +135,7 @@ export default function Layout() {
           },
         ]}
         className={drawerState()}
+        style={{ position: lg() ? "sticky" : "absolute" }}
       />
       <div id="nav-drawer-layout-right">
         <AppBar
@@ -148,7 +147,10 @@ export default function Layout() {
                 !lg() && {
                   type: "button",
                   icon: <SvgMenu />,
-                  onClick: () => setDrawerOpen(true),
+                  onClick: (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    setDrawerOpen(true);
+                  },
                 },
               {
                 type: "appLogo",

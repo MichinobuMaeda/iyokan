@@ -4,7 +4,7 @@ import SvgPause from "../icons/SvgPause";
 import SvgSchedule from "../icons/SvgSchedule";
 import SvgCheck from "../icons/SvgCheck";
 
-export default function SvgStatus({ type }: { type: PostStatus }) {
+export default function StatusIcons({ type }: { type: PostStatus }) {
   switch (type) {
     case "canceled":
       return <SvgDeleteForever />;

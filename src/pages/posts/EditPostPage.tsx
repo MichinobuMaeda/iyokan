@@ -3,19 +3,25 @@ import { useParams, redirect } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAtom } from "jotai";
 import { TextField, Button } from "glassine-paper";
+import * as E from "fp-ts/Either";
 
 import { postsAtom, providersAtom } from "../../lib/store";
 import { updateOrgPost } from "../../lib/firestore";
 import { savePostedImage } from "../../lib/storage";
 import { getFileExtension } from "../../lib/media";
 import { type PostData, type PostStatus } from "../../types/Post";
+import {
+  validateSomePostText,
+  validateSomePostProvider,
+} from "../../lib/validators";
+import { useImageUrl } from "../../lib/storage";
 import SvgArticle from "../../icons/SvgArticle";
 import SvgAddPhotoAlternate from "../../icons/SvgAddPhotoAlternate";
 import SvgRemove from "../../icons/SvgRemove";
 import MetaItems from "../../components/MetaItems";
 import Form from "../../components/Form";
-import SvgProvider from "../../components/SvgProvider";
-import SvgStatus from "../../components/SvgStatus";
+import ProviderIcons from "../../components/ProviderIcons";
+import StatusIcons from "../../components/StatusIcons";
 
 export default function EditPostPage() {
   const { t } = useTranslation();
@@ -26,6 +32,7 @@ export default function EditPostPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const post = () => posts?.find((p) => p.id === params.postId);
+  const imageUrls = useImageUrl(params.postId, post()?.files);
 
   if (!post()) {
     throw redirect(`/o/${oid}/posts`);
@@ -40,8 +47,6 @@ export default function EditPostPage() {
     providers: post()!.providers || [],
     status: post()!.status || "paused",
   });
-
-  const errorTitle = () => (!formData.title ? t("required") : undefined);
 
   const toggleProvider = (providerId: string) => {
     const newProviders = formData.providers.includes(providerId)
@@ -78,13 +83,23 @@ export default function EditPostPage() {
     return `${year}-${month}-${day}T${hour}:${minute}`;
   };
 
+  const errorAnyPostText = () => {
+    const result = validateSomePostText(formData);
+    return E.isLeft(result) ? t(result.left) : undefined;
+  };
+
+  const errorAnyPostProvider = () => {
+    const result = validateSomePostProvider(formData);
+    return E.isLeft(result) ? t(result.left) : undefined;
+  };
+
   return (
     <main>
       <Form
         onSubmit={handleSubmit}
         returnPath={`/o/${oid}/posts/${post()!.id}`}
         returnOnSubmit
-        validated={!errorTitle()}
+        validated={!errorAnyPostText() && !errorAnyPostProvider()}
       >
         <h2>
           <SvgArticle /> {t("editPost")}
@@ -111,8 +126,6 @@ export default function EditPostPage() {
             onChange={(e) =>
               setFormData({ ...formData, title: e.target.value })
             }
-            supportingText={t("required")}
-            errorMessage={errorTitle()}
             style={{ width: "100%" }}
           />
         </div>
@@ -139,6 +152,9 @@ export default function EditPostPage() {
             style={{ width: "100%" }}
           />
         </div>
+        {!!errorAnyPostText() && (
+          <div className="message error">{errorAnyPostText()}</div>
+        )}
         <div className="row">
           <input
             ref={fileInputRef}
@@ -177,6 +193,24 @@ export default function EditPostPage() {
                 : t("selectImage")}
           </button>
         </div>
+        {selectedFile && (
+          <div className="row">
+            <img
+              src={URL.createObjectURL(selectedFile)}
+              alt="Selected"
+              style={{ maxWidth: "100%", height: "auto" }}
+            />
+          </div>
+        )}
+        {imageUrls && imageUrls[0] && !selectedFile && (
+          <div className="row">
+            <img
+              src={imageUrls[0]}
+              alt="Current"
+              style={{ maxWidth: "100%", height: "auto" }}
+            />
+          </div>
+        )}
         <div className="button-group">
           {providers
             ?.filter((p) => p.valid)
@@ -185,20 +219,23 @@ export default function EditPostPage() {
                 key={provider.id}
                 type="select"
                 label={provider.name}
-                icon={<SvgProvider type={provider.type} />}
+                icon={<ProviderIcons type={provider.type} />}
                 checked={formData.providers.includes(provider.id)}
                 size="sm"
                 onClick={() => toggleProvider(provider.id)}
               />
             ))}
         </div>
+        {!!errorAnyPostProvider() && (
+          <div className="message error">{errorAnyPostProvider()}</div>
+        )}
         <div className="button-group">
           {(["canceled", "paused", "scheduled"] as PostStatus[]).map(
             (status) => (
               <Button
                 key={status}
                 type="select"
-                icon={<SvgStatus type={status as PostStatus} />}
+                icon={<StatusIcons type={status as PostStatus} />}
                 checked={formData.status === status}
                 size="sm"
                 onClick={() => setFormData({ ...formData, status })}

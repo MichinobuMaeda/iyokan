@@ -98,6 +98,8 @@ export const en = {
   errorOidUsed: "Organization ID is already in use",
   errorOidInvalidFormat:
     "Organization ID must contain only lowercase letters and numbers",
+  atLeastOneFieldRequired:
+    "At least one of title, message, or link is required",
   errorPasswordRequired: "Password is required",
   errorPasswordMin10: "Min 10 characters",
   errorPasswordUppercase: "Add uppercase letter",
@@ -105,6 +107,8 @@ export const en = {
   errorPasswordNumber: "Add number",
   errorPasswordSymbol: "Add symbol",
   errorPasswordMismatch: "Passwords do not match",
+  errorEmptyText: "At least one of title, message, or link should be filled",
+  errorAtLeastOneProvider: "At least one provider must be selected",
 
   // Authentication Errors
   errorLogin: "Failed to login",

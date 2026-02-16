@@ -100,6 +100,8 @@ export const ja = {
   errorOidReserved: "この組織IDは予約されており使用できません",
   errorOidUsed: "この組織IDは既に使用されています",
   errorOidInvalidFormat: "組織IDは小文字と数字のみ使用できます",
+  atLeastOneFieldRequired:
+    "タイトル、メッセージ、リンクのいずれか1つは必須です",
   errorPasswordRequired: "パスワードは必須です",
   errorPasswordMin10: "10文字以上が必要です",
   errorPasswordUppercase: "大文字を使用してください",
@@ -107,6 +109,8 @@ export const ja = {
   errorPasswordNumber: "数字を使用してください",
   errorPasswordSymbol: "記号を使用してください",
   errorPasswordMismatch: "パスワードが一致しません",
+  errorEmptyText: "タイトル、メッセージ、リンクのいずれか1つは入力してください",
+  errorAtLeastOneProvider: "少なくとも1つのプロバイダーを選択してください",
 
   // Authentication Errors
   errorLogin: "ログインに失敗しました",

@@ -3,7 +3,7 @@ import { useAtom } from "jotai";
 
 import { providerTypes } from "../../../functions/src/common";
 import { providersAtom, dataStateAtom } from "../../lib/store";
-import SvgProvider from "../../components/SvgProvider";
+import ProviderIcons from "../../components/ProviderIcons";
 import SvgBlock from "../../icons/SvgBlock";
 import SvgEdit from "../../icons/SvgEdit";
 import MetaItems from "../../components/MetaItems";
@@ -25,7 +25,7 @@ export default function ShowProviderPage() {
       <div className="row">
         <h2 style={{ flexGrow: 1 }}>
           {provider()!.valid ? (
-            <SvgProvider type={provider()!.type} />
+            <ProviderIcons type={provider()!.type} />
           ) : (
             <SvgBlock />
           )}

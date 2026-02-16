@@ -11,7 +11,7 @@ import SvgTumblr from "../icons/SvgTumblr";
 import SvgTwitter from "../icons/SvgTwitter";
 import SvgWordpress from "../icons/SvgWordpress";
 
-export default function SvgProvider({
+export default function ProviderIcons({
   type,
   disabled,
   error,

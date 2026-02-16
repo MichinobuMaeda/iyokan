@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as E from "fp-ts/Either";
 
@@ -71,3 +72,23 @@ export const savePostedImage = async (
     return E.left(`saveImage: ${e}`);
   }
 };
+
+export function useImageUrl(
+  id: string | undefined,
+  files: string[] | undefined | null
+) {
+  const [imageUrls, setImageUrls] = useState<string[] | undefined>(undefined);
+
+  useEffect(() => {
+    if (id && files && files.length > 0) {
+      Promise.all(files.map((file) => getSavedImageUrl({ id, name: file })))
+        .then((urls) => setImageUrls(urls))
+        .catch((error) => {
+          console.error("Failed to load image:", error);
+          setImageUrls(undefined);
+        });
+    }
+  }, [id, files]);
+
+  return imageUrls;
+}

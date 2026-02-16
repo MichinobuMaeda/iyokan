@@ -5,8 +5,8 @@ import { useAtom } from "jotai";
 import { postsAtom, providersAtom, dataStateAtom } from "../../lib/store";
 import SvgAdd from "../../icons/SvgAdd";
 import SvgArticle from "../../icons/SvgArticle";
-import SvgStatus from "../../components/SvgStatus";
-import SvgProvider from "../../components/SvgProvider";
+import StatusIcons from "../../components/StatusIcons";
+import ProviderIcons from "../../components/ProviderIcons";
 
 export default function ListPostsPage() {
   const { t } = useTranslation();
@@ -41,10 +41,10 @@ export default function ListPostsPage() {
       {posts?.map((post) => (
         <div className="post-list-item" key={post.id}>
           <NavLink key={post.id} to={`/o/${oid}/posts/${post.id}`}>
-            <SvgStatus type={post.status} />
+            <StatusIcons type={post.status} />
             {formatDateTime(post.schedule)}
             {providers?.map((provider) => (
-              <SvgProvider
+              <ProviderIcons
                 key={provider.id}
                 type={provider.type}
                 disabled={!post.providers.includes(provider.id)}

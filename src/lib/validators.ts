@@ -3,6 +3,7 @@ import { pipe } from "fp-ts/function";
 
 import type { TranslationKey } from "../i18n/i18n";
 import type { Org } from "../types/Org";
+import type { PostData } from "../types/Post";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const urlRegex = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)(:[0-9]{1,5})?(\/\S*)?$/i;
@@ -196,4 +197,39 @@ export function validateOid(
     E.flatMap(validateReservedOids),
     E.flatMap(validateUsedOids(orgs))
   );
+}
+
+/**
+ * Validates that at least one post text field (title, message, or link) has content
+ *
+ * @param data - Post data containing title, message, and link
+ * @returns Either containing an Error with i18n key or void
+ * @returns Left: "errorEmptyText" - When all fields are empty or whitespace
+ * @returns Right: undefined - When at least one field has content
+ */
+export function validateSomePostText(
+  data: PostData
+): E.Either<TranslationKey, void> {
+  const { title, message, link } = data;
+  return !isEmptyOrWhitespace(title) ||
+    !isEmptyOrWhitespace(message) ||
+    !isEmptyOrWhitespace(link)
+    ? E.right(undefined)
+    : E.left("errorEmptyText");
+}
+
+/**
+ * Validates that at least one provider is selected for the post
+ *
+ * @param data - Post data containing selected providers
+ * @returns Either containing an Error with i18n key or void
+ * @returns Left: "errorAtLeastOneProvider" - When no providers are selected
+ * @returns Right: undefined - When at least one provider is selected
+ */
+export function validateSomePostProvider(
+  data: PostData
+): E.Either<TranslationKey, void> {
+  return data.providers && data.providers.length > 0
+    ? E.right(undefined)
+    : E.left("errorAtLeastOneProvider");
 }

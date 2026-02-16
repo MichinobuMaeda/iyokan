@@ -1,14 +1,14 @@
 import { useParams, NavLink, redirect } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAtom } from "jotai";
-import { useState, useEffect } from "react";
 
 import { postsAtom, dataStateAtom, providersAtom } from "../../lib/store";
-import { getSavedImageUrl } from "../../lib/storage";
-import SvgStatus from "../../components/SvgStatus";
+import StatusIcons from "../../components/StatusIcons";
 import SvgEdit from "../../icons/SvgEdit";
-import SvgProvider from "../../components/SvgProvider";
+import ProviderIcons from "../../components/ProviderIcons";
 import MetaItems from "../../components/MetaItems";
+import { formatLong } from "../../lib/formatter";
+import { useImageUrl } from "../../lib/storage";
 
 export default function ShowPostPage() {
   const { t } = useTranslation();
@@ -17,49 +17,19 @@ export default function ShowPostPage() {
   const [dataState] = useAtom(dataStateAtom);
   const [posts] = useAtom(postsAtom);
   const [providers] = useAtom(providersAtom);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const post = () => posts?.find((p) => p.id === params.postId);
+  const imageUrls = useImageUrl(params.postId, post()?.files);
 
   if (!post()) {
     throw redirect(`/o/${oid}/posts`);
   }
 
-  const currentPost = post()!;
-  const postId = currentPost.id;
-  const postFiles = currentPost.files;
-
-  useEffect(() => {
-    const loadImage = async () => {
-      if (postFiles && postFiles.length > 0) {
-        try {
-          const url = await getSavedImageUrl({
-            id: postId,
-            name: postFiles[0],
-          });
-          setImageUrl(url);
-        } catch (error) {
-          console.error("Failed to load image:", error);
-        }
-      }
-    };
-    loadImage();
-  }, [postId, postFiles]);
-
-  const formatDateTime = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hour = String(date.getHours()).padStart(2, "0");
-    const minute = String(date.getMinutes()).padStart(2, "0");
-    return `${year}/${month}/${day} ${hour}:${minute}`;
-  };
-
   return (
     <main>
       <div className="row">
         <h2 style={{ flexGrow: 1 }}>
-          <SvgStatus type={post()!.status} />
-          {formatDateTime(post()!.schedule)}
+          <StatusIcons type={post()!.status} />
+          {formatLong(post()!.schedule)}
         </h2>
         <NavLink
           className="button icon sm text"
@@ -92,12 +62,12 @@ export default function ShowPostPage() {
           </div>
         </>
       )}
-      {imageUrl && (
+      {imageUrls && imageUrls.length > 0 && (
         <>
           <h3>{t("image")}</h3>
           <div className="row">
             <img
-              src={imageUrl}
+              src={imageUrls[0]}
               alt={post()!.title}
               style={{ maxWidth: "100%", height: "auto" }}
             />
@@ -114,7 +84,7 @@ export default function ShowPostPage() {
               )
               .map((pid) => (
                 <div key={pid} className="chip selected">
-                  <SvgProvider
+                  <ProviderIcons
                     type={providers?.find((p) => p.id === pid)?.type}
                   />
                   {providers?.find((p) => p.id === pid)?.name || pid}

@@ -9,7 +9,9 @@ import {
   validateRequiredUrl,
   validatePassword,
   validateOid,
+  validateSomePostText,
 } from "./validators";
+import type { PostData } from "../types/Post";
 
 describe("validators", () => {
   describe("isEmptyOrWhitespace", () => {
@@ -631,6 +633,126 @@ describe("validators", () => {
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorOidUsed");
+        }
+      });
+    });
+  });
+
+  describe("validateSomePostText", () => {
+    const baseData: PostData = {
+      schedule: new Date(),
+      title: "",
+      message: "",
+      link: "",
+      files: [],
+      providers: [],
+      status: "scheduled",
+    };
+
+    describe("valid inputs", () => {
+      it("should return right when title has content", () => {
+        const result = validateSomePostText({ ...baseData, title: "Title" });
+        expect(E.isRight(result)).toBe(true);
+      });
+
+      it("should return right when message has content", () => {
+        const result = validateSomePostText({
+          ...baseData,
+          message: "Message content",
+        });
+        expect(E.isRight(result)).toBe(true);
+      });
+
+      it("should return right when link has content", () => {
+        const result = validateSomePostText({
+          ...baseData,
+          link: "https://example.com",
+        });
+        expect(E.isRight(result)).toBe(true);
+      });
+
+      it("should return right when all fields have content", () => {
+        const result = validateSomePostText({
+          ...baseData,
+          title: "Title",
+          message: "Message",
+          link: "https://example.com",
+        });
+        expect(E.isRight(result)).toBe(true);
+      });
+
+      it("should return right when title and message have content", () => {
+        const result = validateSomePostText({
+          ...baseData,
+          title: "Title",
+          message: "Message",
+        });
+        expect(E.isRight(result)).toBe(true);
+      });
+
+      it("should return right when title is whitespace but message has content", () => {
+        const result = validateSomePostText({
+          ...baseData,
+          title: "   ",
+          message: "Message",
+        });
+        expect(E.isRight(result)).toBe(true);
+      });
+
+      it("should return right when title has whitespace-surrounded content", () => {
+        const result = validateSomePostText({
+          ...baseData,
+          title: "  Title  ",
+        });
+        expect(E.isRight(result)).toBe(true);
+      });
+    });
+
+    describe("invalid inputs", () => {
+      it("should return left with errorEmptyText when all fields are empty strings", () => {
+        const result = validateSomePostText(baseData);
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorEmptyText");
+        }
+      });
+
+      it("should return left with errorEmptyText when all fields are undefined", () => {
+        const result = validateSomePostText({
+          ...baseData,
+          title: undefined as unknown as string,
+          message: undefined as unknown as string,
+          link: undefined as unknown as string,
+        });
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorEmptyText");
+        }
+      });
+
+      it("should return left with errorEmptyText when all fields are whitespace", () => {
+        const result = validateSomePostText({
+          ...baseData,
+          title: "   ",
+          message: "\t\n",
+          link: "  ",
+        });
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorEmptyText");
+        }
+      });
+
+      it("should return left with errorEmptyText when fields are mixed empty and undefined", () => {
+        const result = validateSomePostText({
+          ...baseData,
+          title: "",
+          message: undefined as unknown as string,
+          link: "   ",
+        });
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorEmptyText");
         }
       });
     });

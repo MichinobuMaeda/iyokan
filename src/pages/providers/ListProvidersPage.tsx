@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAtom } from "jotai";
 
 import { providersAtom, dataStateAtom } from "../../lib/store";
-import SvgProvider from "../../components/SvgProvider";
+import ProviderIcons from "../../components/ProviderIcons";
 import SvgAdd from "../../icons/SvgAdd";
 import SvgBlock from "../../icons/SvgBlock";
 
@@ -17,7 +17,7 @@ export default function ListProvidersPage() {
   return (
     <main>
       <h2>
-        <SvgProvider type={null} /> {t("providers")}
+        <ProviderIcons type={null} /> {t("providers")}
       </h2>
       {(dataState?.manager || dataState?.sys) && (
         <NavLink
@@ -38,7 +38,7 @@ export default function ListProvidersPage() {
             style={{ width: "100%" }}
           >
             {provider.valid ? (
-              <SvgProvider type={provider.type} />
+              <ProviderIcons type={provider.type} />
             ) : (
               <SvgBlock />
             )}
