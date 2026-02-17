@@ -5,12 +5,12 @@ import { RouterProvider } from "react-router/dom";
 
 import "./i18n/i18n";
 import { listenAppState } from "./lib/app";
-import { listenAuthState } from "./lib/auth";
+import { initAuth } from "./lib/auth";
 import { subscribeConf } from "./lib/firestore";
 import { route } from "./router";
 
 listenAppState();
-listenAuthState();
+initAuth();
 subscribeConf();
 
 createRoot(document.getElementById("root")!).render(

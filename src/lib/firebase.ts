@@ -8,16 +8,26 @@ import { firebaseConfig } from "./firebase-config";
 
 export const initFirebase = () => {
   console.info("Initializing Firebase...");
+  const isEmulator = ["localhost", "127.0.0.1"].includes(location.hostname);
 
   const app =
-    getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    getApps().length === 0
+      ? initializeApp(
+          isEmulator
+            ? {
+                ...firebaseConfig,
+                authDomain: "localhost",
+              }
+            : firebaseConfig
+        )
+      : getApps()[0];
   const auth = getAuth(app);
   const db = getFirestore(app);
   const functions = getFunctions(app);
   const storage = getStorage(app);
   functions.region = "asia-northeast1";
 
-  if (["localhost", "127.0.0.1"].includes(location.hostname)) {
+  if (isEmulator) {
     console.log("Connecting to Firebase emulators...");
     connectAuthEmulator(auth, "http://127.0.0.1:9099", {
       disableWarnings: true,

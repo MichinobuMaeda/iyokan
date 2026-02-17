@@ -67,7 +67,7 @@ describe("account", () => {
       expect(typeof password).toBe("string");
       expect(password.length).toBeGreaterThan(0);
       // Password should be composed of Math.random() results
-      expect(password.length).toBeGreaterThanOrEqual(4); // At least 4 characters from 4 random strings
+      expect(password.length).toBeGreaterThanOrEqual(128); // At least 128 characters from 13 random strings
 
       // Restore original value
       if (originalPassword) {
@@ -225,7 +225,7 @@ describe("account", () => {
         .calls[0][0].password;
       expect(calledPassword).toBeDefined();
       expect(typeof calledPassword).toBe("string");
-      expect(calledPassword?.length).toBeGreaterThan(0);
+      expect(calledPassword?.length).toBeGreaterThanOrEqual(128);
 
       // Restore original value
       if (originalPassword) {

@@ -15,6 +15,7 @@ import type { User } from "../types/User";
 import type { Group } from "../types/Group";
 import type { Provider } from "../types/Provider";
 import {
+  localeAtom,
   authUserAtom,
   userPrivilegesAtom,
   oidAtom,
@@ -30,9 +31,46 @@ import {
   appStateAtom,
   getDataState,
   dataStateAtom,
+  privilegesAtom,
 } from "./store";
 
 describe("store", () => {
+  describe("localeAtom", () => {
+    it("should have default value 'ja'", () => {
+      const store = createStore();
+
+      const result = store.get(localeAtom);
+
+      expect(result).toBe("ja");
+    });
+
+    it("should persist locale value", () => {
+      const store = createStore();
+
+      store.set(localeAtom, "en");
+
+      expect(store.get(localeAtom)).toBe("en");
+    });
+  });
+
+  describe("privilegesAtom", () => {
+    it("should have default value ['guest']", () => {
+      const store = createStore();
+
+      const result = store.get(privilegesAtom);
+
+      expect(result).toEqual(["guest"]);
+    });
+
+    it("should allow setting privileges", () => {
+      const store = createStore();
+
+      store.set(privilegesAtom, ["admin", "manager"]);
+
+      expect(store.get(privilegesAtom)).toEqual(["admin", "manager"]);
+    });
+  });
+
   describe("getAppState", () => {
     it("should return undefined when authUser is undefined", () => {
       const store = createStore();

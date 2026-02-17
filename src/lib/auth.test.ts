@@ -6,6 +6,9 @@ import type { User } from "firebase/auth";
 vi.mock("firebase/auth", () => ({
   signInWithEmailAndPassword: vi.fn(),
   sendPasswordResetEmail: vi.fn(),
+  sendSignInLinkToEmail: vi.fn(),
+  isSignInWithEmailLink: vi.fn(),
+  signInWithEmailLink: vi.fn(),
   signOut: vi.fn(),
   onAuthStateChanged: vi.fn(),
   EmailAuthProvider: {
@@ -69,8 +72,19 @@ global.document = {
 global.window = {
   location: {
     href: "",
+    origin: "http://localhost:3000",
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any;
+
+// Mock localStorage
+global.localStorage = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+  length: 0,
+  key: vi.fn(),
 } as any;
 
 describe("client auth", () => {
@@ -78,6 +92,12 @@ describe("client auth", () => {
     vi.clearAllMocks();
     // Reset document.cookie
     global.document.cookie = "";
+    // Reset window.location.href
+    global.window.location.href = "";
+    // Reset localStorage
+    vi.mocked(localStorage.getItem).mockReturnValue(null);
+    vi.mocked(localStorage.setItem).mockClear();
+    vi.mocked(localStorage.removeItem).mockClear();
     // Suppress console.error and console.info during tests
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(console, "info").mockImplementation(() => {});
@@ -85,11 +105,12 @@ describe("client auth", () => {
 
   describe("listenAuthState", () => {
     it("should set up auth state listener and update store on auth change", async () => {
-      const { onAuthStateChanged } = await import("firebase/auth");
+      const { onAuthStateChanged, isSignInWithEmailLink } =
+        await import("firebase/auth");
       const { getDefaultStore } = await import("jotai");
       const { authUserAtom } = await import("./store");
       const { setAppState } = await import("./app");
-      const { listenAuthState } = await import("./auth");
+      const { initAuth: listenAuthState } = await import("./auth");
 
       const mockUser = { uid: "test-uid-123", email: "test@example.com" };
       const mockStore = {
@@ -98,6 +119,7 @@ describe("client auth", () => {
       };
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
       vi.mocked(onAuthStateChanged).mockImplementation(
         (_auth, nextOrObserver) => {
           if (typeof nextOrObserver === "function") {
@@ -107,7 +129,7 @@ describe("client auth", () => {
         }
       );
 
-      listenAuthState();
+      await listenAuthState();
 
       expect(onAuthStateChanged).toHaveBeenCalled();
       expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, mockUser);
@@ -115,11 +137,12 @@ describe("client auth", () => {
     });
 
     it("should call setAppState when uid changes", async () => {
-      const { onAuthStateChanged } = await import("firebase/auth");
+      const { onAuthStateChanged, isSignInWithEmailLink } =
+        await import("firebase/auth");
       const { getDefaultStore } = await import("jotai");
       const { authUserAtom } = await import("./store");
       const { setAppState } = await import("./app");
-      const { listenAuthState } = await import("./auth");
+      const { initAuth: listenAuthState } = await import("./auth");
 
       const prevUser = { uid: "old-uid", email: "old@example.com" };
       const newUser = { uid: "new-uid", email: "new@example.com" };
@@ -129,6 +152,7 @@ describe("client auth", () => {
       };
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
       vi.mocked(onAuthStateChanged).mockImplementation(
         (_auth, nextOrObserver) => {
           if (typeof nextOrObserver === "function") {
@@ -138,18 +162,19 @@ describe("client auth", () => {
         }
       );
 
-      listenAuthState();
+      await listenAuthState();
 
       expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, newUser);
       expect(setAppState).toHaveBeenCalledWith(mockStore, newUser);
     });
 
     it("should not call setAppState when uid remains the same", async () => {
-      const { onAuthStateChanged } = await import("firebase/auth");
+      const { onAuthStateChanged, isSignInWithEmailLink } =
+        await import("firebase/auth");
       const { getDefaultStore } = await import("jotai");
       const { authUserAtom } = await import("./store");
       const { setAppState } = await import("./app");
-      const { listenAuthState } = await import("./auth");
+      const { initAuth: listenAuthState } = await import("./auth");
 
       const sameUser = { uid: "same-uid", email: "test@example.com" };
       const mockStore = {
@@ -158,6 +183,7 @@ describe("client auth", () => {
       };
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
       vi.mocked(onAuthStateChanged).mockImplementation(
         (_auth, nextOrObserver) => {
           if (typeof nextOrObserver === "function") {
@@ -167,18 +193,19 @@ describe("client auth", () => {
         }
       );
 
-      listenAuthState();
+      await listenAuthState();
 
       expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, sameUser);
       expect(setAppState).not.toHaveBeenCalled();
     });
 
     it("should handle user logout (null user)", async () => {
-      const { onAuthStateChanged } = await import("firebase/auth");
+      const { onAuthStateChanged, isSignInWithEmailLink } =
+        await import("firebase/auth");
       const { getDefaultStore } = await import("jotai");
       const { authUserAtom } = await import("./store");
       const { setAppState } = await import("./app");
-      const { listenAuthState } = await import("./auth");
+      const { initAuth: listenAuthState } = await import("./auth");
 
       const prevUser = { uid: "test-uid", email: "test@example.com" };
       const mockStore = {
@@ -187,6 +214,7 @@ describe("client auth", () => {
       };
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
       vi.mocked(onAuthStateChanged).mockImplementation(
         (_auth, nextOrObserver) => {
           if (typeof nextOrObserver === "function") {
@@ -196,10 +224,100 @@ describe("client auth", () => {
         }
       );
 
-      listenAuthState();
+      await listenAuthState();
 
       expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, null);
       expect(setAppState).toHaveBeenCalledWith(mockStore, null);
+    });
+  });
+
+  describe("handleSignInWithEmailLink", () => {
+    it("should do nothing if URL is not a sign-in link and call next", async () => {
+      const { isSignInWithEmailLink } = await import("firebase/auth");
+      const { handleSignInWithEmailLink } = await import("./auth");
+
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
+      global.window.location.href = "http://localhost:3000/some-page";
+      const mockNext = vi.fn();
+
+      await handleSignInWithEmailLink(mockNext);
+
+      expect(isSignInWithEmailLink).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it("should sign in with email link when valid", async () => {
+      const { isSignInWithEmailLink, signInWithEmailLink } =
+        await import("firebase/auth");
+      const { handleSignInWithEmailLink } = await import("./auth");
+
+      vi.mocked(localStorage.getItem).mockReturnValue("test@example.com");
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(true);
+      vi.mocked(signInWithEmailLink).mockResolvedValue({
+        user: { uid: "test-uid" },
+      } as never);
+
+      global.window.location.href = "http://localhost:3000?apiKey=xxx";
+      const mockNext = vi.fn();
+
+      await handleSignInWithEmailLink(mockNext);
+
+      expect(isSignInWithEmailLink).toHaveBeenCalled();
+      expect(localStorage.getItem).toHaveBeenCalledWith("sendLinkEmail");
+      expect(signInWithEmailLink).toHaveBeenCalledWith(
+        expect.anything(),
+        "test@example.com",
+        "http://localhost:3000?apiKey=xxx"
+      );
+      expect(localStorage.removeItem).toHaveBeenCalledWith("sendLinkEmail");
+      expect(global.window.location.href).toBe("http://localhost:3000");
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it("should handle error when signing in with email link fails", async () => {
+      const { isSignInWithEmailLink, signInWithEmailLink } =
+        await import("firebase/auth");
+      const { handleSignInWithEmailLink } = await import("./auth");
+
+      vi.mocked(localStorage.getItem).mockReturnValue("test@example.com");
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(true);
+      vi.mocked(signInWithEmailLink).mockRejectedValue(
+        new Error("Sign-in failed")
+      );
+
+      global.window.location.href = "http://localhost:3000?apiKey=xxx";
+      const mockNext = vi.fn();
+
+      await handleSignInWithEmailLink(mockNext);
+
+      expect(signInWithEmailLink).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith(
+        "Error signing in with email link:",
+        expect.any(Error)
+      );
+      expect(global.window.location.href).toBe("http://localhost:3000");
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it("should not sign in if email is missing from localStorage", async () => {
+      const { isSignInWithEmailLink, signInWithEmailLink } =
+        await import("firebase/auth");
+      const { handleSignInWithEmailLink } = await import("./auth");
+
+      vi.mocked(localStorage.getItem).mockReturnValue(null);
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(true);
+
+      global.window.location.href = "http://localhost:3000?apiKey=xxx";
+      const mockNext = vi.fn();
+
+      await handleSignInWithEmailLink(mockNext);
+
+      expect(signInWithEmailLink).not.toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith(
+        "Email is required to sign in with email link"
+      );
+      expect(global.window.location.href).toBe("http://localhost:3000");
+      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 
@@ -281,6 +399,47 @@ describe("client auth", () => {
       expect(E.isLeft(result)).toBe(true);
       if (E.isLeft(result)) {
         expect(result.left).toBe("errorResetPassword");
+      }
+    });
+  });
+
+  describe("sendLoginLink", () => {
+    it("should send login link and store email in localStorage", async () => {
+      const { sendSignInLinkToEmail } = await import("firebase/auth");
+      const { sendLoginLink } = await import("./auth");
+
+      vi.mocked(sendSignInLinkToEmail).mockResolvedValue(undefined);
+
+      const result = await sendLoginLink({ email: "test@example.com" });
+
+      expect(E.isRight(result)).toBe(true);
+      expect(sendSignInLinkToEmail).toHaveBeenCalledWith(
+        expect.anything(),
+        "test@example.com",
+        {
+          url: "http://localhost:3000",
+          handleCodeInApp: true,
+        }
+      );
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        "sendLinkEmail",
+        "test@example.com"
+      );
+    });
+
+    it("should return errorSendLoginLink on failure", async () => {
+      const { sendSignInLinkToEmail } = await import("firebase/auth");
+      const { sendLoginLink } = await import("./auth");
+
+      vi.mocked(sendSignInLinkToEmail).mockRejectedValue(
+        new Error("Send link error")
+      );
+
+      const result = await sendLoginLink({ email: "test@example.com" });
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("errorSendLoginLink");
       }
     });
   });

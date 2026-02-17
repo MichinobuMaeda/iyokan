@@ -52,14 +52,18 @@ export const ja = {
   presetTimesFormat: "1行に1つずつHH:MM形式で入力",
 
   // Login
-  loginTitle: "ログイン",
+  login: "ログイン",
+  emailAndPassword: "メールアドレスとパスワード",
+  receiveLoginLink: "ログイン用リンクを受信",
   loginSuccess: "ログインしました",
+  sendLoginLinkSuccess:
+    "ログイン用リンクを送信しました。受信トレイをご確認ください。",
   forgotPassword: "パスワードをお忘れですか？",
   email: "メールアドレス",
   password: "パスワード",
 
   // Password Reset
-  resetPasswordTitle: "パスワードリセット",
+  resetPassword: "パスワードリセット",
   passwordResetEmailSent:
     "パスワードリセットメールを送信しました。受信トレイをご確認ください。",
   validPassword:
@@ -121,6 +125,7 @@ export const ja = {
   errorNoUser: "ユーザーがログインしていません",
   errorReauthenticate: "再認証に失敗しました",
   errorResetPassword: "パスワードリセットメールの送信に失敗しました",
+  errorSendLoginLink: "ログイン用リンクの送信に失敗しました",
   errorChangeEmail: "メールアドレスの変更に失敗しました",
   errorChangePassword: "パスワードの変更に失敗しました",
   errorGetUserPrivs: "ユーザー権限の取得に失敗しました",

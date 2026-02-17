@@ -1,12 +1,17 @@
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendSignInLinkToEmail,
   signOut,
   EmailAuthProvider,
   reauthenticateWithCredential,
   updateEmail,
   updatePassword,
   onAuthStateChanged,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  type User,
+  type ActionCodeSettings,
 } from "firebase/auth";
 import { getDefaultStore } from "jotai";
 import * as E from "fp-ts/Either";
@@ -16,18 +21,57 @@ import { auth } from "./firebase";
 import { authUserAtom } from "./store";
 import { setAppState } from "./app";
 
-export function listenAuthState() {
-  console.info("Start listenAuthState()");
-  onAuthStateChanged(auth, (user) => {
-    console.info("listenAuthState() uid:", user?.uid);
-    const store = getDefaultStore();
-    const prevUser = store.get(authUserAtom);
-    store.set(authUserAtom, user);
+const keySendLinkEmail = "sendLinkEmail";
 
-    if (prevUser?.uid !== user?.uid) {
-      setAppState(store, user);
+export const handleSignInWithEmailLink = async (next: () => void) => {
+  const url = window.location.href;
+  console.info("handleSignInWithEmailLink() url:", url);
+
+  if (isSignInWithEmailLink(auth, url)) {
+    const email = localStorage.getItem(keySendLinkEmail);
+    localStorage.removeItem(keySendLinkEmail);
+    console.log("Email link sign-in detected. Email:", email);
+
+    if (email) {
+      try {
+        const result = await signInWithEmailLink(auth, email, url);
+        console.info("Successfully signed in with email link:", result);
+      } catch (error) {
+        console.error("Error signing in with email link:", error);
+      }
+    } else {
+      console.error("Email is required to sign in with email link");
     }
-  });
+
+    // Redirect to home page after sign-in
+    window.location.href = window.location.origin;
+    return;
+  }
+
+  next();
+};
+
+export const handleAuthChanged = (user: User | null) => {
+  console.info("handleAuthChanged() uid:", user?.uid);
+  const store = getDefaultStore();
+  const prevUser = store.get(authUserAtom);
+  store.set(authUserAtom, user);
+
+  if (prevUser?.uid !== user?.uid) {
+    setAppState(store, user);
+  }
+};
+
+/**
+ * Initializes authentication system
+ * Handles email link sign-in if present in the URL
+ * Sets up a listener for authentication state changes
+ * Updates the authUserAtom and calls setAppState when user changes
+ */
+export function initAuth() {
+  Promise.resolve().then(() =>
+    handleSignInWithEmailLink(() => onAuthStateChanged(auth, handleAuthChanged))
+  );
 }
 
 export interface LoginData {
@@ -73,6 +117,34 @@ export async function resetPassword({
   } catch (error) {
     console.error("resetPassword error:", error);
     return E.left("errorResetPassword");
+  }
+}
+
+export interface SendLoginLinkData {
+  email: string;
+}
+
+/**
+ * Sends a sign-in link to the specified email address
+ * The link allows passwordless authentication via email
+ * Stores the email in localStorage for verification after redirect
+ * @param email - User's email address to send the login link to
+ * @returns Promise that resolves to Either containing an i18n key or void
+ */
+export async function sendLoginLink({
+  email,
+}: SendLoginLinkData): Promise<E.Either<TranslationKey, void>> {
+  try {
+    const actionCodeSettings: ActionCodeSettings = {
+      url: window.location.origin,
+      handleCodeInApp: true,
+    };
+    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+    localStorage.setItem(keySendLinkEmail, email);
+    return E.right(undefined);
+  } catch (error) {
+    console.error("sendLoginLink error:", error);
+    return E.left("errorSendLoginLink");
   }
 }
 

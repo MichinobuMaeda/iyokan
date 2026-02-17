@@ -13,18 +13,23 @@ import {
   CreateUserData,
 } from "./common.js";
 
+const passwordLength = 128;
+const passwordChars =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" +
+  "0123456789!@#$%^&*_-=+";
+
 /**
  * Generates a random password for user account creation.
  * Returns the DEFAULT_PASSWORD from environment variable if set, otherwise generates a random string.
- * @returns Password string - either from DEFAULT_PASSWORD env var or a randomly generated 40-character string
+ * @returns Password string - either from DEFAULT_PASSWORD env var or a randomly generated 128 character string
  */
 export function generateRandomPassword(): string {
   return process.env.DEFAULT_PASSWORD
     ? process.env.DEFAULT_PASSWORD
-    : Math.random().toString(36).slice(-10) +
-        Math.random().toString(36).slice(-10) +
-        Math.random().toString(36).slice(-10) +
-        Math.random().toString(36).slice(-10);
+    : Array.from(
+        { length: passwordLength },
+        () => passwordChars[Math.floor(Math.random() * passwordChars.length)]
+      ).join("");
 }
 
 /**

@@ -50,14 +50,17 @@ export const en = {
   presetTimesFormat: "One time per line in HH:MM format",
 
   // Login
-  loginTitle: "Login",
+  login: "Login",
+  emailAndPassword: "Email and Password",
+  receiveLoginLink: "Receive Login Link",
   loginSuccess: "Login successful",
+  sendLoginLinkSuccess: "Login link sent. Check your inbox.",
   forgotPassword: "Forgot password?",
   email: "Email",
   password: "Password",
 
   // Password Reset
-  resetPasswordTitle: "Reset Password",
+  resetPassword: "Reset Password",
   passwordResetEmailSent: "Password reset email sent. Check your inbox.",
   validPassword:
     "Set a password with at least 10 characters, including uppercase, lowercase, numbers, and symbols.",
@@ -119,6 +122,7 @@ export const en = {
   errorNoUser: "No user is currently logged in",
   errorReauthenticate: "Failed to re-authenticate",
   errorResetPassword: "Failed to send password reset email",
+  errorSendLoginLink: "Failed to send login link",
   errorChangeEmail: "Failed to change email",
   errorChangePassword: "Failed to change password",
   errorGetUserPrivs: "Failed to get user privileges",

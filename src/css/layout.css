@@ -257,8 +257,8 @@ main {
     margin: 0.5rem 0 0 0;
     font-size: 1.25rem;
     background-color: light-dark(
-      var(--color-light-tertiary-container),
-      var(--color-dark-tertiary-container)
+      var(--color-light-secondary-container),
+      var(--color-dark-secondary-container)
     );
     width: 100%;
     border-radius: 0.25rem;

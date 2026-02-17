@@ -21,7 +21,7 @@ export default function ResetPasswordPage() {
       >
         <h2>
           <SvgPassword />
-          {t("resetPasswordTitle")}
+          {t("resetPassword")}
         </h2>
         <div>{t("validPassword")}</div>
         <div className="row">
