@@ -36,6 +36,7 @@ export const ja = {
   source: "ソース",
   prompt: "プロンプト",
   schedule: "スケジュール",
+  presetTimes: "予約時刻",
   image: "画像",
   description: "説明",
   canceled: "キャンセル済み",
@@ -48,6 +49,7 @@ export const ja = {
   untitled: "無題",
   selectImage: "画像を選択",
   removeImage: "画像を削除",
+  presetTimesFormat: "1行に1つずつHH:MM形式で入力",
 
   // Login
   loginTitle: "ログイン",
@@ -111,6 +113,7 @@ export const ja = {
   errorPasswordMismatch: "パスワードが一致しません",
   errorEmptyText: "タイトル、メッセージ、リンクのいずれか1つは入力してください",
   errorAtLeastOneProvider: "少なくとも1つのプロバイダーを選択してください",
+  errorInvalidTimeFormat: "時刻の形式が無効です。HH:MM形式で入力してください",
 
   // Authentication Errors
   errorLogin: "ログインに失敗しました",

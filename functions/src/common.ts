@@ -11,6 +11,7 @@ export type CreateOrgData = {
   name: string;
   desc?: string;
   hardBreak: boolean;
+  presetTimes?: string[];
   valid: boolean;
 };
 
@@ -21,6 +22,11 @@ export type CreateUserData = {
   valid: boolean;
 };
 
+export interface PostError {
+  provider: string;
+  message: string;
+  createdAt: Date;
+}
 export interface ProviderParamDef {
   key: string;
   type: string;
@@ -31,6 +37,7 @@ export interface ProviderType {
   type: string;
   defaultName: string;
   params: ProviderParamDef[];
+  imageRequired: boolean;
 }
 
 export const providerTypes: Array<ProviderType> = [
@@ -42,6 +49,7 @@ export const providerTypes: Array<ProviderType> = [
       { key: "identifier", type: "string", source: "user" },
       { key: "password", type: "string", source: "user" },
     ],
+    imageRequired: false,
   },
   {
     type: "mastodon",
@@ -50,6 +58,7 @@ export const providerTypes: Array<ProviderType> = [
       { key: "token", type: "string", source: "user" },
       { key: "url", type: "string", source: "user" },
     ],
+    imageRequired: false,
   },
   {
     type: "misskey",
@@ -58,6 +67,7 @@ export const providerTypes: Array<ProviderType> = [
       { key: "token", type: "string", source: "user" },
       { key: "url", type: "string", source: "user" },
     ],
+    imageRequired: false,
   },
   {
     type: "twitter",
@@ -72,6 +82,7 @@ export const providerTypes: Array<ProviderType> = [
       { key: "refresh_token", type: "string", source: "api" },
       { key: "expires_in", type: "number", source: "api" },
     ],
+    imageRequired: false,
   },
   {
     type: "threads",
@@ -85,6 +96,7 @@ export const providerTypes: Array<ProviderType> = [
       { key: "user_id", type: "string", source: "api" },
       { key: "expires_in", type: "number", source: "api" },
     ],
+    imageRequired: false,
   },
   {
     type: "instagram",
@@ -94,6 +106,7 @@ export const providerTypes: Array<ProviderType> = [
       { key: "access_token", type: "string", source: "user" },
       { key: "expires_in", type: "number", source: "api" },
     ],
+    imageRequired: true,
   },
   {
     type: "tumblr",
@@ -107,6 +120,7 @@ export const providerTypes: Array<ProviderType> = [
       { key: "refresh_token", type: "string", source: "api" },
       { key: "expires_in", type: "number", source: "api" },
     ],
+    imageRequired: false,
   },
   {
     type: "wordpress",
@@ -117,5 +131,6 @@ export const providerTypes: Array<ProviderType> = [
       { key: "password", type: "string", source: "user" },
       { key: "category", type: "string", source: "user" },
     ],
+    imageRequired: false,
   },
 ];

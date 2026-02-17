@@ -24,6 +24,7 @@ describe("Post types", () => {
         files: ["file1.jpg", "file2.png"],
         providers: ["provider1", "provider2"],
         status: "scheduled",
+        errors: [],
         createdAt: { toDate: () => new Date("2024-01-01T00:00:00Z") },
         updatedAt: { toDate: () => new Date("2024-01-02T00:00:00Z") },
       };
@@ -44,6 +45,7 @@ describe("Post types", () => {
         files: ["file1.jpg", "file2.png"],
         providers: ["provider1", "provider2"],
         status: "scheduled",
+        errors: [],
         createdAt: new Date("2024-01-01T00:00:00Z"),
         updatedAt: new Date("2024-01-02T00:00:00Z"),
       });
@@ -67,6 +69,7 @@ describe("Post types", () => {
         expect(result.files).toEqual([]);
         expect(result.providers).toEqual([]);
         expect(result.status).toBe("paused");
+        expect(result.errors).toEqual([]);
         expect(result.createdAt).toBeUndefined();
         expect(result.updatedAt).toBeUndefined();
       }
@@ -95,6 +98,7 @@ describe("Post types", () => {
         files: [],
         providers: [],
         status: "paused",
+        errors: [],
         createdAt: new Date("2024-01-15T00:00:00Z"),
         updatedAt: undefined,
       });
@@ -149,6 +153,69 @@ describe("Post types", () => {
       if (result) {
         expect(result.createdAt).toBeUndefined();
         expect(result.updatedAt).toBeUndefined();
+      }
+    });
+
+    it("should handle errors field when present", () => {
+      const mockErrors = [
+        {
+          provider: "twitter" as const,
+          code: "AUTH_ERROR",
+          message: "Authentication failed",
+        },
+        {
+          provider: "facebook" as const,
+          code: "RATE_LIMIT",
+          message: "Rate limit exceeded",
+        },
+      ];
+
+      const mockData = {
+        schedule: { toDate: () => new Date("2024-05-01T10:00:00Z") },
+        title: "Post with Errors",
+        message: "This post has errors",
+        link: "",
+        files: [],
+        providers: ["twitter", "facebook"],
+        status: "paused",
+        errors: mockErrors,
+      };
+
+      const mockDoc = {
+        exists: () => true,
+        id: "post-with-errors",
+        data: () => mockData,
+      } as unknown as DocumentSnapshot;
+
+      const result = postFromDoc(mockDoc);
+      expect(result).not.toBeNull();
+      if (result) {
+        expect(result.errors).toEqual(mockErrors);
+        expect(result.errors).toHaveLength(2);
+      }
+    });
+
+    it("should default to empty array when errors field is missing", () => {
+      const mockData = {
+        schedule: { toDate: () => new Date("2024-06-01T10:00:00Z") },
+        title: "Post without Errors",
+        message: "This post has no errors",
+        link: "",
+        files: [],
+        providers: ["twitter"],
+        status: "scheduled",
+      };
+
+      const mockDoc = {
+        exists: () => true,
+        id: "post-no-errors",
+        data: () => mockData,
+      } as unknown as DocumentSnapshot;
+
+      const result = postFromDoc(mockDoc);
+      expect(result).not.toBeNull();
+      if (result) {
+        expect(result.errors).toEqual([]);
       }
     });
   });

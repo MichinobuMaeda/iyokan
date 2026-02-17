@@ -219,6 +219,17 @@ fieldset {
       var(--color-dark-on-secondary-container)
     );
   }
+
+  &.error {
+    background-color: light-dark(
+      var(--color-light-error-container),
+      var(--color-dark-error-container)
+    );
+    color: light-dark(
+      var(--color-light-on-error-container),
+      var(--color-dark-on-error-container)
+    );
+  }
 }
 
 main {

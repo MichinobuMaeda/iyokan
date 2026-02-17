@@ -34,6 +34,7 @@ export const en = {
   source: "Source",
   prompt: "Prompt",
   schedule: "Schedule",
+  presetTimes: "Preset Times",
   image: "Image",
   description: "Description",
   canceled: "Canceled",
@@ -46,6 +47,7 @@ export const en = {
   untitled: "Untitled",
   selectImage: "Select image",
   removeImage: "Remove image",
+  presetTimesFormat: "One time per line in HH:MM format",
 
   // Login
   loginTitle: "Login",
@@ -109,6 +111,7 @@ export const en = {
   errorPasswordMismatch: "Passwords do not match",
   errorEmptyText: "At least one of title, message, or link should be filled",
   errorAtLeastOneProvider: "At least one provider must be selected",
+  errorInvalidTimeFormat: "Invalid time format. Use HH:MM format",
 
   // Authentication Errors
   errorLogin: "Failed to login",

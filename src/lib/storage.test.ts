@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+// @vitest-environment jsdom
+import { renderHook, waitFor } from "@testing-library/react";
 import * as E from "fp-ts/Either";
 
 // Mock Firebase Storage
@@ -213,6 +215,75 @@ describe("storage", () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("test.jpg")
       );
+    });
+  });
+
+  describe("useImageUrl", () => {
+    it("should return undefined when no id or files provided", async () => {
+      const { useImageUrl } = await import("./storage");
+      const { result } = renderHook(() => useImageUrl(undefined, undefined));
+
+      expect(result.current).toBeUndefined();
+    });
+
+    it("should return undefined when id is provided but files is empty", async () => {
+      const { useImageUrl } = await import("./storage");
+      const { result } = renderHook(() => useImageUrl("12345", []));
+
+      expect(result.current).toBeUndefined();
+    });
+
+    it("should return undefined when id is provided but files is null", async () => {
+      const { useImageUrl } = await import("./storage");
+      const { result } = renderHook(() => useImageUrl("12345", null));
+
+      expect(result.current).toBeUndefined();
+    });
+
+    it("should fetch and return image URLs for valid id and files", async () => {
+      const { useImageUrl } = await import("./storage");
+
+      const mockUrls = [
+        "https://storage.example.com/1.jpg",
+        "https://storage.example.com/2.jpg",
+      ];
+
+      // Setup fresh mocks
+      mockRef.mockReturnValue({ path: "some/path" });
+      mockGetDownloadURL.mockImplementation(() =>
+        Promise.resolve(mockUrls[mockGetDownloadURL.mock.calls.length - 1])
+      );
+
+      const { result } = renderHook(() =>
+        useImageUrl("12345", ["1.jpg", "2.jpg"])
+      );
+
+      await waitFor(
+        () => {
+          expect(result.current).toBeDefined();
+          expect(result.current?.length).toBe(2);
+        },
+        { timeout: 1000 }
+      );
+    });
+
+    it("should handle errors when fetching image URLs", async () => {
+      const { useImageUrl } = await import("./storage");
+
+      const consoleErrorSpy = vi.spyOn(console, "error");
+      mockRef.mockReturnValue({ path: "some/path" });
+      mockGetDownloadURL.mockRejectedValue(new Error("Failed to fetch URL"));
+
+      const { result } = renderHook(() => useImageUrl("12345", ["1.jpg"]));
+
+      await waitFor(
+        () => {
+          expect(consoleErrorSpy).toHaveBeenCalled();
+        },
+        { timeout: 1000 }
+      );
+
+      expect(result.current).toBeUndefined();
     });
   });
 });

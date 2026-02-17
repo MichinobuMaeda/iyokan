@@ -7,7 +7,7 @@ import Md from "../../components/Md";
 import SvgHome from "../../icons/SvgHome";
 import SvgDomain from "../../icons/SvgDomain";
 import SvgLogin from "../../icons/SvgLogin";
-import SvgEdit from "../../icons/SvgEdit";
+import SvgSettingsApplications from "../../icons/SvgSettingsApplications";
 import { OID_SYSADMIN } from "../../../functions/src/common";
 
 export default function InfoPage() {
@@ -28,6 +28,12 @@ export default function InfoPage() {
           <NavLink to={`/o/${dataState.oid}`} className="button outlined">
             <SvgHome /> {t("returnToHome")}
           </NavLink>
+          {dataState?.oid === OID_SYSADMIN &&
+            (dataState.manager || dataState.admin) && (
+              <NavLink to="/conf/edit" className="button tonal">
+                <SvgSettingsApplications /> {t("appSettings")}
+              </NavLink>
+            )}
         </div>
       ) : (
         <NavLink
@@ -38,14 +44,6 @@ export default function InfoPage() {
           <SvgLogin /> {t("login")}
         </NavLink>
       )}
-      {dataState?.oid === OID_SYSADMIN &&
-        (dataState.manager || dataState.admin) && (
-          <div className="row right">
-            <NavLink to="/conf/edit" className="button icon sm text">
-              <SvgEdit />
-            </NavLink>
-          </div>
-        )}
       {conf?.desc && <Md hardBreak={conf!.hardBreak}>{conf!.desc!}</Md>}
     </main>
   );

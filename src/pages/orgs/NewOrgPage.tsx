@@ -19,6 +19,7 @@ export default function NewOrgPage() {
     name: "",
     desc: "",
     hardBreak: false,
+    presetTimes: [],
     valid: true,
   });
   const errorOid = () => {

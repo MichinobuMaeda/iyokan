@@ -233,3 +233,42 @@ export function validateSomePostProvider(
     ? E.right(undefined)
     : E.left("errorAtLeastOneProvider");
 }
+
+/**
+ * Converts multiline time text to an array of preset times in HH:MM format
+ * Parses each line, filters non-time characters, normalizes times, and sorts them
+ *
+ * @param text - Multiline string containing times (one per line, e.g., "9:00\n14:30")
+ * @returns Array of time strings in HH:MM format, sorted (e.g., ["09:00", "14:30"])
+ * @example
+ * timesTextToPresetTimes("9:00\n14:30\n8:15")
+ * // Returns: ["08:15", "09:00", "14:30"]
+ */
+export const timesTextToPresetTimes = (text: string): string[] =>
+  text
+    .split("\n")
+    .map((s) => s.replace(/[^0-9:]/g, ""))
+    .filter((s) => s.length > 0)
+    .map((s) => (/^[0-9]:[0-9][0-9]$/.test(s) ? `0${s}` : s))
+    .sort();
+
+/**
+ * Validates that time text contains only valid HH:MM format times
+ * Uses timesTextToPresetTimes to parse the text and validates each time
+ *
+ * @param text - Multiline string containing times to validate
+ * @returns Either containing an Error with i18n key or void
+ * @returns Left: "errorInvalidTimeFormat" - When any time has invalid format
+ * @returns Right: undefined - When all times are valid HH:MM format
+ */
+export const validateTimesText = (
+  text: string
+): E.Either<TranslationKey, void> => {
+  const times = timesTextToPresetTimes(text);
+  // If input is not empty but results in no times, it's invalid
+  return text.trim().length > 0 && times.length === 0
+    ? E.left("errorInvalidTimeFormat")
+    : times.every((t) => /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(t))
+      ? E.right(undefined)
+      : E.left("errorInvalidTimeFormat");
+};

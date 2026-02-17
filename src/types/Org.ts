@@ -5,16 +5,18 @@ export const reservedOids = ["id", "oid", "admin", "admins"];
 
 export interface OrgData {
   name: string;
-  desc?: string;
-  hardBreak?: boolean;
+  desc: string;
+  hardBreak: boolean;
+  presetTimes: string[];
   valid: boolean;
 }
 
 export interface Org extends Meta, OrgData {
   id: string;
   name: string;
-  desc?: string;
-  hardBreak?: boolean;
+  desc: string;
+  hardBreak: boolean;
+  presetTimes: string[];
   valid: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -35,9 +37,10 @@ export function orgFromDoc(doc: DocumentSnapshot): Org | null {
   return {
     id: doc.id,
     name: data?.name ?? "",
-    desc: data?.desc,
+    desc: data?.desc ?? "",
     hardBreak: !!data?.hardBreak,
-    valid: data?.valid ?? false,
+    valid: !!data?.valid,
+    presetTimes: data?.presetTimes ?? [],
     createdAt: data?.createdAt?.toDate(),
     updatedAt: data?.updatedAt?.toDate(),
   };

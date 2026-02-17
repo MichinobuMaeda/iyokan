@@ -24,6 +24,9 @@ export default function ShowPostPage() {
     throw redirect(`/o/${oid}/posts`);
   }
 
+  const isError = (providerId: string) =>
+    post()!.errors?.some((e) => e.provider === providerId) ?? false;
+
   return (
     <main>
       <div className="row">
@@ -83,9 +86,13 @@ export default function ShowPostPage() {
                 providers?.some((p) => p.valid && p.id === pid)
               )
               .map((pid) => (
-                <div key={pid} className="chip selected">
+                <div
+                  key={pid}
+                  className={`chip selected${isError(pid) ? " error" : ""}`}
+                >
                   <ProviderIcons
                     type={providers?.find((p) => p.id === pid)?.type}
+                    error={isError(pid)}
                   />
                   {providers?.find((p) => p.id === pid)?.name || pid}
                 </div>

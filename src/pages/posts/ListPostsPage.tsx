@@ -3,10 +3,12 @@ import { useTranslation } from "react-i18next";
 import { useAtom } from "jotai";
 
 import { postsAtom, providersAtom, dataStateAtom } from "../../lib/store";
+import { formatLong } from "../../lib/formatter";
 import SvgAdd from "../../icons/SvgAdd";
 import SvgArticle from "../../icons/SvgArticle";
 import StatusIcons from "../../components/StatusIcons";
 import ProviderIcons from "../../components/ProviderIcons";
+import type { Post } from "../../types/Post";
 
 export default function ListPostsPage() {
   const { t } = useTranslation();
@@ -15,14 +17,9 @@ export default function ListPostsPage() {
   const oid = params.oid!;
   const [dataState] = useAtom(dataStateAtom);
   const [providers] = useAtom(providersAtom);
-  const formatDateTime = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hour = String(date.getHours()).padStart(2, "0");
-    const minute = String(date.getMinutes()).padStart(2, "0");
-    return `${year}/${month}/${day} ${hour}:${minute}`;
-  };
+
+  const isError = (post: Post, providerId: string) =>
+    post.errors?.some((e) => e.provider === providerId) ?? false;
 
   return (
     <main>
@@ -42,12 +39,13 @@ export default function ListPostsPage() {
         <div className="post-list-item" key={post.id}>
           <NavLink key={post.id} to={`/o/${oid}/posts/${post.id}`}>
             <StatusIcons type={post.status} />
-            {formatDateTime(post.schedule)}
+            {formatLong(post.schedule)}
             {providers?.map((provider) => (
               <ProviderIcons
                 key={provider.id}
                 type={provider.type}
                 disabled={!post.providers.includes(provider.id)}
+                error={isError(post, provider.id)}
               />
             ))}
           </NavLink>

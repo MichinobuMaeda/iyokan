@@ -10,6 +10,9 @@ import {
   validatePassword,
   validateOid,
   validateSomePostText,
+  validateSomePostProvider,
+  timesTextToPresetTimes,
+  validateTimesText,
 } from "./validators";
 import type { PostData } from "../types/Post";
 
@@ -753,6 +756,237 @@ describe("validators", () => {
         expect(E.isLeft(result)).toBe(true);
         if (E.isLeft(result)) {
           expect(result.left).toBe("errorEmptyText");
+        }
+      });
+    });
+  });
+
+  describe("validateSomePostProvider", () => {
+    const baseData: PostData = {
+      schedule: new Date(),
+      title: "Test",
+      message: "Message",
+      link: "https://example.com",
+      files: [],
+      providers: [],
+      status: "scheduled",
+    };
+
+    describe("valid inputs", () => {
+      it("should return right when one provider is selected", () => {
+        const result = validateSomePostProvider({
+          ...baseData,
+          providers: ["twitter"],
+        });
+        expect(E.isRight(result)).toBe(true);
+      });
+
+      it("should return right when multiple providers are selected", () => {
+        const result = validateSomePostProvider({
+          ...baseData,
+          providers: ["twitter", "facebook", "bluesky"],
+        });
+        expect(E.isRight(result)).toBe(true);
+      });
+    });
+
+    describe("invalid inputs", () => {
+      it("should return left with errorAtLeastOneProvider when providers is empty array", () => {
+        const result = validateSomePostProvider({
+          ...baseData,
+          providers: [],
+        });
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorAtLeastOneProvider");
+        }
+      });
+
+      it("should return left with errorAtLeastOneProvider when providers is undefined", () => {
+        const result = validateSomePostProvider({
+          ...baseData,
+          providers: undefined as unknown as string[],
+        });
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorAtLeastOneProvider");
+        }
+      });
+
+      it("should return left with errorAtLeastOneProvider when providers is null", () => {
+        const result = validateSomePostProvider({
+          ...baseData,
+          providers: null as unknown as string[],
+        });
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorAtLeastOneProvider");
+        }
+      });
+    });
+  });
+
+  describe("timesTextToPresetTimes", () => {
+    it("should return empty array for empty string", () => {
+      const result = timesTextToPresetTimes("");
+      expect(result).toEqual([]);
+    });
+
+    it("should parse single time", () => {
+      const result = timesTextToPresetTimes("09:00");
+      expect(result).toEqual(["09:00"]);
+    });
+
+    it("should parse multiple times", () => {
+      const result = timesTextToPresetTimes("09:00\n14:30\n18:45");
+      expect(result).toEqual(["09:00", "14:30", "18:45"]);
+    });
+
+    it("should pad single digit hours", () => {
+      const result = timesTextToPresetTimes("9:00");
+      expect(result).toEqual(["09:00"]);
+    });
+
+    it("should pad multiple single digit hours", () => {
+      const result = timesTextToPresetTimes("9:00\n8:15\n7:30");
+      expect(result).toEqual(["07:30", "08:15", "09:00"]);
+    });
+
+    it("should sort times", () => {
+      const result = timesTextToPresetTimes("14:30\n09:00\n18:45");
+      expect(result).toEqual(["09:00", "14:30", "18:45"]);
+    });
+
+    it("should filter empty lines", () => {
+      const result = timesTextToPresetTimes("09:00\n\n14:30\n\n\n18:45");
+      expect(result).toEqual(["09:00", "14:30", "18:45"]);
+    });
+
+    it("should remove non-time characters", () => {
+      const result = timesTextToPresetTimes("09:00 morning\n14:30 afternoon");
+      expect(result).toEqual(["09:00", "14:30"]);
+    });
+
+    it("should handle whitespace-only lines", () => {
+      const result = timesTextToPresetTimes("09:00\n   \n14:30");
+      expect(result).toEqual(["09:00", "14:30"]);
+    });
+
+    it("should handle times with various formats and normalize them", () => {
+      const result = timesTextToPresetTimes("9:00\n09:30\n8:15");
+      expect(result).toEqual(["08:15", "09:00", "09:30"]);
+    });
+  });
+
+  describe("validateTimesText", () => {
+    describe("valid inputs", () => {
+      it("should return right for empty string", () => {
+        const result = validateTimesText("");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe(undefined);
+        }
+      });
+
+      it("should return right for valid single time", () => {
+        const result = validateTimesText("09:00");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe(undefined);
+        }
+      });
+
+      it("should return right for valid multiple times", () => {
+        const text = "09:00\n14:30\n18:45";
+        const result = validateTimesText(text);
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe(undefined);
+        }
+      });
+
+      it("should return right for times with single digit hours that get padded", () => {
+        const text = "9:00\n8:15";
+        const result = validateTimesText(text);
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe(undefined);
+        }
+      });
+
+      it("should return right for valid times with empty lines", () => {
+        const text = "09:00\n\n14:30";
+        const result = validateTimesText(text);
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe(undefined);
+        }
+      });
+
+      it("should return right for all valid hour ranges", () => {
+        const text = "00:00\n12:00\n23:59";
+        const result = validateTimesText(text);
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe(undefined);
+        }
+      });
+    });
+
+    describe("invalid inputs", () => {
+      it("should return left for invalid hour (24:00)", () => {
+        const result = validateTimesText("24:00");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidTimeFormat");
+        }
+      });
+
+      it("should return left for invalid minutes (09:60)", () => {
+        const result = validateTimesText("09:60");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidTimeFormat");
+        }
+      });
+
+      it("should return left for invalid format (9:0)", () => {
+        const result = validateTimesText("9:0");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidTimeFormat");
+        }
+      });
+
+      it("should return left for invalid format (no colon)", () => {
+        const result = validateTimesText("0900");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidTimeFormat");
+        }
+      });
+
+      it("should return left for text without time", () => {
+        const result = validateTimesText("not a time");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidTimeFormat");
+        }
+      });
+
+      it("should return left when one of multiple times is invalid", () => {
+        const result = validateTimesText("09:00\n25:00\n14:30");
+        expect(E.isLeft(result)).toBe(true);
+        if (E.isLeft(result)) {
+          expect(result.left).toBe("errorInvalidTimeFormat");
+        }
+      });
+
+      it("should return right for valid time with extra characters stripped", () => {
+        const result = validateTimesText("09:00am");
+        expect(E.isRight(result)).toBe(true);
+        if (E.isRight(result)) {
+          expect(result.right).toBe(undefined);
         }
       });
     });

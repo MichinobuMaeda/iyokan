@@ -1,5 +1,6 @@
 import { DocumentSnapshot } from "firebase/firestore";
 
+import { type PostError } from "../../functions/src/common";
 import { type ProviderType } from "./Provider";
 import { type Meta } from "./Meta";
 
@@ -13,6 +14,7 @@ export interface PostData {
   files: string[];
   providers: ProviderType[];
   status: PostStatus;
+  errors?: PostError[];
 }
 
 export interface Post extends Meta, PostData {
@@ -24,6 +26,7 @@ export interface Post extends Meta, PostData {
   files: string[];
   providers: ProviderType[];
   status: PostStatus;
+  errors?: PostError[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -49,6 +52,7 @@ export function postFromDoc(doc: DocumentSnapshot): Post | null {
     files: data?.files ?? [],
     providers: data?.providers ?? [],
     status: data?.status ?? "paused",
+    errors: data?.errors ?? [],
     createdAt: data?.createdAt?.toDate(),
     updatedAt: data?.updatedAt?.toDate(),
   };
