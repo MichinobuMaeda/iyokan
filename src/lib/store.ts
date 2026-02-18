@@ -17,7 +17,7 @@ import { type Template } from "../types/Template";
 import { type Generator } from "../types/Generator";
 import { type Post } from "../types/Post";
 
-export const localeAtom = atomWithStorage<string>("locale", "ja");
+export const localeAtom = atomWithStorage<string>("iyokan-locale", "ja");
 
 export const authUserAtom = atom<
   import("firebase/auth").User | null | undefined
@@ -27,7 +27,7 @@ export const userPrivilegesAtom = atom<UserPrivileges | null | undefined>(
   undefined
 );
 
-export const oidAtom = atomWithStorage<string | null>("oid", null);
+export const oidAtom = atomWithStorage<string | null>("iyokan-oid", null);
 
 export const confAtom = atom<Conf | null | undefined>(undefined);
 

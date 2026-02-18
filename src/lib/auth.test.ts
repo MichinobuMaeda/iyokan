@@ -51,6 +51,7 @@ vi.mock("./app", () => ({
 
 vi.mock("./store", () => ({
   authUserAtom: { toString: () => "authUserAtom" },
+  localeAtom: { toString: () => "localeAtom" },
   oidAtom: { toString: () => "oidAtom" },
   userPrivilegesAtom: { toString: () => "userPrivilegesAtom" },
   authStateAtom: { toString: () => "authStateAtom" },
@@ -263,13 +264,15 @@ describe("client auth", () => {
       await handleSignInWithEmailLink(mockNext);
 
       expect(isSignInWithEmailLink).toHaveBeenCalled();
-      expect(localStorage.getItem).toHaveBeenCalledWith("sendLinkEmail");
+      expect(localStorage.getItem).toHaveBeenCalledWith("iyokan-sendLinkEmail");
       expect(signInWithEmailLink).toHaveBeenCalledWith(
         expect.anything(),
         "test@example.com",
         "http://localhost:3000?apiKey=xxx"
       );
-      expect(localStorage.removeItem).toHaveBeenCalledWith("sendLinkEmail");
+      expect(localStorage.removeItem).toHaveBeenCalledWith(
+        "iyokan-sendLinkEmail"
+      );
       expect(global.window.location.href).toBe("http://localhost:3000");
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -422,7 +425,7 @@ describe("client auth", () => {
         }
       );
       expect(localStorage.setItem).toHaveBeenCalledWith(
-        "sendLinkEmail",
+        "iyokan-sendLinkEmail",
         "test@example.com"
       );
     });

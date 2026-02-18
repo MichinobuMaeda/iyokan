@@ -71,6 +71,33 @@ describe("store", () => {
     });
   });
 
+  describe("oidAtom", () => {
+    it("should have default value null", () => {
+      const store = createStore();
+
+      const result = store.get(oidAtom);
+
+      expect(result).toBe(null);
+    });
+
+    it("should persist oid value", () => {
+      const store = createStore();
+
+      store.set(oidAtom, "org1");
+
+      expect(store.get(oidAtom)).toBe("org1");
+    });
+
+    it("should allow setting oid to null", () => {
+      const store = createStore();
+
+      store.set(oidAtom, "org1");
+      store.set(oidAtom, null);
+
+      expect(store.get(oidAtom)).toBe(null);
+    });
+  });
+
   describe("getAppState", () => {
     it("should return undefined when authUser is undefined", () => {
       const store = createStore();

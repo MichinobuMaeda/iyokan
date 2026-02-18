@@ -18,10 +18,10 @@ import * as E from "fp-ts/Either";
 
 import type { TranslationKey } from "../i18n/i18n";
 import { auth } from "./firebase";
-import { authUserAtom } from "./store";
+import { authUserAtom, localeAtom } from "./store";
 import { setAppState } from "./app";
 
-const keySendLinkEmail = "sendLinkEmail";
+const keySendLinkEmail = "iyokan-sendLinkEmail";
 
 export const handleSignInWithEmailLink = async (next: () => void) => {
   const url = window.location.href;
@@ -135,6 +135,7 @@ export async function sendLoginLink({
   email,
 }: SendLoginLinkData): Promise<E.Either<TranslationKey, void>> {
   try {
+    auth.languageCode = getDefaultStore().get(localeAtom);
     const actionCodeSettings: ActionCodeSettings = {
       url: window.location.origin,
       handleCodeInApp: true,
