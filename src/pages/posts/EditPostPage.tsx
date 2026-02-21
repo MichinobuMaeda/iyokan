@@ -5,16 +5,15 @@ import { useAtom } from "jotai";
 import { TextField, Button } from "glassine-paper";
 import * as E from "fp-ts/Either";
 
-import { postsAtom, providersAtom } from "../../lib/store";
+import { appStateAtom, postsAtom, providersAtom } from "../../lib/store";
 import { updateOrgPost } from "../../lib/firestore";
-import { savePostedImage } from "../../lib/storage";
+import { savePostedImage, useImageUrl } from "../../lib/storage";
 import { getFileExtension } from "../../lib/media";
 import { type PostData, type PostStatus } from "../../types/Post";
 import {
   validateSomePostText,
   validateSomePostProvider,
 } from "../../lib/validators";
-import { useImageUrl } from "../../lib/storage";
 import SvgArticle from "../../icons/SvgArticle";
 import SvgAddPhotoAlternate from "../../icons/SvgAddPhotoAlternate";
 import SvgRemove from "../../icons/SvgRemove";
@@ -26,6 +25,7 @@ import StatusIcons from "../../components/StatusIcons";
 export default function EditPostPage() {
   const { t } = useTranslation();
   const params = useParams();
+  const [appState] = useAtom(appStateAtom);
   const oid = params.oid!;
   const [posts] = useAtom(postsAtom);
   const [providers] = useAtom(providersAtom);
@@ -46,6 +46,10 @@ export default function EditPostPage() {
     files: post()!.files || [],
     providers: post()!.providers || [],
     status: post()!.status || "paused",
+    template: post()!.template || null,
+    generator: post()!.generator || null,
+    createdBy: post()!.createdBy || null,
+    updatedBy: appState?.uid || null,
   });
 
   const toggleProvider = (providerId: string) => {

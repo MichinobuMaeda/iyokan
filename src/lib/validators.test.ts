@@ -650,6 +650,10 @@ describe("validators", () => {
       files: [],
       providers: [],
       status: "scheduled",
+      template: null,
+      generator: null,
+      createdBy: null,
+      updatedBy: null,
     };
 
     describe("valid inputs", () => {
@@ -770,6 +774,10 @@ describe("validators", () => {
       files: [],
       providers: [],
       status: "scheduled",
+      template: null,
+      generator: null,
+      createdBy: null,
+      updatedBy: null,
     };
 
     describe("valid inputs", () => {

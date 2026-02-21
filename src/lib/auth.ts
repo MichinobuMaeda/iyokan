@@ -10,6 +10,9 @@ import {
   onAuthStateChanged,
   isSignInWithEmailLink,
   signInWithEmailLink,
+  signInWithRedirect,
+  getRedirectResult,
+  GoogleAuthProvider,
   type User,
   type ActionCodeSettings,
 } from "firebase/auth";
@@ -22,33 +25,62 @@ import { authUserAtom, localeAtom } from "./store";
 import { setAppState } from "./app";
 
 const keySendLinkEmail = "iyokan-sendLinkEmail";
+const keySignInWithGoogle = "iyokan-signInWithGoogle";
 
-export const handleSignInWithEmailLink = async (next: () => void) => {
+/**
+ * Redirects to URL without query parameters if query parameters exist
+ */
+export const redirectToCleanUrl = () => {
   const url = window.location.href;
-  console.info("handleSignInWithEmailLink() url:", url);
+  if (url.includes("?")) {
+    window.location.href = url.split("?")[0];
+  }
+};
 
-  if (isSignInWithEmailLink(auth, url)) {
-    const email = localStorage.getItem(keySendLinkEmail);
-    localStorage.removeItem(keySendLinkEmail);
-    console.log("Email link sign-in detected. Email:", email);
+export const handleSignInWithGoogleRedirect = async () => {
+  const ts = window.localStorage.getItem(keySignInWithGoogle);
 
-    if (email) {
-      try {
-        const result = await signInWithEmailLink(auth, email, url);
-        console.info("Successfully signed in with email link:", result);
-      } catch (error) {
-        console.error("Error signing in with email link:", error);
-      }
-    } else {
-      console.error("Email is required to sign in with email link");
-    }
-
-    // Redirect to home page after sign-in
-    window.location.href = window.location.origin;
+  if (!ts) {
     return;
   }
 
-  next();
+  window.localStorage.removeItem(keySignInWithGoogle);
+
+  if (Date.now() - new Date(ts).getTime() >= 5 * 60 * 1000) {
+    return;
+  }
+
+  try {
+    await getRedirectResult(auth);
+    console.info("Successfully signed in with Google redirect");
+  } catch (error) {
+    console.error("Error handling Google sign-in redirect:", error);
+  }
+};
+
+export const handleSignInWithEmailLink = async () => {
+  const url = window.location.href;
+  console.info("handleSignInWithEmailLink() url:", url);
+
+  if (!isSignInWithEmailLink(auth, url)) {
+    return;
+  }
+
+  const email = localStorage.getItem(keySendLinkEmail);
+  localStorage.removeItem(keySendLinkEmail);
+  console.log("Email link sign-in detected. Email:", email);
+
+  if (!email) {
+    console.error("Email is required to sign in with email link");
+    return;
+  }
+
+  try {
+    const result = await signInWithEmailLink(auth, email, url);
+    console.info("Successfully signed in with email link:", result);
+  } catch (error) {
+    console.error("Error signing in with email link:", error);
+  }
 };
 
 export const handleAuthChanged = (user: User | null) => {
@@ -69,8 +101,11 @@ export const handleAuthChanged = (user: User | null) => {
  * Updates the authUserAtom and calls setAppState when user changes
  */
 export function initAuth() {
-  Promise.resolve().then(() =>
-    handleSignInWithEmailLink(() => onAuthStateChanged(auth, handleAuthChanged))
+  Promise.resolve().then(async () =>
+    handleSignInWithGoogleRedirect()
+      .then(() => handleSignInWithEmailLink())
+      .then(() => redirectToCleanUrl())
+      .then(() => onAuthStateChanged(auth, handleAuthChanged))
   );
 }
 
@@ -146,6 +181,20 @@ export async function sendLoginLink({
   } catch (error) {
     console.error("sendLoginLink error:", error);
     return E.left("errorSendLoginLink");
+  }
+}
+
+export async function signInWithGoogle(): Promise<
+  E.Either<TranslationKey, void>
+> {
+  try {
+    auth.languageCode = getDefaultStore().get(localeAtom);
+    await signInWithRedirect(auth, new GoogleAuthProvider());
+    window.localStorage.setItem(keySignInWithGoogle, new Date().toISOString());
+    return E.right(undefined);
+  } catch (error) {
+    console.error("Google sign-in error:", error);
+    return E.left("errorSignInWithGoogle");
   }
 }
 

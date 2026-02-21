@@ -37,7 +37,7 @@ export default function EditTemplatePage() {
     <main>
       <Form
         onSubmit={() => updateOrgTemplate(oid, template()!.id, formData)}
-        returnPath={`/o/${oid}/templates/${template()!.id}`}
+        returnPath={`/o/${oid}/templates`}
         returnOnSubmit
         validated={!errorName()}
       >
@@ -118,7 +118,9 @@ export default function EditTemplatePage() {
           <Switch
             name="valid"
             checked={formData.valid}
-            onClick={() => setFormData({ ...formData, valid: !formData.valid })}
+            onChange={(e) =>
+              setFormData({ ...formData, valid: e.target.checked })
+            }
           />
           {t("active")}
         </label>

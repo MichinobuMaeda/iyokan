@@ -26,7 +26,6 @@ import ShowProviderPage from "./pages/providers/ShowProviderPage.tsx";
 import ListProvidersPage from "./pages/providers/ListProvidersPage.tsx";
 import NewTemplatePage from "./pages/templates/NewTemplatePage.tsx";
 import ListTemplatesPage from "./pages/templates/ListTemplatesPage.tsx";
-import ShowTemplatePage from "./pages/templates/ShowTemplatePage.tsx";
 import EditTemplatePage from "./pages/templates/EditTemplatePage.tsx";
 import ListGeneratorsPage from "./pages/generators/ListGeneratorsPage.tsx";
 import NewGeneratorPage from "./pages/generators/NewGeneratorPage.tsx";
@@ -124,11 +123,6 @@ export const route: RouteObject[] = [
                     path: ":templateId",
                     children: [
                       {
-                        index: true,
-                        middleware: [guardRoute(["user"])],
-                        Component: ShowTemplatePage,
-                      },
-                      {
                         path: "edit",
                         middleware: [guardRoute(["user"])],
                         Component: EditTemplatePage,
@@ -177,8 +171,18 @@ export const route: RouteObject[] = [
                   },
                   {
                     path: "new",
-                    middleware: [guardRoute(["user"])],
-                    Component: NewPostPage,
+                    children: [
+                      {
+                        index: true,
+                        middleware: [guardRoute(["user"])],
+                        Component: NewPostPage,
+                      },
+                      {
+                        path: ":templateId",
+                        middleware: [guardRoute(["user"])],
+                        Component: NewPostPage,
+                      },
+                    ],
                   },
                   {
                     path: ":postId",

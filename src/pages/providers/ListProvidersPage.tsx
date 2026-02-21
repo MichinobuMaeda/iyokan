@@ -4,7 +4,7 @@ import { useAtom } from "jotai";
 
 import { providersAtom, dataStateAtom } from "../../lib/store";
 import ProviderIcons from "../../components/ProviderIcons";
-import SvgAdd from "../../icons/SvgAdd";
+import SvgAddBox from "../../icons/SvgAddBox";
 import SvgBlock from "../../icons/SvgBlock";
 
 export default function ListProvidersPage() {
@@ -25,7 +25,7 @@ export default function ListProvidersPage() {
           className="button tonal"
           style={{ width: "100%" }}
         >
-          <SvgAdd /> {t("addProvider")}
+          <SvgAddBox /> {t("addProvider")}
         </NavLink>
       )}
       {providers

@@ -5,7 +5,7 @@ import { useAtom } from "jotai";
 import { postsAtom, dataStateAtom, providersAtom } from "../../lib/store";
 import StatusIcons from "../../components/StatusIcons";
 import SvgEdit from "../../icons/SvgEdit";
-import ProviderIcons from "../../components/ProviderIcons";
+import PostProvidersState from "../../components/PostProvidersState";
 import MetaItems from "../../components/MetaItems";
 import { formatLong } from "../../lib/formatter";
 import { useImageUrl } from "../../lib/storage";
@@ -23,9 +23,6 @@ export default function ShowPostPage() {
   if (!post()) {
     throw redirect(`/o/${oid}/posts`);
   }
-
-  const isError = (providerId: string) =>
-    post()!.errors?.some((e) => e.provider === providerId) ?? false;
 
   return (
     <main>
@@ -81,22 +78,11 @@ export default function ShowPostPage() {
         <>
           <h3>{t("providers")}</h3>
           <div className="row wrap" style={{ gap: "0.5em" }}>
-            {post()!
-              .providers.filter((pid) =>
-                providers?.some((p) => p.valid && p.id === pid)
-              )
-              .map((pid) => (
-                <div
-                  key={pid}
-                  className={`chip selected${isError(pid) ? " error" : ""}`}
-                >
-                  <ProviderIcons
-                    type={providers?.find((p) => p.id === pid)?.type}
-                    error={isError(pid)}
-                  />
-                  {providers?.find((p) => p.id === pid)?.name || pid}
-                </div>
-              ))}
+            <PostProvidersState
+              providers={providers ?? []}
+              post={post()!}
+              withName
+            />
           </div>
         </>
       )}

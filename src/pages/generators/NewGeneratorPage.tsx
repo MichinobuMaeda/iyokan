@@ -103,7 +103,9 @@ export default function NewGeneratorPage() {
           <Switch
             name="valid"
             checked={formData.valid}
-            onClick={() => setFormData({ ...formData, valid: !formData.valid })}
+            onChange={(e) =>
+              setFormData({ ...formData, valid: e.target.checked })
+            }
           />
           {t("active")}
         </label>

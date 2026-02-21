@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useLocation, NavLink } from "react-router";
 import { Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAtom } from "jotai";
@@ -12,6 +12,8 @@ import {
   dataStateAtom,
   orgsAtom,
   userPrivilegesAtom,
+  templatesAtom,
+  generatorsAtom,
 } from "../lib/store";
 import { useGuard } from "../lib/guard";
 import { useWindowWidth } from "../lib/useWindowWidth";
@@ -32,6 +34,7 @@ import SvgAppRegistration from "../icons/SvgAppRegistration";
 import SvgAlternateEmail from "../icons/SvgAlternateEmail";
 import SvgPassword from "../icons/SvgPassword";
 import SvgLogout from "../icons/SvgLogout";
+import SvgAdd2 from "../icons/SvgAdd2";
 
 export default function Layout() {
   useGuard();
@@ -40,9 +43,12 @@ export default function Layout() {
   const windowWidth = useWindowWidth();
   const location = useLocation();
   const [dataState] = useAtom(dataStateAtom);
+  const [templates] = useAtom(templatesAtom);
+  const [generators] = useAtom(generatorsAtom);
   const [orgs] = useAtom(orgsAtom);
   const [, setUserPrivileges] = useAtom(userPrivilegesAtom);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [fabOpen, setFabOpen] = useState(false);
 
   const lg = () => windowWidth >= 1024;
   const drawerState = () =>
@@ -65,6 +71,12 @@ export default function Layout() {
     dataState
       ? location.pathname.startsWith(`/o/${dataState?.oid}/${subPath}`)
       : false;
+  const isTemplate = () => templates?.some((t) => t.valid);
+  const isGenerator = () => generators?.some((g) => g.valid);
+  const showFab = () =>
+    !!dataState &&
+    location.pathname !== `/o/${dataState!.oid}/posts/new` &&
+    !location.pathname.startsWith(`/o/${dataState!.oid}/posts/new/`);
 
   useEffect(() => {
     i18n.changeLanguage(locale);
@@ -76,6 +88,7 @@ export default function Layout() {
       onClick={() => {
         setMenuOpen(null);
         setDrawerOpen(false);
+        setFabOpen(false);
       }}
     >
       <NavDrawer
@@ -248,6 +261,53 @@ export default function Layout() {
           <Outlet />
         )}
       </div>
+      {showFab() && (
+        <>
+          {isTemplate() || isGenerator() ? (
+            fabOpen ? (
+              <div className="fab-menu">
+                {isTemplate() && (
+                  <NavLink
+                    className={`button sm tonal`}
+                    to={`/o/${dataState!.oid}/templates`}
+                  >
+                    <SvgStickyNote /> {t("template")}
+                  </NavLink>
+                )}
+                <NavLink
+                  className={`button sm tonal`}
+                  to={`/o/${dataState!.oid}/posts/new`}
+                >
+                  <SvgArticle /> {t("post")}
+                </NavLink>
+                <button
+                  className={`fab primary-container sm closed`}
+                  onClick={() => setFabOpen(false)}
+                >
+                  <SvgClose />
+                </button>
+              </div>
+            ) : (
+              <button
+                className={`fab primary-container sm`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFabOpen(true);
+                }}
+              >
+                <SvgAdd2 />
+              </button>
+            )
+          ) : (
+            <NavLink
+              className="fab primary sm"
+              to={`/o/${dataState!.oid}/posts/new`}
+            >
+              <SvgAdd2 />
+            </NavLink>
+          )}
+        </>
+      )}
     </div>
   );
 }

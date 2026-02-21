@@ -80,8 +80,8 @@ export default function NewOrgPage() {
             name="hardBreak"
             value="on"
             checked={formData.hardBreak}
-            onClick={() =>
-              setFormData({ ...formData, hardBreak: !formData.hardBreak })
+            onChange={(e) =>
+              setFormData({ ...formData, hardBreak: e.target.checked })
             }
           />
           {t("hardBreak")}
@@ -91,7 +91,9 @@ export default function NewOrgPage() {
             name="valid"
             value="on"
             checked={formData.valid}
-            onClick={() => setFormData({ ...formData, valid: !formData.valid })}
+            onChange={(e) =>
+              setFormData({ ...formData, valid: e.target.checked })
+            }
           />
           {t("active")}
         </label>

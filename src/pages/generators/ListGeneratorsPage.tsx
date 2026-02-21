@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAtom } from "jotai";
 
 import { generatorsAtom, dataStateAtom } from "../../lib/store";
-import SvgAdd from "../../icons/SvgAdd";
+import SvgAddBox from "../../icons/SvgAddBox";
 import SvgCognition from "../../icons/SvgCognition";
 import SvgBlock from "../../icons/SvgBlock";
 
@@ -25,7 +25,7 @@ export default function ListGeneratorsPage() {
           className="button tonal"
           style={{ width: "100%" }}
         >
-          <SvgAdd /> {t("addGenerator")}
+          <SvgAddBox /> {t("addGenerator")}
         </NavLink>
       )}
       {generators

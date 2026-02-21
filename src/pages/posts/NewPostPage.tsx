@@ -8,14 +8,14 @@ import * as E from "fp-ts/Either";
 import { type PostData, type PostStatus } from "../../types/Post";
 import { formatPostId } from "../../lib/formatter";
 import { createOrgPost } from "../../lib/firestore";
-import { providersAtom } from "../../lib/store";
+import { providersAtom, appStateAtom, templatesAtom } from "../../lib/store";
 import { savePostedImage } from "../../lib/storage";
 import { getFileExtension } from "../../lib/media";
 import {
   validateSomePostText,
   validateSomePostProvider,
 } from "../../lib/validators";
-import SvgArticle from "../../icons/SvgArticle";
+import SvgAdd2 from "../../icons/SvgAdd2";
 import SvgAddPhotoAlternate from "../../icons/SvgAddPhotoAlternate";
 import SvgRemove from "../../icons/SvgRemove";
 import Form from "../../components/Form";
@@ -26,17 +26,25 @@ export default function NewPostPage() {
   const { t } = useTranslation();
   const params = useParams();
   const oid = params.oid!;
+  const templateId = params.templateId;
+  const [templates] = useAtom(templatesAtom);
+  const template = templates?.find((t) => t.id === templateId) ?? null;
+  const [appState] = useAtom(appStateAtom);
   const [providers] = useAtom(providersAtom);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<PostData>({
     schedule: new Date(),
-    title: "",
-    message: "",
-    link: "",
+    title: template?.title ?? "",
+    message: template?.message ?? "",
+    link: template?.link ?? "",
     files: [],
     providers: [],
     status: "scheduled",
+    template: template?.id ?? null,
+    generator: null,
+    createdBy: appState?.uid ?? null,
+    updatedBy: null,
   });
 
   const toggleProvider = (providerId: string) => {
@@ -90,12 +98,12 @@ export default function NewPostPage() {
     <main>
       <Form
         onSubmit={handleSubmit}
-        returnPath={`/o/${oid}/posts`}
+        returnPath={template ? `/o/${oid}/templates` : `/o/${oid}/posts`}
         returnOnSubmit
         validated={!errorAnyPostText() && !errorAnyPostProvider()}
       >
         <h2>
-          <SvgArticle /> {t("addPost")}
+          <SvgAdd2 /> {t("addPost")}
         </h2>
         <div className="row">
           <TextField

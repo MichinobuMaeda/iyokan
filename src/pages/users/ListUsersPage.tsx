@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAtom } from "jotai";
 
 import { usersAtom, dataStateAtom } from "../../lib/store";
-import SvgAdd from "../../icons/SvgAdd";
+import SvgPersonAdd from "../../icons/SvgPersonAdd";
 import SvgPerson from "../../icons/SvgPerson";
 import SvgAccountCircle from "../../icons/SvgAccountCircle";
 import SvgBlock from "../../icons/SvgBlock";
@@ -26,7 +26,7 @@ export default function ListUsersPage() {
           className="button tonal"
           style={{ width: "100%" }}
         >
-          <SvgAdd /> {t("addUser")}
+          <SvgPersonAdd /> {t("addUser")}
         </NavLink>
       )}
       {users

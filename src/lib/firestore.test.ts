@@ -574,9 +574,10 @@ describe("firestore", () => {
       const formData = {
         id: "org1",
         name: "Test Org",
-        desc: undefined,
+        desc: "",
         valid: true,
         hardBreak: false,
+        presetTimes: [],
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
       } as Org;
@@ -589,6 +590,7 @@ describe("firestore", () => {
         desc: "",
         valid: true,
         hardBreak: false,
+        presetTimes: [],
         updatedAt: new Date("2024-01-01T00:00:00.000Z"),
       });
     });
@@ -754,7 +756,6 @@ describe("firestore", () => {
         url: "https://api.github.com",
         valid: true,
         createdAt: new Date("2024-01-01T00:00:00.000Z"),
-        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
       });
     });
 
@@ -861,7 +862,6 @@ describe("firestore", () => {
         category: "cat1",
         valid: true,
         createdAt: new Date("2024-01-01T00:00:00.000Z"),
-        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
       });
     });
 
@@ -972,7 +972,6 @@ describe("firestore", () => {
         providers: ["provider1", "provider2"],
         valid: true,
         createdAt: new Date("2024-01-01T00:00:00.000Z"),
-        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
       });
     });
 
@@ -1008,6 +1007,7 @@ describe("firestore", () => {
         name: "Test Generator",
         source: "source1",
         prompt: "Test prompt",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         providers: undefined as any,
         valid: true,
       };
@@ -1022,7 +1022,6 @@ describe("firestore", () => {
         providers: [],
         valid: true,
         createdAt: new Date("2024-01-01T00:00:00.000Z"),
-        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
       });
     });
   });
@@ -1087,6 +1086,7 @@ describe("firestore", () => {
         name: "Test Generator",
         source: "source1",
         prompt: "Test prompt",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         providers: undefined as any,
         valid: true,
       };
@@ -1255,6 +1255,10 @@ describe("firestore", () => {
         files: ["1.jpg"],
         providers: ["provider1", "provider2"],
         status: "scheduled" as const,
+        template: null,
+        generator: null,
+        createdBy: null,
+        updatedBy: null,
       };
 
       const result = await createOrgPost("org1", "20240615103000000", formData);
@@ -1269,7 +1273,6 @@ describe("firestore", () => {
         providers: ["provider1", "provider2"],
         status: "scheduled",
         createdAt: new Date("2024-01-01T00:00:00.000Z"),
-        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
       });
     });
 
@@ -1287,6 +1290,10 @@ describe("firestore", () => {
         files: [],
         providers: [],
         status: "paused" as const,
+        template: null,
+        generator: null,
+        createdBy: null,
+        updatedBy: null,
       };
 
       const result = await createOrgPost("org1", "20240615103000000", formData);
@@ -1308,9 +1315,15 @@ describe("firestore", () => {
         title: "Test Post",
         message: "Test message",
         link: "https://example.com",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         files: undefined as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         providers: undefined as any,
-        status: "published" as const,
+        status: "scheduled" as const,
+        template: null,
+        generator: null,
+        createdBy: null,
+        updatedBy: null,
       };
 
       const result = await createOrgPost("org1", "20240615103000000", formData);
@@ -1323,9 +1336,8 @@ describe("firestore", () => {
         link: "https://example.com",
         files: [],
         providers: [],
-        status: "published",
+        status: "scheduled",
         createdAt: new Date("2024-01-01T00:00:00.000Z"),
-        updatedAt: new Date("2024-01-01T00:00:00.000Z"),
       });
     });
   });
@@ -1344,7 +1356,11 @@ describe("firestore", () => {
         link: "https://example.com/updated  ",
         files: ["1.png"],
         providers: ["provider1"],
-        status: "failed" as const,
+        status: "canceled" as const,
+        template: null,
+        generator: null,
+        createdBy: null,
+        updatedBy: null,
       };
 
       const result = await updateOrgPost("org1", "20240615103000000", formData);
@@ -1357,7 +1373,7 @@ describe("firestore", () => {
         link: "https://example.com/updated",
         files: ["1.png"],
         providers: ["provider1"],
-        status: "failed",
+        status: "canceled",
         updatedAt: new Date("2024-01-01T00:00:00.000Z"),
       });
     });
@@ -1376,6 +1392,10 @@ describe("firestore", () => {
         files: [],
         providers: [],
         status: "paused" as const,
+        template: null,
+        generator: null,
+        createdBy: null,
+        updatedBy: null,
       };
 
       const result = await updateOrgPost("org1", "20240615103000000", formData);
@@ -1397,9 +1417,15 @@ describe("firestore", () => {
         title: "Test Post",
         message: "Test message",
         link: "https://example.com",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         files: undefined as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         providers: undefined as any,
         status: "scheduled" as const,
+        template: null,
+        generator: null,
+        createdBy: null,
+        updatedBy: null,
       };
 
       const result = await updateOrgPost("org1", "20240615103000000", formData);

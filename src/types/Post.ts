@@ -15,6 +15,10 @@ export interface PostData {
   providers: ProviderType[];
   status: PostStatus;
   errors?: PostError[];
+  template: string | null;
+  generator: string | null;
+  createdBy: string | null;
+  updatedBy: string | null;
 }
 
 export interface Post extends Meta, PostData {
@@ -27,6 +31,10 @@ export interface Post extends Meta, PostData {
   providers: ProviderType[];
   status: PostStatus;
   errors?: PostError[];
+  template: string | null;
+  generator: string | null;
+  createdBy: string | null;
+  updatedBy: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -53,6 +61,10 @@ export function postFromDoc(doc: DocumentSnapshot): Post | null {
     providers: data?.providers ?? [],
     status: data?.status ?? "paused",
     errors: data?.errors ?? [],
+    template: data?.template || null,
+    generator: data?.generator || null,
+    createdBy: data?.createdBy || null,
+    updatedBy: data?.updatedBy || null,
     createdAt: data?.createdAt?.toDate(),
     updatedAt: data?.updatedAt?.toDate(),
   };

@@ -46,6 +46,10 @@ describe("Post types", () => {
         providers: ["provider1", "provider2"],
         status: "scheduled",
         errors: [],
+        template: null,
+        generator: null,
+        createdBy: null,
+        updatedBy: null,
         createdAt: new Date("2024-01-01T00:00:00Z"),
         updatedAt: new Date("2024-01-02T00:00:00Z"),
       });
@@ -70,6 +74,10 @@ describe("Post types", () => {
         expect(result.providers).toEqual([]);
         expect(result.status).toBe("paused");
         expect(result.errors).toEqual([]);
+        expect(result.template).toBeNull();
+        expect(result.generator).toBeNull();
+        expect(result.createdBy).toBeNull();
+        expect(result.updatedBy).toBeNull();
         expect(result.createdAt).toBeUndefined();
         expect(result.updatedAt).toBeUndefined();
       }
@@ -99,6 +107,10 @@ describe("Post types", () => {
         providers: [],
         status: "paused",
         errors: [],
+        template: null,
+        generator: null,
+        createdBy: null,
+        updatedBy: null,
         createdAt: new Date("2024-01-15T00:00:00Z"),
         updatedAt: undefined,
       });

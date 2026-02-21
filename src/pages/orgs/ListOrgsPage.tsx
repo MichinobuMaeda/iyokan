@@ -4,7 +4,7 @@ import { useAtom } from "jotai";
 
 import { OID_SYSADMIN } from "../../../functions/src/common";
 import { orgsAtom, dataStateAtom, userPrivilegesAtom } from "../../lib/store";
-import SvgAdd from "../../icons/SvgAdd";
+import SvgAddBox from "../../icons/SvgAddBox";
 import SvgDomain from "../../icons/SvgDomain";
 import SvgHome from "../../icons/SvgHome";
 import SvgBlock from "../../icons/SvgBlock";
@@ -22,7 +22,7 @@ export default function ListOrgsPage() {
       </h2>
       {dataState?.oid === OID_SYSADMIN && (
         <NavLink to="/o/new" className="button tonal" style={{ width: "100%" }}>
-          <SvgAdd /> {t("addOrganization")}
+          <SvgAddBox /> {t("addOrganization")}
         </NavLink>
       )}
       {(orgs ?? [])

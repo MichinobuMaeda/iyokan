@@ -36,10 +36,10 @@ export default function EditGroupPage() {
 
   const errorName = () => (!formData.name ? t("required") : undefined);
 
-  const toggleMember = (uid: string) => {
-    const members = formData.members.includes(uid)
-      ? formData.members.filter((m) => m !== uid)
-      : [...formData.members, uid];
+  const toggleMember = (uid: string, checked: boolean) => {
+    const members = checked
+      ? [...formData.members, uid]
+      : formData.members.filter((m) => m !== uid);
     setFormData({ ...formData, members });
   };
 
@@ -73,7 +73,7 @@ export default function EditGroupPage() {
             <label key={user.id} className="row">
               <Checkbox
                 checked={formData.members.includes(user.id)}
-                onClick={() => toggleMember(user.id)}
+                onChange={(e) => toggleMember(user.id, e.target.checked)}
               />
               {user.name}
             </label>
@@ -85,8 +85,8 @@ export default function EditGroupPage() {
               name="valid"
               value="on"
               checked={formData.valid}
-              onClick={() =>
-                setFormData({ ...formData, valid: !formData.valid })
+              onChange={(e) =>
+                setFormData({ ...formData, valid: e.target.checked })
               }
             />
             {t("active")}

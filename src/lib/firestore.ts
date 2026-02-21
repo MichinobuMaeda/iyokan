@@ -253,7 +253,7 @@ export async function updateOrg(
     const { id, createdAt, updatedAt, ...data } = formData;
 
     data.name = data.name.trim();
-    data.desc = data.desc?.trim() ?? "";
+    data.desc = data.desc.trim();
     data.valid = Boolean(data.valid);
 
     await updateDoc(doc(db, "orgs", id), {
@@ -339,7 +339,6 @@ export async function createOrgProvider(
       ...params.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {}),
       valid: !!valid,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
     });
     return E.right(undefined);
   } catch (error) {
@@ -391,7 +390,6 @@ export async function createOrgTemplate(
       category: formData.category.trim(),
       valid: !!formData.valid,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
     });
     return E.right(undefined);
   } catch (error) {
@@ -435,7 +433,6 @@ export async function createOrgGenerator(
       providers: formData.providers || [],
       valid: !!formData.valid,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
     });
     return E.right(undefined);
   } catch (error) {
@@ -480,7 +477,6 @@ export async function createOrgPost(
       providers: formData.providers || [],
       status: formData.status,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
     });
     return E.right(undefined);
   } catch (error) {

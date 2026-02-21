@@ -3,8 +3,10 @@ import { useTranslation } from "react-i18next";
 import { useAtom } from "jotai";
 
 import { templatesAtom, dataStateAtom } from "../../lib/store";
-import SvgAdd from "../../icons/SvgAdd";
 import SvgStickyNote from "../../icons/SvgStickyNote ";
+import SvgAddBox from "../../icons/SvgAddBox";
+import SvgEdit from "../../icons/SvgEdit";
+import SvgAdd2 from "../../icons/SvgAdd2";
 import SvgBlock from "../../icons/SvgBlock";
 
 export default function ListTemplatesPage() {
@@ -25,21 +27,50 @@ export default function ListTemplatesPage() {
           className="button tonal"
           style={{ width: "100%" }}
         >
-          <SvgAdd /> {t("addTemplate")}
+          <SvgAddBox /> {t("addTemplate")}
         </NavLink>
       )}
       {templates
         ?.sort((a, b) => a.name.localeCompare(b.name))
         .map((template) => (
-          <NavLink
-            key={template.id}
-            to={`/o/${oid}/templates/${template.id}`}
-            className="button outlined"
-            style={{ width: "100%" }}
-          >
-            {template.valid ? <SvgStickyNote /> : <SvgBlock />}
-            {template.name}
-          </NavLink>
+          <div key={template.id} className="row" style={{ gap: "0.125em" }}>
+            <NavLink
+              key={template.id}
+              to={`/o/${oid}/templates/${template.id}/edit`}
+              className="button icon text"
+            >
+              <SvgEdit />
+            </NavLink>
+            {template.valid ? (
+              <NavLink
+                key={template.id}
+                to={`/o/${oid}/posts/new/${template.id}`}
+                className="button outlined"
+                style={{ width: "100%" }}
+              >
+                <span
+                  style={{
+                    flexGrow: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {template.name}
+                </span>
+                <SvgAdd2 />
+              </NavLink>
+            ) : (
+              <button
+                key={template.id}
+                className="button outlined"
+                style={{ width: "100%" }}
+                disabled
+              >
+                <SvgBlock />
+                {template.name}
+              </button>
+            )}
+          </div>
         ))}
     </main>
   );

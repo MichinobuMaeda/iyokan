@@ -68,7 +68,9 @@ export default function NewUserPage() {
             name="valid"
             value="on"
             checked={formData.valid}
-            onClick={() => setFormData({ ...formData, valid: !formData.valid })}
+            onChange={(e) =>
+              setFormData({ ...formData, valid: e.target.checked })
+            }
           />
           {t("active")}
         </label>

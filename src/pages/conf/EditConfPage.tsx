@@ -66,8 +66,8 @@ export default function EditConfPage() {
             name="hardBreak"
             value="on"
             checked={formData.hardBreak}
-            onClick={() =>
-              setFormData({ ...formData, hardBreak: !formData.hardBreak })
+            onChange={(e) =>
+              setFormData({ ...formData, hardBreak: e.target.checked })
             }
           />
           {t("hardBreak")}

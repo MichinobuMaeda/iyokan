@@ -9,6 +9,9 @@ vi.mock("firebase/auth", () => ({
   sendSignInLinkToEmail: vi.fn(),
   isSignInWithEmailLink: vi.fn(),
   signInWithEmailLink: vi.fn(),
+  signInWithRedirect: vi.fn(),
+  getRedirectResult: vi.fn(),
+  GoogleAuthProvider: vi.fn(),
   signOut: vi.fn(),
   onAuthStateChanged: vi.fn(),
   EmailAuthProvider: {
@@ -70,14 +73,6 @@ global.document = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
-global.window = {
-  location: {
-    href: "",
-    origin: "http://localhost:3000",
-  },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any;
-
 // Mock localStorage
 global.localStorage = {
   getItem: vi.fn(),
@@ -86,6 +81,16 @@ global.localStorage = {
   clear: vi.fn(),
   length: 0,
   key: vi.fn(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any;
+
+global.window = {
+  location: {
+    href: "",
+    origin: "http://localhost:3000",
+  },
+  localStorage: global.localStorage,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
 describe("client auth", () => {
@@ -121,6 +126,7 @@ describe("client auth", () => {
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
       vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
+      vi.mocked(localStorage.getItem).mockReturnValue(null); // No Google redirect
       vi.mocked(onAuthStateChanged).mockImplementation(
         (_auth, nextOrObserver) => {
           if (typeof nextOrObserver === "function") {
@@ -130,7 +136,8 @@ describe("client auth", () => {
         }
       );
 
-      await listenAuthState();
+      listenAuthState();
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(onAuthStateChanged).toHaveBeenCalled();
       expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, mockUser);
@@ -154,6 +161,7 @@ describe("client auth", () => {
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
       vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
+      vi.mocked(localStorage.getItem).mockReturnValue(null); // No Google redirect
       vi.mocked(onAuthStateChanged).mockImplementation(
         (_auth, nextOrObserver) => {
           if (typeof nextOrObserver === "function") {
@@ -163,7 +171,8 @@ describe("client auth", () => {
         }
       );
 
-      await listenAuthState();
+      listenAuthState();
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, newUser);
       expect(setAppState).toHaveBeenCalledWith(mockStore, newUser);
@@ -185,6 +194,7 @@ describe("client auth", () => {
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
       vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
+      vi.mocked(localStorage.getItem).mockReturnValue(null); // No Google redirect
       vi.mocked(onAuthStateChanged).mockImplementation(
         (_auth, nextOrObserver) => {
           if (typeof nextOrObserver === "function") {
@@ -194,7 +204,8 @@ describe("client auth", () => {
         }
       );
 
-      await listenAuthState();
+      listenAuthState();
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, sameUser);
       expect(setAppState).not.toHaveBeenCalled();
@@ -216,6 +227,7 @@ describe("client auth", () => {
 
       vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
       vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
+      vi.mocked(localStorage.getItem).mockReturnValue(null); // No Google redirect
       vi.mocked(onAuthStateChanged).mockImplementation(
         (_auth, nextOrObserver) => {
           if (typeof nextOrObserver === "function") {
@@ -225,26 +237,122 @@ describe("client auth", () => {
         }
       );
 
-      await listenAuthState();
+      listenAuthState();
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(mockStore.set).toHaveBeenCalledWith(authUserAtom, null);
       expect(setAppState).toHaveBeenCalledWith(mockStore, null);
     });
   });
 
+  describe("redirectToCleanUrl", () => {
+    it("should redirect to URL without query parameters if they exist", async () => {
+      const { redirectToCleanUrl } = await import("./auth");
+
+      global.window.location.href =
+        "http://localhost:3000/page?foo=bar&baz=qux";
+
+      redirectToCleanUrl();
+
+      expect(global.window.location.href).toBe("http://localhost:3000/page");
+    });
+
+    it("should do nothing if URL has no query parameters", async () => {
+      const { redirectToCleanUrl } = await import("./auth");
+
+      global.window.location.href = "http://localhost:3000/page";
+
+      redirectToCleanUrl();
+
+      expect(global.window.location.href).toBe("http://localhost:3000/page");
+    });
+  });
+
+  describe("handleSignInWithGoogleRedirect", () => {
+    it("should do nothing if no timestamp in localStorage", async () => {
+      const { handleSignInWithGoogleRedirect } = await import("./auth");
+
+      vi.mocked(localStorage.getItem).mockReturnValue(null);
+
+      await handleSignInWithGoogleRedirect();
+
+      expect(localStorage.getItem).toHaveBeenCalledWith(
+        "iyokan-signInWithGoogle"
+      );
+      expect(localStorage.removeItem).not.toHaveBeenCalled();
+    });
+
+    it("should handle Google redirect when timestamp is recent", async () => {
+      const { getRedirectResult } = await import("firebase/auth");
+      const { handleSignInWithGoogleRedirect } = await import("./auth");
+
+      const recentTime = new Date(Date.now() - 1000).toISOString(); // 1 second ago
+      vi.mocked(localStorage.getItem).mockReturnValue(recentTime);
+      vi.mocked(getRedirectResult).mockResolvedValue({
+        user: { uid: "test-uid" },
+      } as never);
+
+      await handleSignInWithGoogleRedirect();
+
+      expect(localStorage.getItem).toHaveBeenCalledWith(
+        "iyokan-signInWithGoogle"
+      );
+      expect(localStorage.removeItem).toHaveBeenCalledWith(
+        "iyokan-signInWithGoogle"
+      );
+      expect(getRedirectResult).toHaveBeenCalled();
+    });
+
+    it("should handle error when Google redirect fails", async () => {
+      const { getRedirectResult } = await import("firebase/auth");
+      const { handleSignInWithGoogleRedirect } = await import("./auth");
+
+      const recentTime = new Date(Date.now() - 1000).toISOString();
+      vi.mocked(localStorage.getItem).mockReturnValue(recentTime);
+      vi.mocked(getRedirectResult).mockRejectedValue(
+        new Error("Google redirect error")
+      );
+
+      await handleSignInWithGoogleRedirect();
+
+      expect(localStorage.removeItem).toHaveBeenCalledWith(
+        "iyokan-signInWithGoogle"
+      );
+      expect(getRedirectResult).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith(
+        "Error handling Google sign-in redirect:",
+        expect.any(Error)
+      );
+    });
+
+    it("should return early if timestamp is too old (> 5 minutes)", async () => {
+      const { getRedirectResult } = await import("firebase/auth");
+      const { handleSignInWithGoogleRedirect } = await import("./auth");
+
+      const oldTime = new Date(Date.now() - 6 * 60 * 1000).toISOString(); // 6 minutes ago
+      vi.mocked(localStorage.getItem).mockReturnValue(oldTime);
+
+      await handleSignInWithGoogleRedirect();
+
+      expect(localStorage.removeItem).toHaveBeenCalledWith(
+        "iyokan-signInWithGoogle"
+      );
+      expect(getRedirectResult).not.toHaveBeenCalled();
+    });
+  });
+
   describe("handleSignInWithEmailLink", () => {
-    it("should do nothing if URL is not a sign-in link and call next", async () => {
+    it("should do nothing if URL is not a sign-in link", async () => {
       const { isSignInWithEmailLink } = await import("firebase/auth");
       const { handleSignInWithEmailLink } = await import("./auth");
 
       vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
       global.window.location.href = "http://localhost:3000/some-page";
-      const mockNext = vi.fn();
 
-      await handleSignInWithEmailLink(mockNext);
+      await handleSignInWithEmailLink();
 
       expect(isSignInWithEmailLink).toHaveBeenCalled();
-      expect(mockNext).toHaveBeenCalled();
+      expect(localStorage.getItem).not.toHaveBeenCalled();
     });
 
     it("should sign in with email link when valid", async () => {
@@ -259,9 +367,8 @@ describe("client auth", () => {
       } as never);
 
       global.window.location.href = "http://localhost:3000?apiKey=xxx";
-      const mockNext = vi.fn();
 
-      await handleSignInWithEmailLink(mockNext);
+      await handleSignInWithEmailLink();
 
       expect(isSignInWithEmailLink).toHaveBeenCalled();
       expect(localStorage.getItem).toHaveBeenCalledWith("iyokan-sendLinkEmail");
@@ -273,8 +380,6 @@ describe("client auth", () => {
       expect(localStorage.removeItem).toHaveBeenCalledWith(
         "iyokan-sendLinkEmail"
       );
-      expect(global.window.location.href).toBe("http://localhost:3000");
-      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should handle error when signing in with email link fails", async () => {
@@ -289,17 +394,14 @@ describe("client auth", () => {
       );
 
       global.window.location.href = "http://localhost:3000?apiKey=xxx";
-      const mockNext = vi.fn();
 
-      await handleSignInWithEmailLink(mockNext);
+      await handleSignInWithEmailLink();
 
       expect(signInWithEmailLink).toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
         "Error signing in with email link:",
         expect.any(Error)
       );
-      expect(global.window.location.href).toBe("http://localhost:3000");
-      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should not sign in if email is missing from localStorage", async () => {
@@ -311,16 +413,13 @@ describe("client auth", () => {
       vi.mocked(isSignInWithEmailLink).mockReturnValue(true);
 
       global.window.location.href = "http://localhost:3000?apiKey=xxx";
-      const mockNext = vi.fn();
 
-      await handleSignInWithEmailLink(mockNext);
+      await handleSignInWithEmailLink();
 
       expect(signInWithEmailLink).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
         "Email is required to sign in with email link"
       );
-      expect(global.window.location.href).toBe("http://localhost:3000");
-      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 
@@ -443,6 +542,58 @@ describe("client auth", () => {
       expect(E.isLeft(result)).toBe(true);
       if (E.isLeft(result)) {
         expect(result.left).toBe("errorSendLoginLink");
+      }
+    });
+  });
+
+  describe("signInWithGoogle", () => {
+    it("should initiate Google sign-in redirect", async () => {
+      const { signInWithRedirect, GoogleAuthProvider } =
+        await import("firebase/auth");
+      const { getDefaultStore } = await import("jotai");
+      const { signInWithGoogle } = await import("./auth");
+
+      const mockStore = {
+        get: vi.fn(() => "ja"),
+        set: vi.fn(),
+      };
+
+      vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(signInWithRedirect).mockResolvedValue(undefined as never);
+
+      const result = await signInWithGoogle();
+
+      expect(E.isRight(result)).toBe(true);
+      expect(signInWithRedirect).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(GoogleAuthProvider)
+      );
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        "iyokan-signInWithGoogle",
+        expect.any(String)
+      );
+    });
+
+    it("should return errorSignInWithGoogle on failure", async () => {
+      const { signInWithRedirect } = await import("firebase/auth");
+      const { getDefaultStore } = await import("jotai");
+      const { signInWithGoogle } = await import("./auth");
+
+      const mockStore = {
+        get: vi.fn(() => "ja"),
+        set: vi.fn(),
+      };
+
+      vi.mocked(getDefaultStore).mockReturnValue(mockStore as never);
+      vi.mocked(signInWithRedirect).mockRejectedValue(
+        new Error("Google sign-in error")
+      );
+
+      const result = await signInWithGoogle();
+
+      expect(E.isLeft(result)).toBe(true);
+      if (E.isLeft(result)) {
+        expect(result.left).toBe("errorSignInWithGoogle");
       }
     });
   });
