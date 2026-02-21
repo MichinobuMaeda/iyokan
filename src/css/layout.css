@@ -279,6 +279,12 @@ main {
     &.wrap {
       flex-wrap: wrap;
     }
+
+    svg,
+    img {
+      height: 1rem;
+      width: 1rem;
+    }
   }
 
   .post-list-item {

@@ -12,6 +12,7 @@ export const en = {
   providers: "Providers",
   users: "Users",
   groups: "Groups",
+  settings: "Settings",
   appSettings: "App Settings",
 
   // Common UI

@@ -12,6 +12,7 @@ export const ja = {
   providers: "プロバイダー",
   users: "ユーザー",
   groups: "グループ",
+  settings: "設定",
   appSettings: "アプリの設定",
 
   // Common UI

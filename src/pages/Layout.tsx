@@ -24,6 +24,7 @@ import SvgLanguage from "../icons/SvgLanguage";
 import SvgInfo from "../icons/SvgInfo";
 import SvgAccountCircle from "../icons/SvgAccountCircle";
 import SvgLogin from "../icons/SvgLogin";
+import SvgSettings from "../icons/SvgSettings";
 import SvgDomain from "../icons/SvgDomain";
 import SvgStickyNote from "../icons/SvgStickyNote ";
 import SvgCognition from "../icons/SvgCognition";
@@ -139,6 +140,12 @@ export default function Layout() {
             label: t("providers"),
             onClick: () => navigate(`/o/${dataState!.oid}/providers`),
             active: locationIs("providers"),
+          },
+          (dataState?.sys || dataState?.manager) && {
+            leadingIcon: <SvgSettings />,
+            label: t("settings"),
+            onClick: () => navigate(`/o/${dataState!.oid}/edit`),
+            active: locationIs("edit"),
           },
           dataState?.sys && {
             leadingIcon: <SvgDomain />,

@@ -13,6 +13,7 @@ import {
 } from "../../lib/validators";
 import { type Org } from "../../types/Org";
 import Form from "../../components/Form";
+import SvgSettings from "../../icons/SvgSettings";
 import SvgDomain from "../../icons/SvgDomain";
 
 export default function EditOrgPage() {
@@ -57,8 +58,15 @@ export default function EditOrgPage() {
         validated={!errorName() && !errorTimesText()}
       >
         <h2>
-          <SvgDomain /> {org.id}
+          <SvgSettings /> {t("settings")}
         </h2>
+        <div
+          className="row"
+          style={{ fontFamily: "monospace", gap: "0.25rem" }}
+        >
+          <SvgDomain />
+          ID: {org.id}
+        </div>
         <div className="row">
           <TextField
             name="name"
